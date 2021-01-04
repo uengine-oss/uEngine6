@@ -1,6 +1,6 @@
-# uEngine5-bpm-istio
+# uEngine5-bpm
 
-## Running in Kubernetes / Istio
+## Running on Kubernetes
 
 ```
 mvn clean package -B -Dmaven.test.skip=true
