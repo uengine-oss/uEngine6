@@ -22,7 +22,7 @@ zuul:
   addProxyHeaders: true
 
   # Decides to check the token.
-  iam-authentication: true
+  iam-authentication: false
 
   # Key to determine if the token's signature is correct.
   # It must be the same key that IAM used to issue the token.

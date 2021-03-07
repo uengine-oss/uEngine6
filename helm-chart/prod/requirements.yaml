@@ -1,7 +1,4 @@
 dependencies:
-  - name: kafka
-    version: 0.9.6
-    repository: http://storage.googleapis.com/kubernetes-charts-incubator
-  - name: nginx-ingress
-    version: 0.1.0
-    repository: .....
+- name: kafka
+  version: 7.1.2
+  repository: https://charts.bitnami.com/bitnami
