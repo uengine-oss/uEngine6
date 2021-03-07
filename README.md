@@ -163,7 +163,7 @@ Test the helm chart:
 
 ```
 cd helm-chart/prod
-helm install --dry-run --debug --name uengine --namespace uengine .
+helm install --dry-run --debug uengine --namespace uengine .
 
 ```
 
@@ -172,7 +172,7 @@ Real deploy:
 cd helm-chart/prod
 helm dependency update
 helm init
-helm install --name uengine --namespace uengine .
+helm install uengine --namespace uengine .
 ```
 
 
