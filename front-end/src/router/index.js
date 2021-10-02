@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Login from '../../node_modules/metaworks4/src/components/Login.vue'
+// import Login from '../../node_modules/metaworks4/src/components/Login.vue'
+import Login from "../components/Login";
 import ServiceLocator from '@/components/ServiceLocator'
 import Home from '@/components/Home'
 
@@ -32,7 +33,7 @@ import Service from '@/components/service/ServiceManagement'
  */
 import DefinitionList from '@/components/designer/DefinitionList'
 import ModelerRouter from '@/components/designer/ModelerRouter'
-import ProcessDesigner from '@/components/designer/process//ProcessDesigner'
+import ProcessDesigner from '@/components/designer/process/ProcessDesigner'
 import ClassModeler from '@/components/designer/class-modeling/ClassModeler'
 import PracticeDesigner from '@/components/designer/essence/PracticeDesigner'
 
@@ -49,6 +50,7 @@ import ClassSelector from '@/components/ClassSelector'
 import UserSelector from '@/components/bpm-portal/UserSelector'
 import AvatarUploader from '@/components/AvatarUploader'
 import IAMAvatar from '@/components/IAMAvatar'
+import KeyCloakAvatar from "../components/KeyCloakAvatar";
 import UserPicker from '@/components/bpm-portal/UserPicker'
 import UserAutocomplete from '@/components/bpm-portal/UserAutocomplete'
 import NewPackage from '@/components/bpm-portal/NewPackage'
@@ -76,11 +78,11 @@ Vue.use(TreeView)
  * Iam && Vue Router
  * @type {IAM}
  */
-var clientKey = "my-client-key";
+var clientKey = "uEngine5-bpm";
 
 //This required for managing user rest api (avatar upload, curl user data, etc..)
 //If the client type is not public,(described in iam yaml setting) the rest api will rejected.
-var clientSecret = "my-client-secret";
+var clientSecret = "848479eb-6a43-41e9-a149-41a89634e7bd";
 
 //window.profile will be autowired by uengine-cloud-server. It can be local,dev,stg,prod. default is 'local'.
 var profile = window.profile;
@@ -88,18 +90,23 @@ var profile = window.profile;
 
 //Change the url your IAM application's vcap service's profile url.
 //For example, 'http://' + config.vcap.services['your-iam-server'][profile].external;
-var iamUrl = 'http://iam:8081';
+// var iamUrl = 'http://iam:8081';
+var keyCloackUrl = 'http://bpm.uengine.io:8080';
 
 //Define iam client
-var iam = new IAM(iamUrl);
+// var iam = new IAM(iamUrl);
+var keycloak = new KEYCLOAK(keyCloackUrl);
 
 //Set clientKey, clientSecret(optional).
-iam.setDefaultClient(clientKey, clientSecret);
+// iam.setDefaultClient(clientKey, clientSecret);
+keycloak.setDefaultClient(clientKey, clientSecret);
 
 //Mark in window
-window.iam = iam;
+// window.iam = iam;
+window.keycloak = keycloak;
 
-let RouterGuard = require("./RouterGuard.js")(iam);
+// let RouterGuard = require("./RouterGuard.js")(iam);
+let RouterGuard = require("./RouterGuard.js")(keycloak);
 Vue.use(Router);
 
 
@@ -142,6 +149,8 @@ if (profile == 'local') {
   backend = hybind("http://" + config.vcap.services['uengine5-router'][profile].external, {headers: {'access_token': access_token}});
 }
 
+console.log('backend!!!', backend)
+
 window.backend = backend;
 
 /**
@@ -160,6 +169,7 @@ Vue._components['object-form-org-uengine-kernel-role-mapping'] = UserSelector;
 
 Vue.component('avatar-uploader', AvatarUploader);
 Vue.component('iam-avatar', IAMAvatar);
+Vue.component('keycloak-avatar', KeyCloakAvatar);
 Vue.component('user-picker', UserPicker);
 Vue.component('new-package', NewPackage);
 Vue.component('rename-package', RenamePackage);
@@ -185,8 +195,6 @@ import ClassDiagram from '../components/example/ClassDiagram'
 
 
 //--------- customized components here -------
-
-
 export default new Router({
 //  mode: 'history',
   base: '/',
@@ -196,10 +204,8 @@ export default new Router({
       redirect: '/workspace',
       name: 'home',
       component: Home,
-      props: {iam: iam},
-      meta: {
-        breadcrumb: '홈'
-      },
+      props: {keycloak: keycloak},
+      meta: {breadcrumb: '홈'},
       children: [
         {
           path: 'example/cloud',
@@ -295,7 +301,7 @@ export default new Router({
               instanceId: route.params.id,
               rootInstanceId: route.params.rootId,
               monitor: true,
-              iam: iam
+              iam: keycloak
             }
           }
         },
@@ -342,7 +348,8 @@ export default new Router({
       name: 'login',
       component: Login,
       props: {
-        iamServer: iamUrl,
+        keycloak: keycloak,
+        iamServer: keyCloackUrl,
         scopes: "cloud-server,bpm"
       },
       beforeEnter: RouterGuard.requireGuest
@@ -350,3 +357,168 @@ export default new Router({
 
   ]
 })
+
+
+// export default new Router({
+// //  mode: 'history',
+//   base: '/',
+//   routes: [
+//     {
+//       path: '/',
+//       redirect: '/workspace',
+//       name: 'home',
+//       component: Home,
+//       props: {iam: iam},
+//       meta: {
+//         breadcrumb: '홈'
+//       },
+//       children: [
+//         {
+//           path: 'example/cloud',
+//           name: 'cloudexample',
+//           component: CloudExample,
+//           beforeEnter: RouterGuard.requireUser,
+//         },
+//         {
+//           path: 'example/elements',
+//           name: 'elementlistexample',
+//           component: ElementListExample,
+//           beforeEnter: RouterGuard.requireUser,
+//         },
+//         {
+//           path: 'example/chart',
+//           name: 'chartexample',
+//           component: ChartExample,
+//           beforeEnter: RouterGuard.requireUser,
+//         },
+//         {
+//           path: 'example/class',
+//           name: 'classexample',
+//           component: ClassDiagram,
+//           beforeEnter: RouterGuard.requireUser,
+//         },
+//         {
+//           path: 'services',
+//           name: 'Service',
+//           component: Service,
+//           beforeEnter: RouterGuard.requireUser,
+//           meta: {
+//             breadcrumb: 'Service'
+//           },
+//           props: {
+//             backend: backend
+//           },
+//         },
+//         {
+//           path: 'workspace',
+//           redirect: '/workspace/worklist',
+//         },
+//         {
+//           path: 'workspace/:submenu/:id*',
+//           name: 'Workspace',
+//           component: Workspace,
+//           beforeEnter: RouterGuard.requireUser,
+//           meta: {
+//             breadcrumb: 'Workspace'
+//           },
+//           props: function (route) {
+//             return {
+//               backend: backend,
+//               submenu: route.params.submenu,
+//               id: route.params.id
+//             }
+//           }
+//         },
+//         {
+//           path: 'designer/:path*',
+//           name: 'designer',
+//           component: DefinitionList,
+//           beforeEnter: RouterGuard.requireUser,
+//           meta: {
+//             breadcrumb: 'Designer'
+//           },
+//           props: function (route) {
+//             return {
+//               backend: backend,
+//               path: route.params.path
+//             }
+//           }
+//         },
+//         {
+//           path: 'definition/:path*',
+//           name: 'definition',
+//           component: ModelerRouter,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: function (route) {
+//             return {
+//               backend: backend,
+//               path: route.params.path
+//             }
+//           }
+//         },
+//         {
+//           path: 'instance/:rootId/:id',
+//           name: 'instanceMonitor',
+//           component: ProcessDesigner,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: function (route) {
+//             return {
+//               backend: backend,
+//               instanceId: route.params.id,
+//               rootInstanceId: route.params.rootId,
+//               monitor: true,
+//               iam: iam
+//             }
+//           }
+//         },
+//         {
+//           path: 'class-definition',
+//           name: 'classdefinition',
+//           component: ClassModeler,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: {
+//             backend: backend,
+//           },
+//         },
+//         {
+//           path: 'process-definition',
+//           name: 'processdefinition',
+//           component: ProcessDesigner,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: {
+//             backend: backend,
+//           },
+//         },
+//         {
+//           path: 'practice',
+//           name: 'practice',
+//           component: PracticeDesigner,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: {
+//             backend: backend,
+//           },
+//         },
+//         {
+//           path: 'instance',
+//           name: 'instance',
+//           component: InstanceList,
+//           beforeEnter: RouterGuard.requireUser,
+//           props: {
+//             backend: backend
+//           },
+//         }
+//       ]
+//     },
+//     {
+//       path: '/auth/:command',
+//       name: 'login',
+//       component: Login,
+//       props: {
+//         iamServer: iamUrl,
+//         scopes: "cloud-server,bpm"
+//       },
+//       beforeEnter: RouterGuard.requireGuest
+//     }
+//
+//   ]
+// })

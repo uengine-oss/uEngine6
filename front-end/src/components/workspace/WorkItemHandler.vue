@@ -5,7 +5,8 @@
         <md-layout md-flex="40">
           <div>
             <md-layout>
-              <iam-avatar :workItem="workItem"></iam-avatar>
+<!--              <iam-avatar :workItem="workItem"></iam-avatar>-->
+              <keycloak-avatar :workItem="workItem"></keycloak-avatar>
               <div style="margin-left: 16px">
                 <span class="md-title">{{workItem.activity.name}}</span><br>
                 <span class="md-caption">{{workItem.activity.description || 'No description for this activity.'}}</span>

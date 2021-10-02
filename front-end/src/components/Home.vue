@@ -19,7 +19,8 @@
 
     <md-sidenav class="md-left" ref="leftSidenav">
       <md-toolbar class="md-account-header">
-        <iam-avatar :iam="iam"></iam-avatar>
+<!--        <iam-avatar :iam="iam"></iam-avatar>-->
+        <keycloak-avatar :keycloak="keycloak"></keycloak-avatar>
       </md-toolbar>
 
       <md-list>
@@ -36,66 +37,65 @@
   </div>
 </template>
 <script>
-  export default {
-    props: {
-      iam: Object
-    },
-    data() {
-      return {
-        drawer: null,
-        items: [
-          {title: 'Workspace', icon: 'supervisor_account', routerPath: '/workspace'},
-          {title: 'Designer', icon: 'crop', routerPath: '/designer'},
-          {title: 'Service', icon: 'cloud_queue', routerPath: '/services'},
-          {title: 'Instances', icon: 'list', routerPath: '/instance'}
-        ],
-        mini: false,
-      }
-    },
-    mounted() {
-      this.updateActive();
-
-    },
-    watch: {
-      '$route'(to, from) {
-        this.updateActive();
-      },
-    },
-    methods: {
-      toggleLeftSidenav() {
-        this.$refs.leftSidenav.toggle();
-      },
-      logout: function () {
-        var me = this;
-        this.iam.logout();
-
-        //Additional access_token storage
-        localStorage.removeItem('access_token');
-
-        this.$router.push({
-          path: '/auth/login'
-        })
-      },
-      updateActive: function () {
-        var me = this;
-        var routers = me.$route.matched;
-        $.each(me.items, function (i, item) {
-          var isActive = false;
-          $.each(routers, function (r, router) {
-            if (router.name == item.routerPath) {
-              isActive = true;
+    export default {
+        props: {
+            iam: Object,
+            keycloak: Object
+        },
+        data() {
+            return {
+                drawer: null,
+                items: [
+                    {title: 'Workspace', icon: 'supervisor_account', routerPath: '/workspace'},
+                    {title: 'Designer', icon: 'crop', routerPath: '/designer'},
+                    {title: 'Service', icon: 'cloud_queue', routerPath: '/services'},
+                    {title: 'Instances', icon: 'list', routerPath: '/instance'}
+                ],
+                mini: false,
             }
-          });
-          item.isActive = isActive;
-        })
-      },
-      move(routerPath) {
-        this.$router.push(routerPath)
-      },
+        },
+        mounted() {
+            this.updateActive();
 
-    },
+        },
+        watch: {
+            '$route'(to, from) {
+                this.updateActive();
+            },
+        },
+        methods: {
+            toggleLeftSidenav() {
+                this.$refs.leftSidenav.toggle();
+            },
+            logout: function () {
+                var me = this;
+                me.keycloak.logout()
+                // this.iam.logout();
 
-  }
+                //Additional access_token storage
+                // localStorage.removeItem('access_token');
+                // window.location = '/'
+            },
+            updateActive: function () {
+                var me = this;
+                var routers = me.$route.matched;
+                $.each(me.items, function (i, item) {
+                    var isActive = false;
+                    $.each(routers, function (r, router) {
+                        if (router.name == item.routerPath) {
+                            isActive = true;
+                        }
+                    });
+                    item.isActive = isActive;
+                })
+            },
+            move(routerPath) {
+                this.$router.push(routerPath)
+            },
+
+        },
+
+    }
 </script>
 
 <style scoped lang="scss" rel="stylesheet/scss">

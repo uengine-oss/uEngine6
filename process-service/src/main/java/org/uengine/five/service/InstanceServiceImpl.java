@@ -6,10 +6,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
+
+import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
@@ -27,6 +32,7 @@ import org.uengine.five.framework.ProcessTransactional;
 import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
+import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.*;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.SendTask;
@@ -61,6 +67,11 @@ public class InstanceServiceImpl implements InstanceService {
     @ProcessTransactional
     public InstanceResource runDefinition(@RequestParam("defPath") String filePath, @QueryParam("simulation") boolean simulation) throws Exception {
 
+             //FIXME:  remove me
+             String userId = SecurityAwareServletFilter.getUserId();
+             TenantContext.getThreadLocalInstance().setUserId(userId);
+             //   
+        
         Object definition = definitionService.getDefinition(filePath, !simulation); //if simulation time, use the version under construction
 
         if(definition instanceof ProcessDefinition){
@@ -88,6 +99,7 @@ public class InstanceServiceImpl implements InstanceService {
     @ProcessTransactional
     public InstanceResource start(@PathVariable("instanceId") String instanceId) throws Exception {
 
+        
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
         if(!instance.isRunning(""))

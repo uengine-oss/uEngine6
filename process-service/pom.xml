@@ -33,6 +33,11 @@
             <artifactId>testng</artifactId>
             <version>6.11</version>
         </dependency>
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>3.18.2</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>org.uengine</groupId>-->
             <!--<artifactId>semantic-entity</artifactId>-->

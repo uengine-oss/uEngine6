@@ -25,49 +25,55 @@
   </div>
 </template>
 <script>
-  export default {
-    data () {
-      return {
-        config: window.config,
-        profile: profile,
-        location: window.location,
-        snackbar: {
-          top: true,
-          right: true,
-          timeout: 6000,
-          trigger: false,
-          mode: 'multi-line',
-          context: 'info',
-          text: ''
+    export default {
+        data() {
+            return {
+                config: window.config,
+                profile: profile,
+                location: window.location,
+                snackbar: {
+                    top: true,
+                    right: true,
+                    timeout: 6000,
+                    trigger: false,
+                    mode: 'multi-line',
+                    context: 'info',
+                    text: ''
+                },
+            }
         },
-      }
-    },
-    mounted() {
+        created() {
+            if(!localStorage.getItem('accessToken')){
+                window.location = '/api/accessToken/'  //check valid accessToken
+            }
+        },
+        mounted() {
 
-    },
-    methods: {
-      info: function (msg) {
-        this.snackbar.context = 'info';
-        this.snackbar.text = msg;
-        this.$refs.snackbar.open();
-      },
-      error: function (msg) {
-        this.snackbar.context = 'error';
-        this.snackbar.text = msg;
-        this.$refs.snackbar.open();
-      },
-      warning: function (msg) {
-        this.snackbar.context = 'warning';
-        this.snackbar.text = msg;
-        this.$refs.snackbar.open();
-      },
-      success: function (msg) {
-        this.snackbar.context = 'success';
-        this.snackbar.text = msg;
-        this.$refs.snackbar.open();
-      }
+
+        },
+        methods: {
+            info: function (msg) {
+                this.snackbar.context = 'info';
+                this.snackbar.text = msg;
+                this.$refs.snackbar.open();
+            },
+            error: function (msg) {
+                this.snackbar.context = 'error';
+                this.snackbar.text = msg;
+                this.$refs.snackbar.open();
+            },
+            warning: function (msg) {
+                this.snackbar.context = 'warning';
+                this.snackbar.text = msg;
+                this.$refs.snackbar.open();
+            },
+            success: function (msg) {
+                this.snackbar.context = 'success';
+                this.snackbar.text = msg;
+                this.$refs.snackbar.open();
+            }
+        }
     }
-  }
 </script>
 
 <style lang="scss" rel="stylesheet/scss">
