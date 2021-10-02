@@ -1,0 +1,326 @@
+2021-09-27 11:53:54,673 INFO  [org.jboss.as.server] (Thread-2) WFLYSRV0272: Suspending server
+2021-09-27 11:53:54,689 INFO  [org.jboss.as.ejb3] (Thread-2) WFLYEJB0493: Jakarta Enterprise Beans subsystem suspension complete
+2021-09-27 11:53:54,695 INFO  [org.jboss.as.server] (Thread-2) WFLYSRV0220: Server shutdown has been requested via an OS signal
+2021-09-27 11:53:54,719 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-7) WFLYJCA0010: Unbound data source [java:jboss/datasources/KeycloakDS]
+2021-09-27 11:53:54,721 INFO  [org.jboss.as.mail.extension] (MSC service thread 1-7) WFLYMAIL0002: Unbound mail session [java:jboss/mail/Default]
+2021-09-27 11:53:54,722 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 61) WFLYUT0022: Unregistered web context: '/auth' from server 'default-server'
+2021-09-27 11:53:54,723 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0008: Undertow HTTPS listener https suspending
+2021-09-27 11:53:54,724 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0007: Undertow HTTPS listener https stopped, was bound to 127.0.0.1:8443
+2021-09-27 11:53:54,767 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-8) WFLYJCA0010: Unbound data source [java:jboss/datasources/ExampleDS]
+2021-09-27 11:53:54,768 INFO  [org.jboss.as.connector.deployers.jdbc] (MSC service thread 1-1) WFLYJCA0019: Stopped Driver service with driver-name = h2
+2021-09-27 11:53:54,770 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0019: Host default-host stopping
+2021-09-27 11:53:54,788 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0008: Undertow HTTP listener default suspending
+2021-09-27 11:53:54,789 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 75) WFLYCLINF0003: Stopped work cache from keycloak container
+2021-09-27 11:53:54,789 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 70) WFLYCLINF0003: Stopped keys cache from keycloak container
+2021-09-27 11:53:54,789 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 72) WFLYCLINF0003: Stopped offlineClientSessions cache from keycloak container
+2021-09-27 11:53:54,790 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 69) WFLYCLINF0003: Stopped sessions cache from keycloak container
+2021-09-27 11:53:54,790 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 77) WFLYCLINF0003: Stopped loginFailures cache from keycloak container
+2021-09-27 11:53:54,791 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0007: Undertow HTTP listener default stopped, was bound to 127.0.0.1:8080
+2021-09-27 11:53:54,791 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 74) WFLYCLINF0003: Stopped actionTokens cache from keycloak container
+2021-09-27 11:53:54,792 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 78) WFLYCLINF0003: Stopped offlineSessions cache from keycloak container
+2021-09-27 11:53:54,792 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 76) WFLYCLINF0003: Stopped clientSessions cache from keycloak container
+2021-09-27 11:53:54,792 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0004: Undertow 2.2.5.Final stopping
+2021-09-27 11:53:54,793 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 71) WFLYCLINF0003: Stopped authenticationSessions cache from keycloak container
+2021-09-27 11:53:54,794 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-6) WFLYSRV0028: Stopped deployment keycloak-server.war (runtime-name: keycloak-server.war) in 84ms
+2021-09-27 11:53:54,798 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 73) WFLYCLINF0003: Stopped users cache from keycloak container
+2021-09-27 11:53:54,798 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 79) WFLYCLINF0003: Stopped authorization cache from keycloak container
+2021-09-27 11:53:54,800 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 80) WFLYCLINF0003: Stopped realms cache from keycloak container
+2021-09-27 11:53:54,803 INFO  [org.infinispan.manager.DefaultCacheManager] (ServerService Thread Pool -- 80) Stopping cache manager null on null
+2021-09-27 11:53:54,899 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 61) WFLYCLINF0003: Stopped http-remoting-connector cache from ejb container
+2021-09-27 11:53:54,900 INFO  [org.infinispan.manager.DefaultCacheManager] (ServerService Thread Pool -- 61) Stopping cache manager null on null
+2021-09-27 11:53:54,919 INFO  [org.jboss.as] (MSC service thread 1-2) WFLYSRV0050: Keycloak 15.0.2 (WildFly Core 15.0.1.Final) stopped in 209ms
+2021-09-27 12:00:57,800 INFO  [org.jboss.modules] (main) JBoss Modules version 1.11.0.Final
+2021-09-27 12:00:58,242 INFO  [org.jboss.msc] (main) JBoss MSC version 1.4.12.Final
+2021-09-27 12:00:58,255 INFO  [org.jboss.threads] (main) JBoss Threads version 2.4.0.Final
+2021-09-27 12:00:58,402 INFO  [org.jboss.as] (MSC service thread 1-2) WFLYSRV0049: Keycloak 15.0.2 (WildFly Core 15.0.1.Final) starting
+2021-09-27 12:00:58,403 DEBUG [org.jboss.as.config] (MSC service thread 1-2) Configured system properties:
+	[Standalone] = 
+	awt.toolkit = sun.lwawt.macosx.LWCToolkit
+	file.encoding = UTF-8
+	file.encoding.pkg = sun.io
+	file.separator = /
+	ftp.nonProxyHosts = local|*.local|169.254/16|*.169.254/16
+	gopherProxySet = false
+	http.nonProxyHosts = local|*.local|169.254/16|*.169.254/16
+	java.awt.graphicsenv = sun.awt.CGraphicsEnvironment
+	java.awt.headless = true
+	java.awt.printerjob = sun.lwawt.macosx.CPrinterJob
+	java.class.path = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/jboss-modules.jar
+	java.class.version = 52.0
+	java.endorsed.dirs = /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/endorsed
+	java.ext.dirs = /Users/heon/Library/Java/Extensions:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/ext:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java
+	java.home = /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre
+	java.io.tmpdir = /var/folders/cq/btdyjs9j5jz2w4_0ks2wrgy80000gn/T/
+	java.library.path = /Users/heon/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.
+	java.net.preferIPv4Stack = true
+	java.runtime.name = Java(TM) SE Runtime Environment
+	java.runtime.version = 1.8.0_202-b08
+	java.specification.name = Java Platform API Specification
+	java.specification.vendor = Oracle Corporation
+	java.specification.version = 1.8
+	java.util.logging.manager = org.jboss.logmanager.LogManager
+	java.vendor = Oracle Corporation
+	java.vendor.url = http://java.oracle.com/
+	java.vendor.url.bug = http://bugreport.sun.com/bugreport/
+	java.version = 1.8.0_202
+	java.vm.info = mixed mode
+	java.vm.name = Java HotSpot(TM) 64-Bit Server VM
+	java.vm.specification.name = Java Virtual Machine Specification
+	java.vm.specification.vendor = Oracle Corporation
+	java.vm.specification.version = 1.8
+	java.vm.vendor = Oracle Corporation
+	java.vm.version = 25.202-b08
+	javax.management.builder.initial = org.jboss.as.jmx.PluggableMBeanServerBuilder
+	jboss.home.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2
+	jboss.host.name = macui-macbookpro
+	jboss.modules.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/modules
+	jboss.modules.system.pkgs = org.jboss.byteman
+	jboss.node.name = macui-macbookpro
+	jboss.qualified.host.name = macui-macbookpro.local
+	jboss.server.base.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone
+	jboss.server.config.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration
+	jboss.server.data.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/data
+	jboss.server.deploy.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/data/content
+	jboss.server.log.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/log
+	jboss.server.name = macui-macbookpro
+	jboss.server.persist.config = true
+	jboss.server.temp.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/tmp
+	line.separator = 
+
+	logging.configuration = file:/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration/logging.properties
+	module.path = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/modules
+	org.jboss.boot.log.file = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/log/server.log
+	org.jboss.resolver.warning = true
+	os.arch = x86_64
+	os.name = Mac OS X
+	os.version = 10.15.7
+	path.separator = :
+	socksNonProxyHosts = local|*.local|169.254/16|*.169.254/16
+	sun.arch.data.model = 64
+	sun.boot.class.path = /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/sunrsasign.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/classes
+	sun.boot.library.path = /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre/lib
+	sun.cpu.endian = little
+	sun.cpu.isalist = 
+	sun.io.unicode.encoding = UnicodeBig
+	sun.java.command = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/jboss-modules.jar -mp /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/modules org.jboss.as.standalone -Djboss.home.dir=/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2 -Djboss.server.base.dir=/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone
+	sun.java.launcher = SUN_STANDARD
+	sun.jnu.encoding = UTF-8
+	sun.management.compiler = HotSpot 64-Bit Tiered Compilers
+	sun.os.patch.level = unknown
+	user.country = KR
+	user.dir = /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/bin
+	user.home = /Users/heon
+	user.language = ko
+	user.language.format = ko-Kore
+	user.name = heon
+	user.timezone = Asia/Seoul
+2021-09-27 12:00:58,404 DEBUG [org.jboss.as.config] (MSC service thread 1-2) VM Arguments: -D[Standalone] -Xms64m -Xmx512m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true -Dorg.jboss.boot.log.file=/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/log/server.log -Dlogging.configuration=file:/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration/logging.properties 
+2021-09-27 12:00:59,133 INFO  [org.wildfly.security] (ServerService Thread Pool -- 20) ELY00001: WildFly Elytron version 1.15.3.Final
+2021-09-27 12:00:59,507 INFO  [org.jboss.as.controller.management-deprecated] (ServerService Thread Pool -- 5) WFLYCTL0033: Extension 'security' is deprecated and may not be supported in future versions
+2021-09-27 12:00:59,689 INFO  [org.jboss.as.controller.management-deprecated] (Controller Boot Thread) WFLYCTL0028: Attribute 'security-realm' in the resource at address '/core-service=management/management-interface=http-interface' is deprecated, and may be removed in a future version. See the attribute description in the output of the read-resource-description operation to learn more about the deprecation.
+2021-09-27 12:00:59,711 INFO  [org.jboss.as.controller.management-deprecated] (ServerService Thread Pool -- 25) WFLYCTL0028: Attribute 'security-realm' in the resource at address '/subsystem=undertow/server=default-server/https-listener=https' is deprecated, and may be removed in a future version. See the attribute description in the output of the read-resource-description operation to learn more about the deprecation.
+2021-09-27 12:00:59,810 INFO  [org.jboss.as.server] (Controller Boot Thread) WFLYSRV0039: Creating http management service using socket-binding (management-http)
+2021-09-27 12:00:59,828 INFO  [org.xnio] (MSC service thread 1-6) XNIO version 3.8.4.Final
+2021-09-27 12:00:59,836 INFO  [org.xnio.nio] (MSC service thread 1-6) XNIO NIO Implementation Version 3.8.4.Final
+2021-09-27 12:00:59,864 INFO  [org.wildfly.extension.health] (ServerService Thread Pool -- 36) WFLYHEALTH0001: Activating Base Health Subsystem
+2021-09-27 12:00:59,865 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 37) WFLYCLINF0001: Activating Infinispan subsystem.
+2021-09-27 12:00:59,865 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 38) WFLYIO001: Worker 'default' has auto-configured to 16 IO threads with 128 max task threads based on your 8 available processors
+2021-09-27 12:00:59,883 INFO  [org.jboss.as.connector] (MSC service thread 1-2) WFLYJCA0009: Starting Jakarta Connectors Subsystem (WildFly/IronJacamar 1.4.27.Final)
+2021-09-27 12:00:59,890 INFO  [org.wildfly.extension.metrics] (ServerService Thread Pool -- 45) WFLYMETRICS0001: Activating Base Metrics Subsystem
+2021-09-27 12:00:59,893 INFO  [org.jboss.as.jaxrs] (ServerService Thread Pool -- 39) WFLYRS0016: RESTEasy version 3.15.1.Final
+2021-09-27 12:00:59,900 INFO  [org.jboss.as.connector.subsystems.datasources] (ServerService Thread Pool -- 31) WFLYJCA0004: Deploying JDBC-compliant driver class org.h2.Driver (version 1.4)
+2021-09-27 12:00:59,903 INFO  [org.jboss.as.connector.deployers.jdbc] (MSC service thread 1-4) WFLYJCA0018: Started Driver service with driver-name = h2
+2021-09-27 12:00:59,913 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 46) WFLYNAM0001: Activating Naming Subsystem
+2021-09-27 12:00:59,926 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-7) WFLYELY00023: KeyStore file '/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration/application.keystore' does not exist. Used blank.
+2021-09-27 12:00:59,935 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-7) WFLYELY01084: KeyStore /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration/application.keystore not found, it will be auto generated on first use with a self-signed certificate for host localhost
+2021-09-27 12:00:59,936 INFO  [org.jboss.as.naming] (MSC service thread 1-3) WFLYNAM0003: Starting Naming Service
+2021-09-27 12:00:59,957 INFO  [org.jboss.as.mail.extension] (MSC service thread 1-7) WFLYMAIL0001: Bound mail session [java:jboss/mail/Default]
+2021-09-27 12:00:59,962 INFO  [org.jboss.as.security] (ServerService Thread Pool -- 49) WFLYSEC0002: Activating Security Subsystem
+2021-09-27 12:00:59,964 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 51) WFLYTX0013: The node-identifier attribute on the /subsystem=transactions is set to the default value. This is a danger for environments running multiple servers. Please make sure the attribute value is unique.
+2021-09-27 12:00:59,970 INFO  [org.jboss.as.security] (MSC service thread 1-2) WFLYSEC0001: Current PicketBox version=5.0.3.Final-redhat-00007
+2021-09-27 12:00:59,998 INFO  [org.jboss.remoting] (MSC service thread 1-3) JBoss Remoting version 5.0.20.Final
+2021-09-27 12:01:00,001 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0003: Undertow 2.2.5.Final starting
+2021-09-27 12:01:00,019 WARN  [org.wildfly.clustering.web.undertow] (ServerService Thread Pool -- 52) WFLYCLWEBUT0007: No routing provider found for default-server; using legacy provider based on static configuration
+2021-09-27 12:01:00,080 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 52) WFLYUT0014: Creating file handler for path '/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/welcome-content' with options [directory-listing: 'false', follow-symlink: 'false', case-sensitive: 'true', safe-symlink-paths: '[]']
+2021-09-27 12:01:00,080 INFO  [org.jboss.as.ejb3] (MSC service thread 1-6) WFLYEJB0482: Strict pool mdb-strict-max-pool is using a max instance size of 32 (per class), which is derived from the number of CPUs on this host.
+2021-09-27 12:01:00,081 INFO  [org.jboss.as.ejb3] (MSC service thread 1-3) WFLYEJB0481: Strict pool slsb-strict-max-pool is using a max instance size of 128 (per class), which is derived from thread worker pool sizing.
+2021-09-27 12:01:00,094 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0012: Started server default-server.
+2021-09-27 12:01:00,095 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) Queuing requests.
+2021-09-27 12:01:00,096 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0018: Host default-host starting
+2021-09-27 12:01:00,200 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-6) WFLYUT0006: Undertow HTTP listener default listening on 127.0.0.1:8080
+2021-09-27 12:01:00,223 INFO  [org.jboss.as.ejb3] (MSC service thread 1-1) WFLYEJB0493: Jakarta Enterprise Beans subsystem suspension complete
+2021-09-27 12:01:00,285 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-1) WFLYJCA0001: Bound data source [java:jboss/datasources/ExampleDS]
+2021-09-27 12:01:00,285 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-6) WFLYJCA0001: Bound data source [java:jboss/datasources/KeycloakDS]
+2021-09-27 12:01:00,401 INFO  [org.jboss.as.patching] (MSC service thread 1-6) WFLYPAT0050: Keycloak cumulative patch ID is: base, one-off patches include: none
+2021-09-27 12:01:00,413 WARN  [org.jboss.as.domain.management.security] (MSC service thread 1-8) WFLYDM0111: Keystore /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/configuration/application.keystore not found, it will be auto generated on first use with a self signed certificate for host localhost
+2021-09-27 12:01:00,414 INFO  [org.jboss.as.server.deployment.scanner] (MSC service thread 1-6) WFLYDS0013: Started FileSystemDeploymentService for directory /Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/deployments
+2021-09-27 12:01:00,422 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-4) WFLYSRV0027: Starting deployment of "keycloak-server.war" (runtime-name: "keycloak-server.war")
+2021-09-27 12:01:00,448 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0006: Undertow HTTPS listener https listening on 127.0.0.1:8443
+2021-09-27 12:01:01,330 INFO  [org.infinispan.CONTAINER] (ServerService Thread Pool -- 55) ISPN000128: Infinispan version: Infinispan 'Corona Extra' 11.0.9.Final
+2021-09-27 12:01:01,371 INFO  [org.infinispan.CONFIG] (MSC service thread 1-6) ISPN000152: Passivation configured without an eviction policy being selected. Only manually evicted entities will be passivated.
+2021-09-27 12:01:01,373 INFO  [org.infinispan.CONFIG] (MSC service thread 1-6) ISPN000152: Passivation configured without an eviction policy being selected. Only manually evicted entities will be passivated.
+2021-09-27 12:01:01,462 INFO  [org.infinispan.PERSISTENCE] (ServerService Thread Pool -- 55) ISPN000556: Starting user marshaller 'org.wildfly.clustering.infinispan.marshalling.jboss.JBossMarshaller'
+2021-09-27 12:01:01,462 INFO  [org.infinispan.PERSISTENCE] (ServerService Thread Pool -- 54) ISPN000556: Starting user marshaller 'org.wildfly.clustering.infinispan.spi.marshalling.InfinispanProtoStreamMarshaller'
+2021-09-27 12:01:01,716 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 54) WFLYCLINF0002: Started http-remoting-connector cache from ejb container
+2021-09-27 12:01:01,742 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 61) WFLYCLINF0002: Started actionTokens cache from keycloak container
+2021-09-27 12:01:01,742 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 62) WFLYCLINF0002: Started offlineClientSessions cache from keycloak container
+2021-09-27 12:01:01,743 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 64) WFLYCLINF0002: Started authenticationSessions cache from keycloak container
+2021-09-27 12:01:01,743 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 66) WFLYCLINF0002: Started work cache from keycloak container
+2021-09-27 12:01:01,744 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 59) WFLYCLINF0002: Started sessions cache from keycloak container
+2021-09-27 12:01:01,745 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 60) WFLYCLINF0002: Started loginFailures cache from keycloak container
+2021-09-27 12:01:01,745 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 55) WFLYCLINF0002: Started offlineSessions cache from keycloak container
+2021-09-27 12:01:01,745 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 57) WFLYCLINF0002: Started clientSessions cache from keycloak container
+2021-09-27 12:01:01,782 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 54) WFLYCLINF0002: Started users cache from keycloak container
+2021-09-27 12:01:01,782 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 63) WFLYCLINF0002: Started authorization cache from keycloak container
+2021-09-27 12:01:01,782 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 56) WFLYCLINF0002: Started keys cache from keycloak container
+2021-09-27 12:01:01,782 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 58) WFLYCLINF0002: Started realms cache from keycloak container
+2021-09-27 12:01:01,900 WARN  [org.jboss.as.server.deployment] (MSC service thread 1-3) WFLYSRV0273: Excluded subsystem webservices via jboss-deployment-structure.xml does not exist.
+2021-09-27 12:01:02,554 INFO  [org.keycloak.services] (ServerService Thread Pool -- 65) KC-SERVICES0001: Loading config from standalone.xml or domain.xml
+2021-09-27 12:01:02,958 INFO  [org.keycloak.url.DefaultHostnameProviderFactory] (ServerService Thread Pool -- 65) Frontend: <request>, Admin: <frontend>, Backend: <request>
+2021-09-27 12:01:03,168 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 65) WFLYCLINF0002: Started realmRevisions cache from keycloak container
+2021-09-27 12:01:03,174 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 65) WFLYCLINF0002: Started userRevisions cache from keycloak container
+2021-09-27 12:01:03,180 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 65) WFLYCLINF0002: Started authorizationRevisions cache from keycloak container
+2021-09-27 12:01:03,181 INFO  [org.keycloak.connections.infinispan.DefaultInfinispanConnectionProviderFactory] (ServerService Thread Pool -- 65) Node name: macui-macbookpro, Site name: null
+2021-09-27 12:01:06,448 INFO  [org.keycloak.connections.jpa.DefaultJpaConnectionProviderFactory] (ServerService Thread Pool -- 65) Database info: {databaseUrl=jdbc:h2:/Users/heon/IdeaProjects/uEngine5-bpm/keycloak-15.0.2/standalone/data/keycloak, databaseUser=SA, databaseProduct=H2 1.4.197 (2018-03-18), databaseDriver=H2 JDBC Driver 1.4.197 (2018-03-18)}
+2021-09-27 12:01:07,456 INFO  [org.hibernate.jpa.internal.util.LogHelper] (ServerService Thread Pool -- 65) HHH000204: Processing PersistenceUnitInfo [
+	name: keycloak-default
+	...]
+2021-09-27 12:01:07,547 INFO  [org.hibernate.Version] (ServerService Thread Pool -- 65) HHH000412: Hibernate Core {5.3.20.Final}
+2021-09-27 12:01:07,548 INFO  [org.hibernate.cfg.Environment] (ServerService Thread Pool -- 65) HHH000206: hibernate.properties not found
+2021-09-27 12:01:07,739 INFO  [org.hibernate.annotations.common.Version] (ServerService Thread Pool -- 65) HCANN000001: Hibernate Commons Annotations {5.0.5.Final}
+2021-09-27 12:01:07,934 INFO  [org.hibernate.dialect.Dialect] (ServerService Thread Pool -- 65) HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+2021-09-27 12:01:07,986 INFO  [org.hibernate.envers.boot.internal.EnversServiceImpl] (ServerService Thread Pool -- 65) Envers integration enabled? : true
+2021-09-27 12:01:08,508 INFO  [org.hibernate.orm.beans] (ServerService Thread Pool -- 65) HHH10005002: No explicit CDI BeanManager reference was passed to Hibernate, but CDI is available on the Hibernate ClassLoader.
+2021-09-27 12:01:08,569 INFO  [org.hibernate.validator.internal.util.Version] (ServerService Thread Pool -- 65) HV000001: Hibernate Validator 6.0.22.Final
+2021-09-27 12:01:09,593 INFO  [org.hibernate.hql.internal.QueryTranslatorFactoryInitiator] (ServerService Thread Pool -- 65) HHH000397: Using ASTQueryTranslatorFactory
+2021-09-27 12:01:10,310 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,312 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002200: Adding class resource org.keycloak.services.resources.ThemeResource from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,312 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002200: Adding class resource org.keycloak.services.resources.JsResource from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,313 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002205: Adding provider class org.keycloak.services.filters.KeycloakSecurityHeadersFilter from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,313 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002205: Adding provider class org.keycloak.services.error.KeycloakErrorHandler from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,313 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002220: Adding singleton resource org.keycloak.services.resources.RobotsResource from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,313 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002220: Adding singleton resource org.keycloak.services.resources.RealmsResource from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,313 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002210: Adding provider singleton org.keycloak.services.util.ObjectMapperResolver from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,314 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002220: Adding singleton resource org.keycloak.services.resources.admin.AdminRoot from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,314 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 65) RESTEASY002220: Adding singleton resource org.keycloak.services.resources.WelcomeResource from Application class org.keycloak.services.resources.KeycloakApplication
+2021-09-27 12:01:10,396 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 65) WFLYUT0021: Registered web context: '/auth' for server 'default-server'
+2021-09-27 12:01:10,468 INFO  [org.jboss.as.server] (ServerService Thread Pool -- 43) WFLYSRV0010: Deployed "keycloak-server.war" (runtime-name : "keycloak-server.war")
+2021-09-27 12:01:10,504 INFO  [org.jboss.as.server] (Controller Boot Thread) WFLYSRV0212: Resuming server
+2021-09-27 12:01:10,506 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: Keycloak 15.0.2 (WildFly Core 15.0.1.Final) started in 13207ms - Started 594 of 872 services (584 services are lazy, passive or on-demand)
+2021-09-27 12:01:10,509 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://127.0.0.1:9990/management
+2021-09-27 12:01:10,510 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://127.0.0.1:9990
+2021-09-27 13:51:50,328 WARN  [org.keycloak.events] (default task-7) type=REFRESH_TOKEN_ERROR, realmId=master, clientId=security-admin-console, userId=null, ipAddress=127.0.0.1, error=invalid_token, grant_type=refresh_token, client_auth_method=client-secret
+2021-09-27 13:54:14,515 WARN  [org.keycloak.services] (default task-12) KC-SERVICES0091: Request is missing scope 'openid' so it's not treated as OIDC, but just pure OAuth2 request.
+2021-09-27 13:54:21,395 WARN  [org.keycloak.events] (default task-12) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin5, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:54:24,183 WARN  [org.keycloak.events] (default task-12) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin5, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:54:30,704 WARN  [org.keycloak.events] (default task-12) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin5, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:54:38,472 WARN  [org.keycloak.events] (default task-12) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=TEST, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:55:06,324 WARN  [org.keycloak.events] (default task-13) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=d7246273-679a-420d-a82f-6e7246c56a14, ipAddress=127.0.0.1, error=invalid_user_credentials, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=uengine, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:55:10,228 WARN  [org.keycloak.events] (default task-13) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=d7246273-679a-420d-a82f-6e7246c56a14, ipAddress=127.0.0.1, error=invalid_user_credentials, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=uengine, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:55:16,580 WARN  [org.keycloak.events] (default task-13) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin5, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:55:19,040 WARN  [org.keycloak.events] (default task-13) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:56:00,069 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=d7246273-679a-420d-a82f-6e7246c56a14, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=9jKRGNgi-4I
+2021-09-27 13:56:53,798 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=TEST, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=yHbSgkXX8Lo
+2021-09-27 13:56:55,913 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=TEST, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=yHbSgkXX8Lo
+2021-09-27 13:57:46,033 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=admin5, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=yHbSgkXX8Lo
+2021-09-27 14:00:43,832 WARN  [org.keycloak.events] (default task-14) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=d7246273-679a-420d-a82f-6e7246c56a14, ipAddress=127.0.0.1, error=invalid_user_credentials, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=uengine, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=yHbSgkXX8Lo
+2021-09-27 14:00:45,935 WARN  [org.keycloak.events] (default task-14) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=d7246273-679a-420d-a82f-6e7246c56a14, ipAddress=127.0.0.1, error=invalid_user_credentials, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/login/oauth2/code/keycloak, code_id=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, username=uengine, authSessionParentId=d7f292db-2b5d-448b-bdbf-6a1e6f3f220f, authSessionTabId=yHbSgkXX8Lo
+2021-09-27 14:02:18,301 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_code
+2021-09-27 14:02:19,037 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_code
+2021-09-27 14:02:20,023 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_code
+2021-09-27 14:02:20,719 WARN  [org.keycloak.events] (default task-15) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_code
+2021-09-27 14:51:45,794 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:18,485 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:19,211 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:19,548 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:19,768 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:19,947 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:23,004 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:23,221 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:23,373 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:23,547 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak
+2021-09-27 14:53:39,116 WARN  [org.keycloak.events] (default task-33) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:53:50,614 WARN  [org.keycloak.events] (default task-29) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:54:27,346 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:54:46,303 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:54:49,447 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:41,856 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:42,437 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:42,656 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:42,822 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:42,990 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:51,542 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 14:59:53,842 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:04:30,274 WARN  [org.keycloak.events] (default task-36) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:11:13,745 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:11:14,384 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:11:14,592 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:11:14,769 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:11:14,935 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/login/oauth2/code/keycloak
+2021-09-27 15:12:43,552 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:15:26,636 WARN  [org.keycloak.events] (default task-39) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:43,741 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:43,939 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:44,621 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:44,815 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:45,672 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:45,889 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:46,099 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:46,706 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:16:51,582 WARN  [org.keycloak.events] (default task-46) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:02,827 WARN  [org.keycloak.events] (default task-45) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:03,593 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:03,797 WARN  [org.keycloak.events] (default task-42) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:04,106 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:08,784 WARN  [org.keycloak.events] (default task-43) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:12,384 WARN  [org.keycloak.events] (default task-42) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:19,343 WARN  [org.keycloak.events] (default task-42) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:20,876 WARN  [org.keycloak.events] (default task-42) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:30,374 WARN  [org.keycloak.events] (default task-42) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:32,486 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:44,632 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:17:44,927 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:19:19,595 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:19:20,337 WARN  [org.keycloak.events] (default task-44) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:19:20,600 WARN  [org.keycloak.events] (default task-47) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:19:52,195 WARN  [org.keycloak.events] (default task-48) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak, code_id=1ebf6b69-5dca-4ea2-bce2-d039aa5d7469, username=admin, authSessionParentId=1ebf6b69-5dca-4ea2-bce2-d039aa5d7469, authSessionTabId=xTwj0zDEY_A
+2021-09-27 15:19:59,557 WARN  [org.keycloak.events] (default task-48) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak, code_id=1ebf6b69-5dca-4ea2-bce2-d039aa5d7469, username=test, authSessionParentId=1ebf6b69-5dca-4ea2-bce2-d039aa5d7469, authSessionTabId=xTwj0zDEY_A
+2021-09-27 15:20:59,994 WARN  [org.keycloak.events] (default task-49) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:21:00,207 WARN  [org.keycloak.events] (default task-49) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:21:01,273 WARN  [org.keycloak.events] (default task-49) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 15:21:01,488 WARN  [org.keycloak.events] (default task-50) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:8080/auth/realms/Process
+2021-09-27 16:34:05,213 WARN  [org.keycloak.events] (default task-69) type=REFRESH_TOKEN_ERROR, realmId=master, clientId=security-admin-console, userId=null, ipAddress=127.0.0.1, error=invalid_token, grant_type=refresh_token, client_auth_method=client-secret
+2021-09-27 16:40:32,048 WARN  [org.keycloak.events] (default task-74) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak, code_id=9c070696-ae59-4a23-a515-d8e7f903822e, username=admin5, authSessionParentId=9c070696-ae59-4a23-a515-d8e7f903822e, authSessionTabId=-piwlpQYTpk
+2021-09-27 16:40:36,550 WARN  [org.keycloak.events] (default task-74) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak, code_id=9c070696-ae59-4a23-a515-d8e7f903822e, username=test, authSessionParentId=9c070696-ae59-4a23-a515-d8e7f903822e, authSessionTabId=-piwlpQYTpk
+2021-09-27 16:40:40,574 WARN  [org.keycloak.events] (default task-74) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:9090/login/oauth2/code/keycloak, code_id=9c070696-ae59-4a23-a515-d8e7f903822e, username=uenigne, authSessionParentId=9c070696-ae59-4a23-a515-d8e7f903822e, authSessionTabId=-piwlpQYTpk
+2021-09-27 17:13:32,216 WARN  [org.keycloak.events] (default task-82) type=USER_INFO_REQUEST_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_token, auth_method=validate_access_token
+2021-09-27 17:37:18,060 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:20,946 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:21,168 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:21,352 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:21,565 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:21,721 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=Process, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:37:27,223 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:19,941 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:20,596 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:20,811 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:21,006 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:21,188 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:38:21,364 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:39:44,994 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:39:45,255 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:39:45,464 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:40:22,434 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:40:22,641 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:41:20,610 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:41:21,137 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:41:21,296 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:41:21,464 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:41:24,360 WARN  [org.keycloak.events] (default task-82) type=REFRESH_TOKEN_ERROR, realmId=master, clientId=security-admin-console, userId=null, ipAddress=127.0.0.1, error=invalid_token, grant_type=refresh_token, client_auth_method=client-secret
+2021-09-27 17:42:05,608 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:42:06,324 WARN  [org.keycloak.events] (default task-82) type=LOGIN_ERROR, realmId=master, clientId=null, userId=null, ipAddress=127.0.0.1, error=invalid_request
+2021-09-27 17:53:07,109 WARN  [org.keycloak.events] (default task-90) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:9090/login/oauth2/code/keycloak
+2021-09-27 17:53:44,565 WARN  [org.keycloak.events] (default task-92) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:9090/login/oauth2/code/keycloak
+2021-09-27 17:59:00,998 WARN  [org.keycloak.events] (default task-99) type=LOGIN_ERROR, realmId=master, clientId=security-admin-console, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/auth/admin/master/console/, code_id=0d46cd4e-8d52-4c92-b6a7-069303c1db17, username=user01, authSessionParentId=0d46cd4e-8d52-4c92-b6a7-069303c1db17, authSessionTabId=j191iOEI7zk
+2021-09-27 17:59:07,124 WARN  [org.keycloak.events] (default task-99) type=LOGIN_ERROR, realmId=master, clientId=security-admin-console, userId=null, ipAddress=127.0.0.1, error=user_not_found, auth_method=openid-connect, auth_type=code, redirect_uri=http://bpm.uengine.io:8080/auth/admin/master/console/, code_id=0d46cd4e-8d52-4c92-b6a7-069303c1db17, username=user01, authSessionParentId=0d46cd4e-8d52-4c92-b6a7-069303c1db17, authSessionTabId=j191iOEI7zk
+2021-09-27 18:00:33,750 WARN  [org.keycloak.events] (default task-94) type=LOGIN_ERROR, realmId=Process, clientId=process-dev, userId=null, ipAddress=127.0.0.1, error=invalid_redirect_uri, redirect_uri=http://localhost:9090/login/oauth2/code/keycloak
