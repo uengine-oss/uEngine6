@@ -88,7 +88,8 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
      */
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
-        storage.setBasePath("/oce/repository");
+        String userName = System.getenv("USER");
+        storage.setBasePath("/Users/" + userName);
 
         return storage;
     }

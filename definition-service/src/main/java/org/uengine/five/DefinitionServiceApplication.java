@@ -58,7 +58,8 @@ public class DefinitionServiceApplication extends Metaworks4BaseApplication {
      */
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
-        storage.setBasePath("/oce/repository");
+        String userName = System.getenv("USER");
+        storage.setBasePath("/Users/" + userName);
 
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource(".")) + " ---> file system is mounted.");
