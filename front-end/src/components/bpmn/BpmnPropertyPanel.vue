@@ -18,6 +18,11 @@
             </md-table-row>
           </md-table-body>
         </md-table>
+
+      </md-tab>
+
+      <md-tab md-label="Actions" v-if="item._instanceInfo">
+        <md-button v-on:click="backToHere" class="md-primary">Back to here</md-button>
       </md-tab>
 
       <md-tab :id="'properties' + _uid" md-label="Properties">
@@ -262,6 +267,25 @@
       },
       toggleRightSidenav() {
         this.$refs.rightSidenav.toggle();
+      },
+      backToHere(){
+       // alert(this.item._instanceInfo.instanceId);
+
+         var serviceLocator = this.$root.$children[0].$refs["backend"]; //TODO hardcoded
+          var me = this;
+
+          serviceLocator.invoke({
+            path: 'instance/' + me.item._instanceInfo.instanceId + "/activity/" + me.item._instanceInfo.tracingTag + "/backToHere",
+            method: 'POST',
+            data: {
+            },
+            success: function (value) {
+              window.location.reload();
+            },
+            fail: function (value) {
+              me.$root.$children[0].error('Fail to rollback due to ' + value);
+            }
+          });
       },
       uuid: function () {
         function s4() {

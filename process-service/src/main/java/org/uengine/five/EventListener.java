@@ -10,12 +10,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
 import org.uengine.five.events.*;
 import org.uengine.five.framework.ProcessTransactional;
+import org.uengine.five.overriding.ActivityQueue;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.Activity;
+
 import org.uengine.kernel.UEngineException;
 
 import java.io.ByteArrayOutputStream;
@@ -30,6 +33,9 @@ public class EventListener {
 
     @Autowired
     Streams streams;
+
+    @Autowired
+    ActivityQueue activityQueue;
 
     @StreamListener(Streams.INPUT)
     public void handleDone(@Payload ActivityDone activityDone) {
@@ -96,6 +102,22 @@ public class EventListener {
                     .build());
 
 
+            //// retry
+            Activity activity = instance.getProcessDefinition().getActivity(activityFailed.getActivityInfo().getTracingTag());
+            if(activity.isQueuingEnabled()){
+
+                int retryDelay = activity.getRetryDelay()>0 ? activity.getRetryDelay():30;
+                int retryLimit = activity.getRetryLimit()>0 ? activity.getRetryLimit():5;
+
+                int currRetryCount = activity.getRetryCount(instance);
+                if(currRetryCount < retryLimit){
+                    Thread.sleep(retryDelay * 1000); /// fixme :  changed to use Timer that tries in different thread.
+
+                    activityQueue.queue(instance.getInstanceId(), activity.getTracingTag(), currRetryCount, null);
+                    activity.setRetryCount(instance, currRetryCount + 1);
+                }
+
+            }
         }
 
     }

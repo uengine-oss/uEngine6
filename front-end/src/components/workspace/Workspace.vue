@@ -18,13 +18,9 @@
             <span>Inbox
               <md-chip>{{items.length}}</md-chip>
             </span>
-            <md-list-expand>
+            <md-list-expand :expanded="true">
               <md-list>
                 <md-list-item v-for="(item, index) in items">
-                  <md-avatar>
-                    <img :src="'http://iam.pas-mini.io/rest/v1/avatar?userName=' + item.endpoint"
-                         alt="People">
-                  </md-avatar>
 
                   <div class="md-list-text-container cursor" v-on:click="selectWorkItem(item._links.self.href)">
                     <span>{{item.title}}</span>

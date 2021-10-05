@@ -10,8 +10,9 @@
     name: 'object-form-boolean',
 
     created(){
-      if(!this.value)
+      if(!this.value){
         this.value = false;
+      }
 
       this.$emit("input", this.value);
     },
@@ -23,7 +24,7 @@
 
     methods: {
 
-      onChange(value){
+      change(value){
 
         this.$emit("input", this.value);
 

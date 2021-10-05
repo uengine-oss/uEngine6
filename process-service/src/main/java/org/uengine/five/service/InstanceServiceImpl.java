@@ -180,9 +180,11 @@ public class InstanceServiceImpl implements InstanceService {
         List<Activity> list = new ArrayList<Activity>();
 
         Activity returningActivity = definition.getActivity(tracingTag);
+
+       // returningActivity.compensateToThis(instance);
         definition.gatherPropagatedActivitiesOf(instance, returningActivity, list);
         Activity proActiviy;
-        for(int i=0; i<list.size(); i++){
+        for(int i=list.size()-1; i>0; i--){
             proActiviy = list.get(i);
             //compensate
             proActiviy.compensate(instance);

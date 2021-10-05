@@ -2,8 +2,8 @@
   <div v-if="workItem != null">
     <md-avatar>
       <img
-        :src="iamHost + '/rest/v1/avatar?userName=' + workItem.worklist.endpoint"
-        alt="People">
+        src="https://cdn.pixabay.com/photo/2013/07/13/12/07/avatar-159236_1280.png"
+        alt="">
     </md-avatar>
   </div>
   <div v-else>
