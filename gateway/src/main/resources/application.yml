@@ -1,0 +1,129 @@
+server:
+  port: 9090
+  
+keycloak-client:
+  server-url: http://localhost:8080/auth
+  realm: uEngine5-bpm
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: definition-service
+          uri: http://bpm.uengine.io:9093
+          predicates:
+            - Path=/definition/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: create-app
+          uri: http://bpm.uengine.io:9093
+          predicates:
+            - Path=/create-app/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: version
+          uri: http://bpm.uengine.io:9093
+          predicates:
+            - Path=/version/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: instance
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/instance/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: instance-entity
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/instances/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: instance-service
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/services/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: instance-service-definitions
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/service-definitions/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: worklist-entity
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/worklist/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: instance-workitem
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/work-item/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: metadata
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/classdefinition/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: bpm
+          uri: http://bpm.uengine.io:9094
+          predicates:
+            - Path=/bpm/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: login-handler
+          uri: http://bpm.uengine.io:9091
+          predicates:
+            - Path=/api/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: front-end
+          uri: http://bpm.uengine.io:8082
+          predicates:
+            - Path=/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/auth/realms/uEngine5-bpm
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: uEngine5-bpm
+            client-secret: 848479eb-6a43-41e9-a149-41a89634e7bd
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+            authorization-grant-type: authorization_code
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs

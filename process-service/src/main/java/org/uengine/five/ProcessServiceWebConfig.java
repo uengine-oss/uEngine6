@@ -12,6 +12,7 @@ import org.metaworks.springboot.configuration.Metaworks4WebConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.repository.query.spi.EvaluationContextExtension;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -31,6 +32,7 @@ import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
 import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.webservices.worklist.WorkList;
+import org.uengine.five.spring.TenantSecurityEvaluationContextExtension;
 
 import javax.servlet.Filter;
 import java.util.HashMap;
@@ -88,8 +90,10 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
      */
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
-        String userName = System.getenv("USER");
-        storage.setBasePath("/Users/" + userName);
+//        storage.setBasePath("/oce/repository");
+        String UserName = System.getenv("USER");
+        storage.setBasePath("/Users/" + UserName);
+
 
         return storage;
     }
@@ -115,7 +119,7 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
     }
 
     @Bean
-    public ActivityFilter instanceDataAppendingFilter(){
+    public ActivityFilter instanceDataAppendingFilter() {
         return new InstanceDataAppendingActivityFilter();
     }
 
@@ -130,18 +134,24 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
     }
 
     @Bean
-    public ProcessDefinitionFactory processDefinitionFactory(){
+    public ProcessDefinitionFactory processDefinitionFactory() {
         return new ProcessDefinitionFactory();
     }
 
     @Bean
-    public ProcessManagerRemote processManagerRemote(){
+    public ProcessManagerRemote processManagerRemote() {
         return new ProcessManagerBean();
     }
 
     @Bean
-    public TimerEventJob timerEventJob(){
+    public TimerEventJob timerEventJob() {
         return new TimerEventJob();
+    }
+
+
+    @Bean
+    EvaluationContextExtension securityExtension() {
+        return new TenantSecurityEvaluationContextExtension();
     }
 }
 

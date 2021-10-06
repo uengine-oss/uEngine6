@@ -60,7 +60,7 @@ public class DefinitionServiceApplication extends Metaworks4BaseApplication {
         LocalFileStorage storage = new LocalFileStorage();
         String userName = System.getenv("USER");
         storage.setBasePath("/Users/" + userName);
-
+        // storage.setBasePath("./definition");
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource(".")) + " ---> file system is mounted.");
         } catch (Exception e) {

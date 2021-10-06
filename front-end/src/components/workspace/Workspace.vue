@@ -18,13 +18,9 @@
             <span>Inbox
               <md-chip>{{items.length}}</md-chip>
             </span>
-            <md-list-expand>
+            <md-list-expand :expanded="true">
               <md-list>
                 <md-list-item v-for="(item, index) in items">
-                  <md-avatar>
-                    <img :src="'http://iam.pas-mini.io/rest/v1/avatar?userName=' + item.endpoint"
-                         alt="People">
-                  </md-avatar>
 
                   <div class="md-list-text-container cursor" v-on:click="selectWorkItem(item._links.self.href)">
                     <span>{{item.title}}</span>
@@ -80,89 +76,93 @@
   </md-layout>
 </template>
 <script>
-  export default {
-    props: {
-      id: String,
-      submenu: String
-    },
-    data() {
-      return {
-        location: window.location,
-        items: [],
-        participating: []
-      }
-    },
-    mounted() {
-      this.load();
-    },
-    computed: {},
-    methods: {
-      getTimeText: function (value, diffType) {
-        var timeText = '';
-        var diffTime;
-        if (diffType == 'start') {
-          diffTime = (new Date().getTime() - new Date(value)) / 1000;
-        } else {
-          diffTime = (new Date(value) - new Date().getTime()) / 1000;
-        }
-        if (diffTime < 60) {
-          timeText = "방금";
-        } else if ((diffTime /= 60) < 60) {
-          timeText = Math.floor(diffTime) + "분";
-        } else if ((diffTime /= 60) < 24) {
-          timeText = Math.floor(diffTime) + "시간";
-        } else if ((diffTime /= 24) < 30) {
-          timeText = Math.floor(diffTime) + "일";
-        } else if ((diffTime /= 30) < 12) {
-          timeText = Math.floor(diffTime) + "달";
-        } else {
-          timeText = Math.floor(diffTime) + "년";
-        }
-        if (diffType == 'start') {
-          timeText = timeText + ' 전';
-        } else {
-          timeText = timeText + ' 남음';
-        }
-        return timeText;
-      },
-      getIdFromUri: function (uri) {
-        var split = uri.split('/');
-        return split[split.length - 1];
-      },
-      selectWorkItem: function (uri) {
-        this.$router.push({
-          path: '/workspace/worklist/' + this.getIdFromUri(uri)
-        })
-      },
-      selectInstance: function (uri) {
-        this.$router.push({
-          path: '/workspace/instance/' + this.getIdFromUri(uri)
-        })
-      },
-      load: function () {
-        var serviceLocator = this.$root.$children[0].$refs['backend'];
-        var me = this;
-        serviceLocator.invoke({
-          path: 'worklist/search/findToDo',
-          success: function (data) {
-            me.items = data._embedded.worklist;
-            console.log(me.items);
-          }
-        });
+    export default {
+        props: {
+            id: String,
+            submenu: String
+        },
+        data() {
+            return {
+                location: window.location,
+                items: [],
+                participating: []
+            }
+        },
+        mounted() {
+            this.load();
+        },
+        computed: {},
+        methods: {
+            getTimeText: function (value, diffType) {
+                var timeText = '';
+                var diffTime;
+                if (diffType == 'start') {
+                    diffTime = (new Date().getTime() - new Date(value)) / 1000;
+                } else {
+                    diffTime = (new Date(value) - new Date().getTime()) / 1000;
+                }
+                if (diffTime < 60) {
+                    timeText = "방금";
+                } else if ((diffTime /= 60) < 60) {
+                    timeText = Math.floor(diffTime) + "분";
+                } else if ((diffTime /= 60) < 24) {
+                    timeText = Math.floor(diffTime) + "시간";
+                } else if ((diffTime /= 24) < 30) {
+                    timeText = Math.floor(diffTime) + "일";
+                } else if ((diffTime /= 30) < 12) {
+                    timeText = Math.floor(diffTime) + "달";
+                } else {
+                    timeText = Math.floor(diffTime) + "년";
+                }
+                if (diffType == 'start') {
+                    timeText = timeText + ' 전';
+                } else {
+                    timeText = timeText + ' 남음';
+                }
+                return timeText;
+            },
+            getIdFromUri: function (uri) {
+                var split = uri.split('/');
+                return split[split.length - 1];
+            },
+            selectWorkItem: function (uri) {
+                this.$router.push({
+                    path: '/workspace/worklist/' + this.getIdFromUri(uri)
+                })
+            },
+            selectInstance: function (uri) {
+                this.$router.push({
+                    path: '/workspace/instance/' + this.getIdFromUri(uri)
+                })
+            },
+            load: function () {
+                var serviceLocator = this.$root.$children[0].$refs['backend'];
+                var me = this;
+                serviceLocator.invoke({
+                    path: 'worklist/search/findToDo',
+                    success: function (data) {
+                        if (data) {
+                            me.items = data._embedded.worklist;
+                            console.log(me.items);
+                        } else {
+                            me.items = []
+                        }
+                    }
+                });
 
-        serviceLocator.invoke({
-          path: 'instances/search/findFilterICanSee',
-          success: function (data) {
-            me.participating = data._embedded.instances;
-          }
-        });
+                serviceLocator.invoke({
+                    path: 'instances/search/findFilterICanSee',
+                    success: function (data) {
+                        me.participating = data._embedded.instances;
+                    }
+                });
 
-      },
+            },
 
 
-    },
-    watch: {}
-  }
+        },
+        watch: {}
+    }
 </script>
 
 <style lang="scss" rel="stylesheet/scss">

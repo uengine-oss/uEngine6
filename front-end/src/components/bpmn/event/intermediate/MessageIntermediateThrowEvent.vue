@@ -157,11 +157,17 @@
                v-model.number="activity.queuingEnabled">Queuing Enabled</md-checkbox>
 
         <md-input-container>
-          <label>retryDelay</label>
+          <label>Retry Delay</label>
           <md-input type="number"
                     v-model.number="activity.retryDelay"></md-input>
         </md-input-container>
+        <md-input-container>
+          <label>Retry Limit</label>
+          <md-input type="number"
+                    v-model.number="activity.retryLimit"></md-input>
+        </md-input-container>
 
+        <br></br>
       </template>
       <template slot="additional-tabs">
 

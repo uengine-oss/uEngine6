@@ -639,7 +639,7 @@
 
                 if (activity) {
                   if (!activity._instanceInfo)
-                    activity._instanceInfo = {};
+                    activity._instanceInfo = {instanceId: me.instanceId, tracingTag: tracingTag};
 
                   activity._instanceInfo[propName] = response.data[key];
 

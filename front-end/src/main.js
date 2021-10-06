@@ -10,6 +10,7 @@ import VueI18n from '../node_modules/vue-i18n'
 import ClassModeling from './components/designer/class-modeling'
 import Essence from './components/designer/essence'
 import Modeling from './components/designer/modeling'
+var jose = require('jsrsasign')
 
 Vue.use(VueMaterial);
 Vue.use(BpmnVue);
@@ -17,6 +18,7 @@ Vue.use(Opengraph);
 Vue.use(ClassModeling);
 Vue.use(Essence);
 Vue.use(Modeling);
+Vue.use(jose);
 
 
 
@@ -51,6 +53,7 @@ router.beforeEach((to, from, next) => {
 Vue.config.productionTip = false
 
 window.Vue = Vue;
+window.Jwt = jose;
 
 import VueBreadcrumbs from 'vue-breadcrumbs'
 Vue.use(VueBreadcrumbs, {

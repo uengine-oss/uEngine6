@@ -5,7 +5,8 @@
         <md-layout md-flex="40">
           <div>
             <md-layout>
-              <iam-avatar :workItem="workItem"></iam-avatar>
+<!--              <iam-avatar :workItem="workItem"></iam-avatar>-->
+              <keycloak-avatar :workItem="workItem"></keycloak-avatar>
               <div style="margin-left: 16px">
                 <span class="md-title">{{workItem.activity.name}}</span><br>
                 <span class="md-caption">{{workItem.activity.description || 'No description for this activity.'}}</span>
@@ -19,11 +20,14 @@
         </md-layout>
         <md-layout md-flex="60" md-align="end">
           <div>
-            <md-layout class="bar-wrapper">
+            <md-layout v-if="workItem.worklist.status != 'COMPLETED'" class="bar-wrapper">
+
               <md-button class="md-raised" v-on:click="complete('COMPLETED')">완료</md-button>
+
               <md-button class="md-raised" v-on:click="complete('SAVED')">저장</md-button>
               <md-button class="md-raised">건너뛰기</md-button>
             </md-layout>
+
           </div>
           <div style="margin-left: 16px;">
             <md-layout class="bar-wrapper">
@@ -52,7 +56,7 @@
         <div class="header-top-line"></div>
         <md-card style="width: 100%;">
           <md-card-area>
-            <md-card-content>
+            <md-card-content v-if="workItem.worklist.status != 'COMPLETED'" >
               {{workItem.activity.description ? workItem.activity.description.text : ""}}
               <div v-if="parameterValueDefinition" style="width: 100%">
                 <object-form
@@ -62,8 +66,12 @@
                 ></object-form>
               </div>
             </md-card-content>
+            <md-card-content v-else>
+             Work-item has been processed.
+            </md-card-content>
           </md-card-area>
         </md-card>
+
       </md-layout>
 
       <md-layout v-if="menu == 'info'" class="bg-white">
@@ -237,6 +245,8 @@
             me.load();
             me.$root.$children[0].success('작업을 완료했습니다.');
             me.$emit('update:reload', true);
+
+            window.location.reload();
           },
           fail: function (value) {
             me.$root.$children[0].error('Fail to complete due to ' + value);
