@@ -97,6 +97,13 @@ To create a message in the above session, simply type the message and press "ent
 
 ## Local development environment
 
+Run KeyCloak for IAM Services:
+```
+cd keycloak<ver>
+./standalone.sh
+```
+
+
 Edit your hosts file to mimic the Kubernetes DNS service
 ```
 127.0.0.1       uengine-kafka
@@ -129,6 +136,13 @@ bin/kafka-server-start.sh config/server.properties
 
 
 Run each service with mvn:
+
+[Note] Before running the services, make sure that you use JDK1.8 rather than higher.
+```
+export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+java -version  # must tells us it is 1.8
+```
+
 ```
 
 (new shell)
