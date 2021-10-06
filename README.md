@@ -175,6 +175,14 @@ npm run dev
 
 ```
 
+Applying uEngine Core Libraries
+```
+git clone https://github.com/uengine-oss/uengine-bpm
+cd uengine-core
+mvn install -Dmaven.test.skip=true
+
+```
+
 
 
 # Deploy with Helm
