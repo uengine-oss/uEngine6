@@ -157,7 +157,7 @@ mvn spring-boot:run -Dserver.port=9094
 
 (new shell)
 
-cd proxy
+cd gateway
 mvn spring-boot:run 
 
 (new shell)
