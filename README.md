@@ -157,6 +157,11 @@ mvn spring-boot:run -Dserver.port=9094
 
 (new shell)
 
+cd login-handler
+mvn spring-boot:run 
+
+(new shell)
+
 cd gateway
 mvn spring-boot:run 
 
@@ -165,6 +170,7 @@ mvn spring-boot:run
 cd front-end
 npm install
 npm run dev
+
 
 
 ```
