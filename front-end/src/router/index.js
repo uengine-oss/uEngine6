@@ -196,8 +196,8 @@ import ClassDiagram from '../components/example/ClassDiagram'
 
 //--------- customized components here -------
 export default new Router({
-//  mode: 'history',
-  base: '/',
+ // mode: 'history',
+  base: '/admin/',
   routes: [
     {
       path: '/',
@@ -244,11 +244,11 @@ export default new Router({
           },
         },
         {
-          path: 'workspace',
+          path: '/workspace',
           redirect: '/workspace/worklist',
         },
         {
-          path: 'workspace/:submenu/:id*',
+          path: '/workspace/:submenu/:id*',
           name: 'Workspace',
           component: Workspace,
           beforeEnter: RouterGuard.requireUser,

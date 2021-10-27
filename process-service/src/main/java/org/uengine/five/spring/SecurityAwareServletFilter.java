@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -32,11 +33,18 @@ public class SecurityAwareServletFilter implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletResponse res = (HttpServletResponse) response;
         String accessToken = req.getHeader("authorization");
 
         if (accessToken != null) {
 
             try {
+
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.setHeader("Access-Control-Allow-Credentials", "true");
+                res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
+                res.setHeader("Access-Control-Max-Age", "3600");
+                res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, remember-me");
 
                 accessToken = accessToken.split("Bearer ")[1];
                 DecodedJWT decodedJWT = JWT.decode(accessToken);
@@ -51,7 +59,7 @@ public class SecurityAwareServletFilter implements Filter {
             }
         }
 
-        chain.doFilter(request, response);
+        chain.doFilter(req, res);
 
     }
 

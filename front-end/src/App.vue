@@ -43,9 +43,9 @@
             }
         },
         created() {
-            if(!localStorage.getItem('accessToken')){
-                window.location = '/api/accessToken/'  //check valid accessToken
-            }
+            // if(!localStorage.getItem('accessToken')){
+            //     window.location = '/api/accessToken/'  //check valid accessToken
+            // }
         },
         mounted() {
 
@@ -77,5 +77,5 @@
 </script>
 
 <style lang="scss" rel="stylesheet/scss">
-  @import '/static/bpmn/css/custom.css';
+  @import '/admin/static/bpmn/css/custom.css';
 </style>

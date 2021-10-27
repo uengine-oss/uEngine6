@@ -93,8 +93,16 @@ spring:
           filters:
             - TokenRelay=
             - RemoveRequestHeader=Cookie
-        - id: front-end
+        - id: backoffice-frontend
           uri: http://bpm.uengine.io:8082
+          predicates:
+            - Path=/admin/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/admin/(?<path>.*),/$\{path}
+        - id: workspace-frontend
+          uri: http://bpm.uengine.io:8083
           predicates:
             - Path=/**
           filters:

@@ -4,38 +4,39 @@
   <meta charset="utf-8">
   <title>uEngine5</title>
 
-  <link href='/static/bpmn/css/bpmn.css' rel="stylesheet" type="text/css">
+<!--  <base href="http://bpm.uengine.io:9090/admin" >-->
+  <link href='/admin/static/bpmn/css/bpmn.css' rel="stylesheet" type="text/css">
 
 <!--  <script type="text/javascript" src="/static/iam-client/jquery.js"></script>-->
 <!--  <script type="text/javascript" src="/static/iam-client/iam-api-2.0.1.js"></script>-->
   <!-- add  jwt -->
 
   <!-- add keycloak js  -->
-  <script type="text/javascript" src="/static/keycloak-client/jquery.js"></script>
-  <script type="text/javascript" src="/static/keycloak-client/keycloak-api-dev.js"></script>
+  <script type="text/javascript" src="/admin/static/keycloak-client/jquery.js"></script>
+  <script type="text/javascript" src="/admin/static/keycloak-client/keycloak-api-dev.js"></script>
 
-  <script type="text/javascript" src="/static/slimscroll/jquery.slimscroll.min.js"></script>
+  <script type="text/javascript" src="/admin/static/slimscroll/jquery.slimscroll.min.js"></script>
   <!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
   <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="//unpkg.com/vue-material@0.7.4/dist/vue-material.css"> -->
-  <link rel="stylesheet" href="/static/external/font-awesome.min.css">
-  <link rel="stylesheet" href="/static/external/fonts.css">
-  <link rel="stylesheet" href="/static/external/vue-material.css">
+  <link rel="stylesheet" href="/admin/static/external/font-awesome.min.css">
+  <link rel="stylesheet" href="/admin/static/external/fonts.css">
+  <link rel="stylesheet" href="/admin/static/external/vue-material.css">
 
   <!-- jquery-ui, jquery.contextmenu -->
-  <link rel="stylesheet" type="text/css" href="/static/lib/jquery-ui-1.11.4.custom/jquery-ui.css"/>
-  <script type="text/javascript" src="/static/lib/jquery-ui-1.11.4.custom/jquery-ui.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="/admin/static/lib/jquery-ui-1.11.4.custom/jquery-ui.css"/>
+  <script type="text/javascript" src="/admin/static/lib/jquery-ui-1.11.4.custom/jquery-ui.min.js"></script>
 
-  <script type="text/javascript" src="/static/lib/jquery-contextMenu/jquery.contextMenu.js"></script>
-  <link rel="stylesheet" type="text/css" href="/static/lib/jquery-contextMenu/jquery.contextMenu.css"/>
+  <script type="text/javascript" src="/admin/static/lib/jquery-contextMenu/jquery.contextMenu.js"></script>
+  <link rel="stylesheet" type="text/css" href="/admin/static/lib/jquery-contextMenu/jquery.contextMenu.css"/>
 
   <!-- libs -->
   <!-- TODO: please change local version -->
   <!-- <script src="https://unpkg.com/hybind@latest/index.js"></script> -->
-  <script src="/static/external/hybind_latest.js"></script>
+  <script src="/admin/static/external/hybind_latest.js"></script>
 
-  <script type="text/javascript" src="/static/lib/jqueryXML2JSON/jquery.xml2json.js"></script>
-  <script type="text/javascript" src="/static/lib/opengraph/OpenGraph-0.1.3-SNAPSHOT.js"></script>
+  <script type="text/javascript" src="/admin/static/lib/jqueryXML2JSON/jquery.xml2json.js"></script>
+  <script type="text/javascript" src="/admin/static/lib/opengraph/OpenGraph-0.1.3-SNAPSHOT.js"></script>
 
   <script>
 
@@ -46,7 +47,7 @@
      * Get profile from system env given by dcos
      */
     $.ajax({
-      url: "/static/env.txt",
+      url: "/admin/static/env.txt",
       type: "get",
       async: false,
       success: function (data) {
@@ -81,8 +82,9 @@
 </head>
 <body>
 <div id="app"></div>
+<script type="text/javascript" src="/admin/app.js"></script></body>
 <!-- built files will be auto injected -->
 </body>
 
-<link rel="stylesheet" href="/static/bpmn/css/custom.css">
+<link rel="stylesheet" href="/admin/static/bpmn/css/custom.css">
 </html>
