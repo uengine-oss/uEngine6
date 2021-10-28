@@ -193,7 +193,6 @@ Vue.component('chart-example', ChartExample);
 
 import ClassDiagram from '../components/example/ClassDiagram'
 
-
 //--------- customized components here -------
 export default new Router({
  // mode: 'history',
