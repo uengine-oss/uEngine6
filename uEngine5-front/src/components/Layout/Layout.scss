@@ -1,0 +1,16 @@
+@import '../../styles/app.scss';
+
+body {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--v-greyTint-base);
+    border-radius: 36px;
+    border: none;
+  }
+}
+
