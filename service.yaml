@@ -1,0 +1,112 @@
+--- 
+apiVersion: "v1"
+kind: "Service"
+metadata: 
+  name: "definition-service"
+  labels: 
+    app: "definition-service"
+  namespace: "uengine5"
+spec: 
+  ports: 
+    - 
+      port: 9093
+      targetPort: 9093
+  selector: 
+    app: "definition-service"
+  type: "ClusterIP"
+--- 
+apiVersion: "v1"
+kind: "Service"
+metadata: 
+  name: "process-service"
+  labels: 
+    app: "process-service"
+  namespace: "uengine5"
+spec: 
+  ports: 
+    - 
+      port: 9094
+      targetPort: 9094
+  selector: 
+    app: "process-service"
+  type: "ClusterIP"
+--- 
+apiVersion: "v1"
+kind: "Service"
+metadata: 
+  name: "workspace"
+  labels: 
+    app: "workspace"
+  namespace: "uengine5"
+spec: 
+  ports: 
+    - 
+      port: 8083
+      targetPort: 8083
+  selector: 
+    app: "workspace"
+  type: "ClusterIP"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "login-handler"
+  labels:
+    app: "login-handler"
+  namespace: "uengine5"
+spec:
+  ports:
+    -
+      port: 9091
+      targetPort: 9091
+  selector:
+    app: "login-handler"
+  type: "ClusterIP"
+--- 
+apiVersion: "v1"
+kind: "Service"
+metadata: 
+  name: "back-office"
+  labels: 
+    app: "back-office"
+  namespace: "uengine5"
+spec: 
+  ports: 
+    - 
+      port: 8082
+      targetPort: 8082
+  selector: 
+    app: "back-office"
+  type: "ClusterIP"
+--- 
+apiVersion: "v1"
+kind: "Service"
+metadata: 
+  name: "gateway"
+  labels: 
+    app: "gateway"
+  namespace: "uengine5"
+spec: 
+  ports: 
+    - 
+      port: 80
+      targetPort: 8088
+  selector: 
+    app: "gateway"
+  type: "LoadBalancer"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "keycloak"
+  labels:
+    app: "keycloak"
+  namespace: "uengine5"
+spec:
+  ports:
+    -
+      port: 80
+      targetPort: 8080
+  selector:
+    app: "keycloak"
+  type: "LoadBalancer"

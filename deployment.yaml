@@ -1,0 +1,198 @@
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "login-handler"
+  labels:
+    app: "login-handler"
+  namespace: "uengine5"
+spec:
+  selector:
+    matchLabels:
+      app: "login-handler"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "login-handler"
+    spec:
+      containers:
+        -
+          name: "login-handler"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-login-handler:v23"
+          ports:
+            -
+              containerPort: 9091
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "definition-service"
+  labels: 
+    app: "definition-service"
+  namespace: "uengine5"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "definition-service"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "definition-service"
+    spec: 
+      containers: 
+        - 
+          name: "definition-service"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-definition-service:v21"
+          ports: 
+            - 
+              containerPort: 9093
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "gateway"
+  labels: 
+    app: "gateway"
+  namespace: "uengine5"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "gateway"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "gateway"
+    spec: 
+      containers: 
+        - 
+          name: "gateway"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-gateway:v68"
+          ports: 
+            - 
+              containerPort: 8088
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "back-office"
+  labels: 
+    app: "back-office"
+  namespace: "uengine5"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "back-office"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "back-office"
+    spec: 
+      containers: 
+        - 
+          name: "back-office"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-back-office:v39"
+          env:
+            - name: PROFILE
+              value: prod
+            - name: CONFIG_JSON
+              value: '{"vcap": {"services": {"uengine5-router": {"prod": {"external": "bpm.uengine.io"}, "dev": {"external": "bpm.uengine.io:9090"}}}}}'
+          ports: 
+            - 
+              containerPort: 8082
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "process-service"
+  labels: 
+    app: "process-service"
+  namespace: "uengine5"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "process-service"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "process-service"
+    spec: 
+      containers: 
+        - 
+          name: "process-service"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-process-service:v17"
+          ports: 
+            - 
+              containerPort: 9094
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "workspace"
+  labels: 
+    app: "workspace"
+  namespace: "uengine5"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "workspace"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "workspace"
+    spec: 
+      containers: 
+        - 
+          name: "workspace"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-workspace:v18"
+          env:
+            - name: PROFILE
+              value: prod
+            - name: CONFIG_JSON
+              value: '{"vcap": {"services": {"uengine5-router": {"prod": {"external": "bpm.uengine.io"}, "dev": {"external": "bpm.uengine.io:9090"}}}}}'
+          ports: 
+            - 
+              containerPort: 8083
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "keycloak"
+  labels:
+    app: "keycloak"
+  namespace: "uengine5"
+spec:
+  selector:
+    matchLabels:
+      app: "keycloak"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "keycloak"
+    spec:
+      containers:
+        -
+          name: "keycloak"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-keycloak:v14"
+          env:
+          - name: KEYCLOAK_USER
+            value: "admin"
+          - name: KEYCLOAK_PASSWORD
+            value: "admin"
+          - name: PROXY_ADDRESS_FORWARDING
+            value: "true"
+          ports:
+          - name: http
+            containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /auth/realms/master
+              port: 8080
+
+
