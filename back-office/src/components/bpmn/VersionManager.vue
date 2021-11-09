@@ -70,7 +70,7 @@
     return {
       versions: null,
       selectedVersion: null,
-      iam: window.iam,
+      keycloak: window.keycloak,
       user: {
 
       },
@@ -84,10 +84,15 @@
     var me = this;
     me.loadVersions();
 
-    me.iam.getUser(localStorage['userName']).then(function(response){
-      me.user = response;
-      console.log(me.user);
-    })
+    // me.keycloak.getUser(localStorage['userName']).then(function(response){
+    //   me.user = response;
+    //   console.log(me.user);
+    // })
+    var getUserInfo = me.keycloak.getUserInfoByToken()
+      if (getUserInfo) {
+          me.user.metaData.name = getUserInfo.preferred_username
+          me.user.metaData.email = getUserInfo.email
+      }
 
   },
   methods: {

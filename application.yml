@@ -1,0 +1,14 @@
+
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: uengine-kafka
+    namespace: uengine5
+  spec:
+    containers:
+    - name: kafka
+      image: confluentinc/cp-zookeeper:6.1.0
+      command:
+        - sh
+        - -c
+        - "exec tail -f /dev/null"

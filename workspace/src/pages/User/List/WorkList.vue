@@ -184,7 +184,7 @@
   },
   mounted(){
     var me = this
-    this.$http.get("http://bpm.uengine.io:9090/worklist/search/findToDo").then((result)=>{
+    this.$http.get("http://bpm.uengine.io/worklist/search/findToDo").then((result)=>{
       me.worklist = result.data._embedded.worklist
     })
     me.$EventBus.$on("unselectWorkItem", function(data){

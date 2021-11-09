@@ -59,7 +59,7 @@
                 var me = this;
                 $.each(me.roles, function (index, arg) {
                     if (me.users[arg.name] != undefined) {
-                        me.$http.get(`http://bpm.uengine.io:9090/instance/${me.id}/role-mapping/${arg.name}`)
+                        me.$http.get(`http://bpm.uengine.io/instance/${me.id}/role-mapping/${arg.name}`)
                         // var data = {_type: "org.uengine.kernel.RoleMapping", endpoint: me.users[arg.name]};
                         .then(function (response) {
                             //me.users[arg.name] = response.data.endpoint;  ---- X
@@ -73,7 +73,7 @@
             loadUsers: function () {
                 var me = this;
                 $.each(me.roles, function (index, arg) {
-                    me.$http.get(`http://bpm.uengine.io:9090/instance/${me.id}/role-mapping/${arg.name}`)
+                    me.$http.get(`http://bpm.uengine.io/instance/${me.id}/role-mapping/${arg.name}`)
                     // me.$root.codi('instance{/id}/role-mapping{/roleName}').get({id: me.id, roleName: arg.name})
                         .then(function (response) {
                             //me.users[arg.name] = response.data.endpoint;  ---- X

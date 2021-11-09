@@ -2,13 +2,37 @@ server:
   port: 9093
 
 spring:
+  # profiles: default
   cloud:
     stream:
       kafka:
         binder:
-          brokers: uengine-kafka:9092
-          zkNodes: uengine-zookeeper:2181
+          brokers: my-kafka.kafka.svc.cluster.local:9092
+          zkNodes: my-kafka-zookeeper.kafka.svc.cluster.local:2181
       bindings:
         bpm-topic:
           destination: bpm.topic
           contentType: application/json
+# ---
+# spring:
+#   cloud:
+#     stream:
+#       kafka:
+#         binder:
+#           brokers: my-kafka.kafka.svc.cluster.local:9092
+#         streams:
+#           binder:
+#             configuration:
+#               default:
+#                 key:
+#                   serde: org.apache.kafka.common.serialization.Serdes.StringSerde
+#                 value:
+#                   serde: org.apache.kafka.common.serialization.Serdes.StringSerde
+#       bindings:
+#         event-in:
+#           group: definition
+#           destination: bpm.topic
+#           contentType: application/json
+#         event-out:
+#           destination: bpm.topic
+#           contentType: application/json

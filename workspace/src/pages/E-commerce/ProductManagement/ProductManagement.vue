@@ -233,7 +233,7 @@
             // this.getProductsRequest()
             var me = this
             try {
-                me.$http.get("http://bpm.uengine.io:9090/worklist/search/findToDo")
+                me.$http.get("http://bpm.uengine.io/worklist/search/findToDo")
                     .then((result) => {
                         me.workList = result.data._embedded.worklist
 

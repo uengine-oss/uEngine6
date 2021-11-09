@@ -101,17 +101,18 @@ export default {
   },
   mounted(){
     var me = this
-    this.$http.get("http://bpm.uengine.io:9090/definition").then((result)=>{
+    this.$http.get("http://bpm.uengine.io/definition").then((result)=>{
         me.DefinitionList = result.data._embedded.definitions
         console.log(me.DefinitionList)
     })
-    this.$http.get("http://bpm.uengine.io:9090/instances/search/findFilterICanSee").then((result2)=>{
+    this.$http.get("http://bpm.uengine.io/instances/search/findFilterICanSee").then((result2)=>{
         me.instanceId = result2.data._embedded.instances.length + 1
     })
   },
   methods: {
     initiateProcess: function (defi) {
       var me = this
+      console.log(defi)
       var axios = require("axios");
         axios.post(defi._links.instantiation.href, {"simulation": false})
           .then(

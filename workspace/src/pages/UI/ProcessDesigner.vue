@@ -832,10 +832,10 @@
             getInstance: function () {
                 var me = this;
                 var instance = {};
-                this.$http.get("http://bpm.uengine.io:9090/instances/" + me.instanceId).then((result2)=>{
+                this.$http.get("http://bpm.uengine.io/instances/" + me.instanceId).then((result2)=>{
                     var defId = result2.data.defId.replace('.xml','.json')
                     // console.log(me.defName)
-                  this.$http.get("http://bpm.uengine.io:9090/definition/raw/" + defId).then((result3)=>{
+                  this.$http.get("http://bpm.uengine.io/definition/raw/" + defId).then((result3)=>{
                     // var DefinitionList = result3.data._embedded.definitions
                       console.log(result3)
                       me.loadStatus(result3);
@@ -891,7 +891,7 @@
 
                 var tree = [];
                 // instance.$load().then(function (instances) {
-                  this.$http.get("http://bpm.uengine.io:9090/instances/search/findFilterICanSee").then((result2)=>{
+                  this.$http.get("http://bpm.uengine.io/instances/search/findFilterICanSee").then((result2)=>{
                     var instances = result2.data._embedded.instances
                     console.log(instances)
                     for (var i in instances) {
@@ -931,7 +931,7 @@
             loadStatus: function (definition) {
                 var me = this;
 
-                this.$http.get(`http://bpm.uengine.io:9090/instance/${me.instanceId}/variables`)
+                this.$http.get(`http://bpm.uengine.io/instance/${me.instanceId}/variables`)
                 // me.$root.codi('instance{/id}/variables').get({id: me.instanceId})
                     .then(function (response) {
                         for (var key in response.data) {

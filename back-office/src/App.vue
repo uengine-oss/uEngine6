@@ -43,9 +43,9 @@
             }
         },
         created() {
-            // if(!localStorage.getItem('accessToken')){
-            //     window.location = '/api/accessToken/'  //check valid accessToken
-            // }
+            if(!localStorage.getItem('accessToken')){
+                window.location = '/api/accessToken/'  //check valid accessToken
+            }
         },
         mounted() {
 

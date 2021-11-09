@@ -1,0 +1,26 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "definition-service"
+  labels: 
+    app: "definition-service"
+  annotations: 
+    msaez.io/x: "1011"
+    msaez.io/y: "138"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "definition-service"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "definition-service"
+    spec: 
+      containers: 
+        - 
+          name: "definition-service"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-definition-service:latest"
+          ports: 
+            - 
+              containerPort: 8080

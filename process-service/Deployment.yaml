@@ -4,14 +4,14 @@ metadata:
   annotations:
     deployment.kubernetes.io/revision: "1"
   labels:
-    run: uengine-process
-  name: uengine-process
+    run: process-service
+  name: process-service
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: uengine-process
+      run: process-service
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -21,12 +21,12 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        run: uengine-process
+        run: process-service
     spec:
       containers:
-      - image: gcr.io/my-project-1531888882785/uengine-process:v2
+      - image: gcr.io/eventstorming-tool/uengine5-bpm-process-service:latest
         imagePullPolicy: IfNotPresent
-        name: uengine-process
+        name: process-service
         resources: {}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File

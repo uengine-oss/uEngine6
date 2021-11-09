@@ -1,0 +1,26 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "process-service"
+  labels: 
+    app: "process-service"
+  annotations: 
+    msaez.io/x: "1010"
+    msaez.io/y: "257"
+spec: 
+  selector: 
+    matchLabels: 
+      app: "process-service"
+  replicas: 1
+  template: 
+    metadata: 
+      labels: 
+        app: "process-service"
+    spec: 
+      containers: 
+        - 
+          name: "process-service"
+          image: "gcr.io/eventstorming-tool/uengine5-bpm-process-service:latest"
+          ports: 
+            - 
+              containerPort: 8080

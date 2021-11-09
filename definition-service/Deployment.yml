@@ -5,14 +5,14 @@ metadata:
     deployment.kubernetes.io/revision: "1"
   generation: 1
   labels:
-    run: uengine-definition
-  name: uengine-definition
+    run: definition-service
+  name: definition-service
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: uengine-definition
+      run: definition-service
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,12 +22,12 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        run: uengine-definition
+        run: definition-service
     spec:
       containers:
-      - image: gcr.io/my-project-1531888882785/uengine-definition:v1
+      - image: gcr.io/eventstorming-tool/uengine5-bpm-definition-service:latest
         imagePullPolicy: IfNotPresent
-        name: uengine-definition
+        name: definition-service
         ports:
         - containerPort: 9093
           protocol: TCP

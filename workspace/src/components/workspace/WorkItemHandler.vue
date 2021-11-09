@@ -271,7 +271,7 @@
         }
         serviceLocator.invoke({
             //aaa
-          path: me.path.replace('http://bpm.uengine.io:9090/', ''),
+          path: me.path.replace('http://bpm.uengine.io:8088/', ''),
           method: 'POST',
           data: {
             worklist: {

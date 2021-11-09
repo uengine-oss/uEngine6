@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *  - ResourceManager and CachedResourceManager will be used for definition caching (Not to use the old DefinitionFactory)
  *  - json must be Typed JSON to enable object polymorphism - need to change the jackson engine. TODO: accept? typed json is sometimes hard to read
  */
-@FeignClient(name="definition", url="http://uengine-definition:9093")
+@FeignClient(name="definition", url="http://definition-service:9093")
 public interface DefinitionXMLService {
 
 

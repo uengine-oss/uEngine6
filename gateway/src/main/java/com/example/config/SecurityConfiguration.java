@@ -30,4 +30,11 @@ public class SecurityConfiguration {
         return http.build();
     }
 
+    // @Bean
+    // public SecurityWebFilterChain securitygWebFilterChain(ServerHttpSecurity http) {
+    //     return http.authorizeExchange().pathMatchers("/**").permitAll()
+    // .anyExchange().authenticated().and().oauth2Login().and().build();;
+    // }
+
+
 }

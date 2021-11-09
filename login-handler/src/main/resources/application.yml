@@ -1,9 +1,6 @@
 server:
   port: 9091
 
-keycloak-client:
-  server-url: http://bpm.uengine.io:8080/auth
-  realm: uEngine5-bpm
 spring:
   application:
     name: login-handler
@@ -30,3 +27,6 @@ spring:
         jwt:
           jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs
 
+keycloak-client:
+  server-url: http://iam.uengine.io/auth
+  realm: uEngine5-bpm

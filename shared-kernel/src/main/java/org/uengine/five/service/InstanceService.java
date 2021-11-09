@@ -17,7 +17,7 @@ import java.util.Map;
  *  - ResourceManager and CachedResourceManager will be used for definition caching (Not to use the old DefinitionFactory)
  *  - json must be Typed JSON to enable object polymorphism - need to change the jackson engine. TODO: accept? typed json is sometimes hard to read
  */
-@FeignClient(name = "bpm", url="http://uengine-process:9094")
+@FeignClient(name = "bpm", url="http://process-service:9094")
 public interface InstanceService {
 
     @RequestMapping(value = "/instance", method = {RequestMethod.POST})

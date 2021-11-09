@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>org.uengine</groupId>
-    <artifactId>uengine-process</artifactId>
+    <artifactId>process-service</artifactId>
     <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
     <name>uEngine5-process-service</name>

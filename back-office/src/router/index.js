@@ -87,11 +87,10 @@ var clientSecret = "848479eb-6a43-41e9-a149-41a89634e7bd";
 //window.profile will be autowired by uengine-cloud-server. It can be local,dev,stg,prod. default is 'local'.
 var profile = window.profile;
 
-
 //Change the url your IAM application's vcap service's profile url.
 //For example, 'http://' + config.vcap.services['your-iam-server'][profile].external;
 // var iamUrl = 'http://iam:8081';
-var keyCloackUrl = 'http://bpm.uengine.io:8080';
+var keyCloackUrl = 'http://iam.uengine.io';
 
 //Define iam client
 // var iam = new IAM(iamUrl);

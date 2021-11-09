@@ -1,2 +1,2 @@
-env > /opt/www/static/env.txt
-http-server /opt/www -p 8080
+env > /opt/www/admin/static/env.txt
+http-server /opt/www/admin -p 8082
