@@ -71,7 +71,6 @@
                 // backend: window.backend,
                 backend: null,
                 infoEnabled: false,
-
             };
         },
         created() {
@@ -85,11 +84,11 @@
             var profile = window.profile;
 
             var backend;
-            if (profile == 'local') {
+            if (profile == 'dev') {
                 backend = hybind("http://bpm.uengine.io:8088", {headers: {'access_token': access_token}});
             } else {
                 //  backend = hybind("http://" + config.vcap.services['uengine5-router'][profile].external, {headers: {'access_token': access_token}});
-                backend = hybind("http://bpm.uengine.io:8088", {headers: {'access_token': access_token}});
+                backend = hybind("http://bpm.uengine.io", {headers: {'access_token': access_token}});
             }
 
             me.backend = backend;
@@ -109,7 +108,7 @@
                 instance.$load().then(function (instance) {
                     me.instance = instance;
                     console.log(me.instance);
-                    me.$http.get(`http://bpm.uengine.io/instance/${me.id}/variables`)
+                    me.$http.get(`${window.origin}/instance/${me.id}/variables`)
                     // me.$root.codi('instance{/id}/variables').get({id: me.id})
                         .then(function (response) {
                             me.variables = response.data;

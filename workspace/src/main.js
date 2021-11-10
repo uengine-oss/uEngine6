@@ -47,13 +47,14 @@ Vue.use(VueGoogleMaps, {
   },
 });
 Vue.mixin(AuthMixin);
-var profile = window.profile
-var backend;
-if (profile == 'local') {
-  backend = "http://bpm.uengine.io:8080"
-} else {
-  backend = "http://bpm.uengine.io"
-}
+// var profile = window.profile
+// var backend;
+// console.log(profile)
+// if (profile == 'dev') {
+//   backend = "http://bpm.uengine.io:8088"
+// } else {
+//   backend = "http://bpm.uengine.io"
+// }
 
 Vue.config.productionTip = false;
 Vue.prototype.$EventBus = new Vue()

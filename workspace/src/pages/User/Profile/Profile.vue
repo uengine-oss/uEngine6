@@ -532,7 +532,7 @@ export default {
   },
   mounted() {
     var me = this
-    this.$http.get("http://bpm.uengine.io/worklist/search/findToDo").then((result)=>{
+    this.$http.get(window.origin + "/worklist/search/findToDo").then((result)=>{
       me.worklist = result.data._embedded.worklist
       console.log(me.worklist)
     })

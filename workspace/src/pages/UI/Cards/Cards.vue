@@ -101,11 +101,11 @@ export default {
   },
   mounted(){
     var me = this
-    this.$http.get("http://bpm.uengine.io/definition").then((result)=>{
+    this.$http.get(window.origin + "/definition").then((result)=>{
         me.DefinitionList = result.data._embedded.definitions
         console.log(me.DefinitionList)
     })
-    this.$http.get("http://bpm.uengine.io/instances/search/findFilterICanSee").then((result2)=>{
+    this.$http.get(window.origin + "/instances/search/findFilterICanSee").then((result2)=>{
         me.instanceId = result2.data._embedded.instances.length + 1
     })
   },
