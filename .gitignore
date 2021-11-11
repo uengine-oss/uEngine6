@@ -22,4 +22,4 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
-
+keycloak-15.0.2/standalone/data/*.db
