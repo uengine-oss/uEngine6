@@ -43,8 +43,6 @@ kubectl create -f Service.yaml
 (kubectl get svc -w)
 
 cd ..
-
-
 ```
 
 
@@ -90,30 +88,24 @@ To start an interactive message producer session:
   kubectl -n default exec -ti testclient -- /usr/bin/kafka-console-producer --broker-list my-kafka-headless:9092 --topic test1
 
 To create a message in the above session, simply type the message and press "enter"
-
 ```
 
 
 
 ## Local development environment
 
-Run KeyCloak for IAM Services:
-```
-cd keycloak<ver>
-./standalone.sh
-```
-
-
 Edit your hosts file to mimic the Kubernetes DNS service
 ```
-127.0.0.1       uengine-kafka
-127.0.0.1       uengine-zookeeper
-127.0.0.1       uengine-definition
-127.0.0.1       uengine-process
-127.0.0.1       bpm.uengine.io
+127.0.0.1 bpm.uengine.io
+127.0.0.1 iam.uengine.io
+127.0.0.1 definition-service
+127.0.0.1 process-service
+127.0.0.1 back-office
+127.0.0.1 workspace
+127.0.0.1 login-handler
+127.0.0.1 my-kafka.kafka.svc.cluster.local
+127.0.0.1 my-kafka-zookeeper.kafka.svc.cluster.local
 ```
-
-
 
 Download and Run kafka firstly:
 
@@ -123,17 +115,19 @@ Download and Run kafka firstly:
 
 ```
 (new shell)
-
 cd ~/Downloads/kafka_2.12-2.1.0
 bin/zookeeper-server-start.sh config/zookeeper.properties
 
 (new shell)
-
 cd ~/Downloads/kafka_2.12-2.1.0
 bin/kafka-server-start.sh config/server.properties
-
 ```
 
+Run KeyCloak for IAM Services:
+```
+cd keycloak-15.0.2/bin
+./standalone.sh
+```
 
 Run each service with mvn:
 
@@ -142,37 +136,40 @@ Run each service with mvn:
 export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 java -version  # must tells us it is 1.8
 ```
-
+```
+java -version
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+sudo update-java-alternatives --jre-headless --jre --set java-1.8.0-openjdk-amd64
 ```
 
-(new shell)
 
+```
+(new shell)
 cd definition-service
 mvn spring-boot:run -Dserver.port=9093
 
 (new shell)
-
 cd process-service
 mvn spring-boot:run -Dserver.port=9094
 
 (new shell)
-
-cd login-handler
-mvn spring-boot:run 
-
-(new shell)
-
 cd gateway
-mvn spring-boot:run 
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 (new shell)
+cd login-handler
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
-cd front-end
+(new shell)
+cd back-office
 npm install
 npm run dev
 
-
-
+(new shell)
+cd workspace
+npm install
+npm run serve
 ```
 
 Applying uEngine Core Libraries
@@ -180,7 +177,6 @@ Applying uEngine Core Libraries
 git clone https://github.com/uengine-oss/uengine-bpm
 cd uengine-core
 mvn install -Dmaven.test.skip=true
-
 ```
 
 
@@ -192,7 +188,6 @@ Test the helm chart:
 ```
 cd helm-chart/prod
 helm install --dry-run --debug uengine --namespace uengine .
-
 ```
 
 Real deploy:
