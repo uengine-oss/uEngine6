@@ -135,12 +135,14 @@ Run each service with mvn:
 ```
 export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 java -version  # must tells us it is 1.8
-```
-```
-java -version
+
+or
+
 sudo apt-get update
 sudo apt-get install openjdk-8-jdk
 sudo update-java-alternatives --jre-headless --jre --set java-1.8.0-openjdk-amd64
+
+java -version  # must tells us it is 1.8
 ```
 
 
