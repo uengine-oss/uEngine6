@@ -194,7 +194,9 @@ public class GlobalContext{
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+
+				new RuntimeException("No uengine.properties: ", e).printStackTrace();
+				properties = new Properties();
 			}
 		}
 
@@ -449,13 +451,13 @@ System.out.println("compilation done");
 	
 	static final Serializer beanSerializerInstance = new org.uengine.components.serializers.BeanSerializer();
 	static Serializer xpdSerializerInstance;
-	static{
-		try {
-			xpdSerializerInstance = (Serializer) Class.forName(getPropertyString("default.serializer.class", "org.uengine.components.serializers.XPDSerializer")).newInstance();
-		} catch (Exception e) {
-			xpdSerializerInstance = new org.uengine.components.serializers.XPDSerializer();
-		}
-	}
+	// static{
+	// 	try {
+	// 		xpdSerializerInstance = (Serializer) Class.forName(getPropertyString("default.serializer.class", "org.uengine.components.serializers.XPDSerializer")).newInstance();
+	// 	} catch (Exception e) {
+	// 		xpdSerializerInstance = new org.uengine.components.serializers.XPDSerializer();
+	// 	}
+	// }
 	static final Serializer roleMappingSerializerInstance = new org.uengine.components.serializers.org_uengine_kernel_RoleMappingSerializer();
 //	static final Serializer axisBeanSerializerInstance = new org.uengine.components.serializers.AxisBeanSerializer();
 	public static Serializer getSerializer(Class cls){
