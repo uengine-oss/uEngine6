@@ -1,11 +1,11 @@
 package org.uengine.five;
 
-import org.metaworks.springboot.configuration.Metaworks4BaseApplication;
+//import org.metaworks.springboot.configuration.Metaworks4BaseApplication;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
-import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
+//import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
+//import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
 import org.springframework.context.annotation.*;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -13,29 +13,23 @@ import org.uengine.five.overriding.EventSendingDeployFilter;
 import org.uengine.five.service.*;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.modeling.resource.*;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.ApplicationContext;
 
 import javax.sql.DataSource;
 
 @SpringBootApplication
-@EnableWebMvc
-@Configuration
-@ComponentScan(basePackageClasses = {DefinitionServiceApplication.class, DefinitionServiceImpl.class})
-public class DefinitionServiceApplication extends Metaworks4BaseApplication {
+//@EnableBinding(KafkaProcessor.class)
+//@EnableFeignClients
+public class DefinitionServiceApplication {
 
-    /**
-     * @param dataSource
-     * @param properties
-     * @param jtaTransactionManagerProvider
-     * @param transactionManagerCustomizers
-     */
-    protected DefinitionServiceApplication(DataSource dataSource, JpaProperties properties,
-                                           ObjectProvider<JtaTransactionManager> jtaTransactionManagerProvider,
-                                           ObjectProvider<TransactionManagerCustomizers> transactionManagerCustomizers) {
-        super(dataSource, properties, jtaTransactionManagerProvider, transactionManagerCustomizers);
+    public static ApplicationContext applicationContext;
+    public static ApplicationContext getApplicationContext(){
+        return applicationContext;
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(DefinitionServiceApplication.class, args);
+        applicationContext = SpringApplication.run(DefinitionServiceApplication.class, args);
     }
 
 
@@ -58,9 +52,9 @@ public class DefinitionServiceApplication extends Metaworks4BaseApplication {
      */
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
-        String userName = System.getenv("USER");
-        storage.setBasePath("/Users/" + userName);
-        // storage.setBasePath("./definition");
+        // String userName = System.getenv("USER");
+        // storage.setBasePath("/Users/" + userName);
+        storage.setBasePath("./definition");
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource(".")) + " ---> file system is mounted.");
         } catch (Exception e) {

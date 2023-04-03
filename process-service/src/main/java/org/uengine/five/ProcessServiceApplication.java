@@ -5,47 +5,33 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.metaworks.springboot.configuration.Metaworks4BaseApplication;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
 import org.springframework.cloud.client.SpringCloudApplication;
-import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.web.bind.annotation.RestController;
 import org.uengine.five.overriding.ActivityQueue;
 import org.uengine.five.overriding.InstanceNameFilter;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
-import org.uengine.five.service.DefinitionService;
-import org.uengine.five.service.SemanticEntityService;
 
-import javax.sql.DataSource;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.context.ApplicationContext;
 
-@SpringCloudApplication
-@EnableFeignClients(basePackageClasses = {DefinitionService.class, SemanticEntityService.class})
-@RestController
-public class ProcessServiceApplication extends Metaworks4BaseApplication {
+@SpringBootApplication
+//@EnableBinding(KafkaProcessor.class)
+@EnableFeignClients
+public class ProcessServiceApplication {
 
-    static public ObjectMapper objectMapper = createTypedJsonObjectMapper();
-
-    /**
-     * @param dataSource
-     * @param properties
-     * @param jtaTransactionManagerProvider
-     * @param transactionManagerCustomizers
-     */
-    protected ProcessServiceApplication(DataSource dataSource, JpaProperties properties,
-                                        ObjectProvider<JtaTransactionManager> jtaTransactionManagerProvider,
-                                        ObjectProvider<TransactionManagerCustomizers> transactionManagerCustomizers) {
-        super(dataSource, properties, jtaTransactionManagerProvider, transactionManagerCustomizers);
-    }
+    public static ApplicationContext applicationContext;
 
     public static void main(String[] args) {
-        SpringApplication.run(ProcessServiceApplication.class, args);
+        applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
     }
-
 
 
     @Bean

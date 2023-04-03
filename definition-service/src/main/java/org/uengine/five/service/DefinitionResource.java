@@ -1,22 +1,21 @@
 package org.uengine.five.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.springframework.hateoas.ResourceSupport;
-import org.springframework.hateoas.core.Relation;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
+import org.springframework.hateoas.RepresentationModel;
 import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.util.UEngineUtil;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import org.springframework.hateoas.server.core.Relation;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.*;
+import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
 
 /**
  * Created by uengine on 2017. 11. 11..
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Relation(value = "definition", collectionRelation = "definitions")
-public class DefinitionResource extends ResourceSupport {
+public class DefinitionResource extends RepresentationModel {
 
     String name;
 

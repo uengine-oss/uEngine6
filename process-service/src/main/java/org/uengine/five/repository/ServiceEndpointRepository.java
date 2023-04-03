@@ -1,6 +1,7 @@
 package org.uengine.five.repository;
 
-import org.metaworks.multitenancy.persistence.MultitenantRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+//import org.metaworks.multitenancy.persistence.MultitenantRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.uengine.five.entity.ServiceEndpointEntity;
 
@@ -9,5 +10,5 @@ import org.uengine.five.entity.ServiceEndpointEntity;
  */
 
 @RepositoryRestResource(collectionResourceRel = "service-definitions", path = "service-definitions")
-public interface ServiceEndpointRepository extends MultitenantRepository<ServiceEndpointEntity, String> {
+public interface ServiceEndpointRepository extends JpaRepository<ServiceEndpointEntity, String> {
 }

@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
-import org.springframework.hateoas.ResourceSupport;
-import org.springframework.hateoas.Resources;
+// import org.springframework.hateoas.ResourceSupport;
+// import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.RepresentationModel;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.HandlerMapping;
@@ -19,7 +21,7 @@ import org.uengine.kernel.NeedArrangementToSerialize;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.UEngineException;
 import org.uengine.modeling.resource.*;
-import org.uengine.processpublisher.BPMNUtil;
+//import org.uengine.processpublisher.BPMNUtil;
 import org.uengine.uml.model.ClassDefinition;
 import org.uengine.util.UEngineUtil;
 
@@ -66,11 +68,11 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
     @Override
-    public Resources<DefinitionResource> listDefinition(String basePath) throws Exception {
+    public CollectionModel<DefinitionResource> listDefinition(String basePath) throws Exception {
         return _listDefinition(RESOURCE_ROOT, basePath);
     }
 
-    private Resources<DefinitionResource> _listDefinition(String resourceRoot, String basePath) throws Exception {
+    private CollectionModel<DefinitionResource> _listDefinition(String resourceRoot, String basePath) throws Exception {
 
         if (basePath == null) {
             basePath = "";
@@ -86,19 +88,19 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definitions.add(definition);
         }
 
-        Resources<DefinitionResource> halResources = new Resources<DefinitionResource>(definitions);
+        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
         return halResources;
     }
 
     @RequestMapping(value = "/version/{version}" + DEFINITION + "/", method = RequestMethod.GET)
-    public Resources<DefinitionResource> listVersionDefinitions(@PathVariable("version") String version, String basePath) throws Exception {
+    public CollectionModel<DefinitionResource> listVersionDefinitions(@PathVariable("version") String version, String basePath) throws Exception {
         VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
 
         return _listDefinition(versionManager.versionDirectoryOf(new Version(version)), basePath);
     }
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
-    public Resources<VersionResource> listVersions() throws Exception {
+    public CollectionModel<VersionResource> listVersions() throws Exception {
         VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
 
         List<VersionResource> versionResources = new ArrayList<VersionResource>();
@@ -107,13 +109,13 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             versionResources.add(versionResource);
         }
 
-        Resources<VersionResource> halResources = new Resources<VersionResource>(versionResources);
+        CollectionModel<VersionResource> halResources = new CollectionModel<VersionResource>(versionResources);
         return halResources;
     }
 
 
     @RequestMapping(value = "/version", method = RequestMethod.POST)
-    public Resources<VersionResource> versionUp(Version version, @QueryParam("major") boolean major, @QueryParam("makeProduction") boolean makeProduction) throws Exception {
+    public CollectionModel<VersionResource> versionUp(Version version, @QueryParam("major") boolean major, @QueryParam("makeProduction") boolean makeProduction) throws Exception {
 
         VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
         versionManager.load("codi", null);
@@ -171,7 +173,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @RequestMapping(value = DEFINITION + "/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @Override
-    public ResourceSupport getDefinition(@PathVariable("defPath") String definitionPath) throws Exception {
+    public RepresentationModel getDefinition(@PathVariable("defPath") String definitionPath) throws Exception {
 
         //case of directory:
         IResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
@@ -323,15 +325,17 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         DefaultResource resource = new DefaultResource(definitionPath);
 
         Object definitionDeployed;
-        if (fileExt.endsWith("bpmn")) {
+       /* if (fileExt.endsWith("bpmn")) {
             // TODO [severe] BPMNUtil.importAdapt(InputStream) must be available. using temp file will arise a multi-thread problem.
             ByteArrayInputStream bai = new ByteArrayInputStream(definition.getBytes("UTF-8"));
 
-            UEngineUtil.copyStream(bai, new FileOutputStream("test.bpmn"));
-            ProcessDefinition processDefinition = BPMNUtil.importAdapt(new File("test.bpmn"));
-            resourceManager.save(resource, processDefinition);
-            definitionDeployed = processDefinition;
-        } else if (fileExt.endsWith("upd")) {
+            // UEngineUtil.copyStream(bai, new FileOutputStream("test.bpmn"));
+            // ProcessDefinition processDefinition = BPMNUtil.importAdapt(new File("test.bpmn"));
+            // resourceManager.save(resource, processDefinition);
+            // definitionDeployed = processDefinition;
+        } else*/
+        
+        if (fileExt.endsWith("upd")) {
             ByteArrayInputStream bai = new ByteArrayInputStream(definition.getBytes("UTF-8"));
             ProcessDefinition processDefinition = (ProcessDefinition) org.uengine.modeling.resource.Serializer.deserialize(bai);
             resourceManager.save(resource, processDefinition);

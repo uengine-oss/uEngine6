@@ -1,7 +1,0 @@
-server:
-  port: 9095
-  servletPath: /
-
-eureka:
-  client:
-    enabled: false
