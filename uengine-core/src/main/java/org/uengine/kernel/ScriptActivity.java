@@ -17,10 +17,10 @@ import org.codehaus.janino.ExpressionEvaluator;
 import org.codehaus.janino.ScriptEvaluator;
 import org.codehaus.janino.samples.DemoBase;
 import org.codehaus.janino.samples.ScriptDemo;
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.RadioInput;
-import org.metaworks.inputter.SelectInput;
+// import org.metaworks.FieldDescriptor;
+// import org.metaworks.Type;
+// import org.metaworks.inputter.RadioInput;
+// import org.metaworks.inputter.SelectInput;
 import org.mozilla.javascript.NativeObject;
 import org.springframework.beans.BeanUtils;
 import org.uengine.util.TreeVisitor;
@@ -37,21 +37,21 @@ public class ScriptActivity extends DefaultActivity {
 	public static final int LANGUAGE_JAVASCRIPT				= 0; 
 	public static final int LANGUAGE_JAVA        			= 1; 
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd;
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd;
 		
-		fd = type.getFieldDescriptor("Language");	
-		fd.setInputter(new RadioInput(
-				new String[]{
-						      "Javascript",
-                              "Java"
-						      },
-				new Object[]{
-						     new Integer(LANGUAGE_JAVASCRIPT),
-         	                 new Integer(LANGUAGE_JAVA)
-						    }
-		));	
-	}
+	// 	fd = type.getFieldDescriptor("Language");	
+	// 	fd.setInputter(new RadioInput(
+	// 			new String[]{
+	// 					      "Javascript",
+    //                           "Java"
+	// 					      },
+	// 			new Object[]{
+	// 					     new Integer(LANGUAGE_JAVASCRIPT),
+    //      	                 new Integer(LANGUAGE_JAVA)
+	// 					    }
+	// 	));	
+	// }
 	
 	
 	String script;

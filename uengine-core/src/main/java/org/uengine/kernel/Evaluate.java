@@ -4,19 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.MetaworksContext;
-import org.metaworks.ObjectInstance;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.annotation.AutowiredFromClient;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Order;
-import org.metaworks.annotation.Range;
-import org.metaworks.annotation.ServiceMethod;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.widget.ModalWindow;
-import org.uengine.kernel.bpmn.face.ProcessVariablePanel;
 import org.uengine.processmanager.SimulatorTransactionContext;
 import org.uengine.util.UEngineUtil;
 
@@ -361,7 +348,6 @@ public class Evaluate extends Condition{
 		return returnVal;
 	}
 
-	@Order(1)
 	public String getKey() {
 		return key;
 	}
@@ -370,7 +356,6 @@ public class Evaluate extends Condition{
 		this.key = key;
 	}
 
-	@Order(3)
 	public Object getValue(){
 		return val;
 	}
@@ -378,9 +363,6 @@ public class Evaluate extends Condition{
 		this.val = value;
 	}
 
-	@Range(options={"==", "!=", ">=", ">", "<", "<=", "contains", "not contains"}
-			, values={"==", "!=", ">=", ">", "<", "<=", "contains", "not contains"})
-	@Order(2)
 	public String getCondition() {
 		return condition;
 	}
@@ -389,7 +371,6 @@ public class Evaluate extends Condition{
 		this.condition = condition;
 	}
 
-	@Hidden
 	public String getType() {
 		return type;
 	}

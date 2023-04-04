@@ -2,9 +2,9 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.TextInput;
+//import org.metaworks.FieldDescriptor;
+//import org.metaworks.Type;
+//import org.metaworks.inputter.TextInput;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.UEngineException;
 import org.uengine.processdesigner.mapper.Transformer;

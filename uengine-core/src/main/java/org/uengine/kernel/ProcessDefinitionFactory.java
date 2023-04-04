@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.processmanager.ProcessTransactionContext;
 
 /**

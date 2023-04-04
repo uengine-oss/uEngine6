@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.Date;
 import java.io.*;
 
-import org.metaworks.annotation.Face;
+//import org.metaworks.annotation.Face;
 import org.uengine.kernel.bpmn.face.ParameterContextArrayFace;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.util.UEngineUtil;
@@ -21,7 +21,7 @@ public class SQLActivity extends DefaultActivity{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
 	String sqlStmt;
-	@Face(ejsPath = "dwr/metaworks/genericfaces/richText.ejs", options={"rows", "cols"}, values = {"7", "130"})
+	//@Face(ejsPath = "dwr/metaworks/genericfaces/richText.ejs", options={"rows", "cols"}, values = {"7", "130"})
 
 //	@Face(faceClassName = "org.uengine.codi.mw3.widget.SourceCodeFace")
 		public String getSqlStmt() {

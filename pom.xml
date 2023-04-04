@@ -18,8 +18,9 @@
 	<description>Demo project for Spring Boot</description>
 
     <modules>
-        <module>uengine-commons</module>
-        <module>uengine-core</module>
+      <module>uengine-commons</module>
+      <module>uengine-resource-manager</module>
+      <module>uengine-core</module>
         <module>uengine-five-api</module>
         <module>definition-service</module>
         <module>process-service</module>

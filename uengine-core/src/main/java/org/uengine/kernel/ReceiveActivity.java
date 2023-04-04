@@ -11,13 +11,6 @@ import java.util.*;
 import org.metaworks.annotation.Face;
 import org.metaworks.annotation.Group;
 import org.metaworks.annotation.Hidden;
-import org.uengine.contexts.MappingContext;
-import org.uengine.kernel.bpmn.face.ParameterContextArrayFace;
-import org.uengine.kernel.bpmn.face.ParameterContextListFace;
-import org.uengine.modeling.IModelingTimeSensitive;
-import org.uengine.util.UEngineUtil;
-
-import static org.metaworks.dwr.MetaworksRemoteService.autowire;
 
 
 public class ReceiveActivity extends DefaultActivity implements MessageListener, NeedArrangementToSerialize, IModelingTimeSensitive {
@@ -25,7 +18,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     String message;
 
-    @Hidden
     public String getMessage() {
         if (message == null && getMessageDefinition() != null)
             setMessage(getMessageDefinition().getName());
@@ -38,8 +30,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     MessageDefinition messageDefinition;
-
-    @Hidden
     public MessageDefinition getMessageDefinition() {
         return messageDefinition;
     }
@@ -51,9 +41,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     ParameterContext[] parameters; //TODO 이게 널일때 어떻게 할것인가>?????
-
-    @Face(faceClass = ParameterContextArrayFace.class)
-    @Group(name = "Data")
     public ParameterContext[] getParameters() {
         return parameters;
     }
@@ -63,8 +50,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     Role fromRole;
-
-    @Hidden
     public Role getFromRole() {
         return fromRole;
     }
@@ -265,8 +250,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     MappingContext mapper;
 
-    //@Group(name="Mapping Out")
-    @Hidden
     public MappingContext getMapper() {
         return mapper;
     }
@@ -277,7 +260,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     MappingContext mapperIn;
 
-    @Group(name = "Mapping")
     public MappingContext getMapperIn() {
         return mapperIn;
     }
@@ -289,7 +271,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     ParameterContext[] mappingContexts;
 
-    @Hidden
     public ParameterContext[] getMappingContexts() {
         return mappingContexts;
     }
@@ -300,7 +281,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     ParameterContext[] mappingContextsIn;
 
-    @Hidden
     public ParameterContext[] getMappingContextsIn() {
         return mappingContextsIn;
     }

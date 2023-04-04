@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.metaworks.Type;
 import org.uengine.util.UEngineUtil;
 import org.uengine.webservices.emailserver.impl.EMailServerSoapBindingImpl;
 
@@ -14,13 +13,6 @@ import org.uengine.webservices.emailserver.impl.EMailServerSoapBindingImpl;
 public class LocalEMailActivity extends DefaultActivity{
 	
 	protected static final String MAIL_SERVICE = "mailServer";
-	
-	public static void metaworksCallback_changeMetadata(Type type){
-		//FieldDescriptor fd = type.getFieldDescriptor("AttachFiles");
-
-		//org_uengine_kernel_ProcessVariableArrayInput varArrinputter = (org_uengine_kernel_ProcessVariableArrayInput) fd.getInputter();
-		//varArrinputter.setFilter(FileContext.class.getName());
-	}
 	
 	String contents;
 		public String getContents() {

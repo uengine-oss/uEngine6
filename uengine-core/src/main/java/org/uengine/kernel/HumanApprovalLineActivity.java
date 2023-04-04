@@ -2,9 +2,6 @@ package org.uengine.kernel;
 
 import java.util.List;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.RadioInput;
 import org.uengine.util.ActivityForLoop;
 
 /**

@@ -5,14 +5,6 @@ import java.io.Serializable;
 
 import javax.swing.JLabel;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.Type;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Id;
-import org.metaworks.annotation.ServiceMethod;
-import org.metaworks.inputter.AbstractComponentInputter;
-import org.metaworks.inputter.SelectInput;
 import org.uengine.contexts.TextContext;
 
 public class EventHandler implements Serializable{
@@ -45,14 +37,13 @@ public class EventHandler implements Serializable{
 	Role openRoles;
 	int triggeringMethod = TRIGGERING_BY_EVENTBUTTON;
 	
-	@Hidden
 	public Activity getHandlerActivity() {
 		return handlerActivity;
 	}
 	public void setHandlerActivity(Activity handlerActivity) {
 		this.handlerActivity = handlerActivity;
 	}
-	@Id
+
 	public String getName() {
 		return name;
 	}
@@ -84,10 +75,5 @@ public class EventHandler implements Serializable{
 		this.triggeringMethod = triggeringMethod;
 	}
 	
-	@ServiceMethod(target=ServiceMethodContext.TARGET_POPUP)
-	public Object addEventHandler() throws Exception{
-		
-		return null;
-	}
 		
 }

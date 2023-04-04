@@ -6,13 +6,6 @@
  */
 package org.uengine.kernel;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Range;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.inputter.ArrayObjectInput;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.face.SubProcessParameterContextListFace;
 import org.uengine.modeling.resource.VersionManager;
@@ -29,17 +22,6 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	protected final static String SUBPROCESS_INST_ID_COMPLETED="completedInstanceIdOfSPs";
 	protected final static String EVENT_ONE_OF_PREV_SP_COMPLETED = "ONE_OF_PREV_SP_COMPLETED";
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd;
-
-//		try {
-//			fd = type.getFieldDescriptor("VariableBindings");
-//			fd.setInputter(new ArrayObjectInput(SubProcessParameterContext.class));
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-
-	}
 
 	public SubProcessActivity(){
 		super();
@@ -49,7 +31,6 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	String instanceId;
-	@Hidden
 	public String getInstanceId() {
 		return instanceId;
 	}
@@ -58,7 +39,6 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	String alias;
-	@Hidden
 	public String getAlias() {
 		return alias;
 	}
@@ -67,8 +47,6 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	String definitionId;
-		@Face(faceClassName = "org.uengine.social.SocialBPMProcessDefinitionSelector")
-		@Hidden(on=false)
 		public String getDefinitionId() {
 			return definitionId;
 		}
@@ -77,7 +55,6 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 		}
 
 	ProcessVariable dynamicDefinitionIdPV;
-	@Hidden
 	public ProcessVariable getDynamicDefinitionIdPV() {
 		return dynamicDefinitionIdPV;
 	}
@@ -87,22 +64,22 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 
 
 	int versionSelectOption = org.uengine.kernel.ProcessDefinition.VERSIONSELECTOPTION_CURRENT_PROD_VER;
-	@Hidden
-	@Range(
-			options={		  
-					"Use the CURRENT production version",
-					"Use the production version AT THE INITIATED TIME",
-					"Use the production version AT THE DESIGNED TIME", 
-					"Use the version JUST SELECTED"
-			},
+	// @Hidden
+	// @Range(
+	// 		options={		  
+	// 				"Use the CURRENT production version",
+	// 				"Use the production version AT THE INITIATED TIME",
+	// 				"Use the production version AT THE DESIGNED TIME", 
+	// 				"Use the version JUST SELECTED"
+	// 		},
 
-			values={
-					""+ProcessDefinition.VERSIONSELECTOPTION_CURRENT_PROD_VER,
-					""+ProcessDefinition.VERSIONSELECTOPTION_PROD_VER_AT_INITIATED_TIME,
-					""+ProcessDefinition.VERSIONSELECTOPTION_PROD_VER_AT_DESIGNED_TIME, 
-					""+ProcessDefinition.VERSIONSELECTOPTION_JUST_SELECTED,
-			}
-			)
+	// 		values={
+	// 				""+ProcessDefinition.VERSIONSELECTOPTION_CURRENT_PROD_VER,
+	// 				""+ProcessDefinition.VERSIONSELECTOPTION_PROD_VER_AT_INITIATED_TIME,
+	// 				""+ProcessDefinition.VERSIONSELECTOPTION_PROD_VER_AT_DESIGNED_TIME, 
+	// 				""+ProcessDefinition.VERSIONSELECTOPTION_JUST_SELECTED,
+	// 		}
+	// 		)
 	public int getVersionSelectOption() {
 		return versionSelectOption;
 	}
@@ -148,7 +125,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 
 
 	boolean runAndForget;
-	@Hidden
+	//@Hidden
 	public boolean isRunAndForget() {
 		return runAndForget;
 	}
@@ -157,7 +134,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	boolean createAsRootProcess;
-	@Hidden
+//@Hidden
 	public boolean isCreateAsRootProcess() {
 		return createAsRootProcess;
 	}
@@ -166,7 +143,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	TextContext multipleInstanceLabel = org.uengine.contexts.TextContext.createInstance();
-	@Hidden
+	//@Hidden
 	public TextContext getMultipleInstanceLabel() {
 		return multipleInstanceLabel;
 	}
@@ -175,7 +152,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	Role forEachRole;
-	@Hidden
+	//@Hidden
 	public Role getForEachRole() {
 		return forEachRole;
 	}
@@ -184,7 +161,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
 	}
 
 	ProcessVariable forEachVariable;
-	@Hidden
+//@Hidden
 	public ProcessVariable getForEachVariable() {
 		return forEachVariable;
 	}

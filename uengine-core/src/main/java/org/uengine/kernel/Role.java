@@ -5,20 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.metaworks.ContextAware;
-import org.metaworks.FieldDescriptor;
-import org.metaworks.MetaworksContext;
-import org.metaworks.Remover;
-import org.metaworks.Type;
-import org.metaworks.annotation.Available;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Name;
-import org.metaworks.annotation.Order;
-import org.metaworks.inputter.RadioInput;
-import org.metaworks.validator.NotNullValid;
-import org.metaworks.validator.Validator;
-import org.metaworks.widget.ModalWindow;
 import org.uengine.contexts.TextContext;
 import org.uengine.modeling.ElementView;
 import org.uengine.modeling.IElement;
@@ -57,9 +43,9 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 
 
 	private java.lang.String name;
-	@Name
-	@Face(displayName="역할 이름")
-	@Order(1)
+	// @Name
+	// @Face(displayName="역할 이름")
+	// @Order(1)
 		public String getName() {
 			return name;
 		}
@@ -68,9 +54,9 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 
 	private RoleResolutionContext roleResolutionContext = null;
-	@Hidden
-	@Face(displayName="역할 선택")
-	@Order(3)
+	// @Hidden
+	// @Face(displayName="역할 선택")
+	// @Order(3)
 		public RoleResolutionContext getRoleResolutionContext() {
 			if (roleResolutionContext instanceof DirectRoleResolutionContext) {
 				DirectRoleResolutionContext drrc = (DirectRoleResolutionContext) roleResolutionContext;
@@ -95,7 +81,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 	
 	int dispatchingOption = DISPATCHINGOPTION_ALL;
-	@Hidden
+	//@Hidden
 		public int getDispatchingOption() {
 			return dispatchingOption;
 		}
@@ -104,7 +90,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 			dispatchingOption = i;
 		}
 	private ServiceDefinition serviceType;
-	@Hidden
+	//@Hidden
 		public ServiceDefinition getServiceType() {
 			return serviceType;
 		}
@@ -113,7 +99,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 	
 	private boolean isHumanWorker;
-	@Hidden
+	//@Hidden
 		public boolean isHumanWorker() {
 			return isHumanWorker;
 		}	
@@ -122,7 +108,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 		
 	private boolean askWhenInit = true;
-	@Hidden
+	//@Hidden
 		public boolean isAskWhenInit() {
 			return askWhenInit;
 		}
@@ -131,7 +117,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 
 	private ProcessVariable identifier;
-		@Hidden
+	
 		public ProcessVariable getIdentifier() {
 			return identifier;
 		}
@@ -140,7 +126,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 
 	private String defaultEndpoint;
-	@Hidden
+	
 		public String getDefaultEndpoint() {
 			return defaultEndpoint;
 		}
@@ -149,9 +135,6 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 		
 	private TextContext displayName = org.uengine.contexts.TextContext.createInstance();
-	@Available(when={MetaworksContext.WHEN_EDIT})
-	@Face(displayName="역할 설명")
-	@Order(2)
 		public TextContext getDisplayName() {
 			if(displayName==null){
 				displayName = TextContext.createInstance();
@@ -172,7 +155,6 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		}
 
 	boolean dontPersistResolutionResult;
-	@Hidden
 		public boolean isDontPersistResolutionResult() {
 			return dontPersistResolutionResult;
 		}
@@ -346,7 +328,6 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 	}
 	
 	transient String currentEditorId;
-	@Hidden
 		public String getCurrentEditorId() {
 			return currentEditorId;
 		}
@@ -358,13 +339,11 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 	 * 나중에 apply 버튼은 ActivityWindow 로 빼야한다... 지금은 텝에 버튼이 보이질 않아서 임시로 달아놓음
 	 * @return
 	 */
-	@Hidden
 	public Object[] apply(){
 		return null;
 	}
 
 
-	@Hidden
 	public Object[] cancel(){
 		ModalWindow modalWindow = new ModalWindow();
 		return new Object[]{new Remover(modalWindow , true)};
@@ -380,7 +359,6 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 
 		return elementView;
 	}
-	@Hidden
 	public ElementView getElementView() {
 		return this.elementView;
 	}

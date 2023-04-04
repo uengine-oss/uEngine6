@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.metaworks.annotation.Hidden;
-import org.uengine.modeling.ElementView;
 
 
 /**
@@ -19,7 +17,6 @@ public class LoopActivity extends ComplexActivity{
 	private static final String PROP_LOOPCOUNT = "_loopCnt";
 
 	Condition loopingCondition;
-		@Hidden
 		public Condition getLoopingCondition() {
 			return loopingCondition;
 		}
@@ -28,7 +25,6 @@ public class LoopActivity extends ComplexActivity{
 		}
 		
 	boolean worklistHistoryManagement;		
-		@Hidden
 		public boolean isWorklistHistoryManagement() {
 			return worklistHistoryManagement;
 		}

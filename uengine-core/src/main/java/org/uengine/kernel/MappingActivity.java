@@ -1,7 +1,5 @@
 package org.uengine.kernel;
 
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
 import org.uengine.contexts.MappingContext;
 import org.uengine.modeling.ElementView;
 
@@ -15,7 +13,6 @@ public class MappingActivity extends DefaultActivity {
 	}
 	
 	transient String parentEditorId;
-	@Hidden
 		public String getParentEditorId() {
 			return parentEditorId;
 		}
@@ -24,7 +21,6 @@ public class MappingActivity extends DefaultActivity {
 		}
 	
 	MappingContext mappingContext;
-	@Face(displayName="$dataMapping")
 		public MappingContext getMappingContext() {
 			return mappingContext;
 		}

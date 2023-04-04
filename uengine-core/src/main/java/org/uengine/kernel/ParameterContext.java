@@ -3,17 +3,6 @@ package org.uengine.kernel;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import org.metaworks.ContextAware;
-import org.metaworks.FieldDescriptor;
-import org.metaworks.MetaworksContext;
-import org.metaworks.Refresh;
-import org.metaworks.Remover;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.Type;
-import org.metaworks.annotation.*;
-import org.metaworks.component.SelectBox;
-import org.metaworks.inputter.RadioInput;
-import org.metaworks.widget.ModalWindow;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.face.ProcessVariableSelectorFace;
 import org.uengine.processdesigner.mapper.TransformerMapping;
@@ -34,13 +23,6 @@ public class ParameterContext implements Serializable , ContextAware{
 	public ParameterContext(){
 		this.setMetaworksContext(new MetaworksContext());
 	}
-	transient MetaworksContext metaworksContext;
-		public MetaworksContext getMetaworksContext() {
-			return metaworksContext;
-		}
-		public void setMetaworksContext(MetaworksContext metaworksContext) {
-			this.metaworksContext = metaworksContext;
-		}
 	
 	TextContext argument = org.uengine.contexts.TextContext.createInstance();
 //	@Name
@@ -56,7 +38,6 @@ public class ParameterContext implements Serializable , ContextAware{
 		}
 
 	ProcessVariable variable;
-	@Face(faceClass = ProcessVariableSelectorFace.class)
 		public ProcessVariable getVariable() {
 			return variable;
 		}
@@ -65,7 +46,6 @@ public class ParameterContext implements Serializable , ContextAware{
 		}
 
 	transient Object type;
-	@Hidden
 		public Object getType() {
 			return type;
 		}
@@ -74,7 +54,7 @@ public class ParameterContext implements Serializable , ContextAware{
 		}
 	
 	String direction;
-	@Range(options={"IN-OUT", "IN", "OUT", }, values={ "in-out", "in", "out",})
+	//@Range(options={"IN-OUT", "IN", "OUT", }, values={ "in-out", "in", "out",})
 		public String getDirection() {
 			return direction;
 		}
@@ -83,7 +63,7 @@ public class ParameterContext implements Serializable , ContextAware{
 		}
 		
 	TransformerMapping transformerMapping;
-	@Hidden
+	//@Hidden
 		public TransformerMapping getTransformerMapping() {
 			return transformerMapping;
 		}

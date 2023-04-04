@@ -14,14 +14,14 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import org.codehaus.jackson.map.ObjectMapper;
-import org.metaworks.ContextAware;
-import org.metaworks.MetaworksContext;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Group;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Id;
-import org.metaworks.annotation.Name;
-import org.metaworks.annotation.Order;
+//import org.metaworks.ContextAware;
+//import org.metaworks.MetaworksContext;
+// import org.metaworks.annotation.Face;
+// import org.metaworks.annotation.Group;
+// import org.metaworks.annotation.Hidden;
+// import org.metaworks.annotation.Id;
+// import org.metaworks.annotation.Name;
+// import org.metaworks.annotation.Order;
 //import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.context.expression.MapAccessor;
 //import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -29,9 +29,9 @@ import org.springframework.context.expression.MapAccessor;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
-import org.uengine.modeling.ElementView;
-import org.uengine.modeling.IElement;
-import org.uengine.modeling.IIntegrityElement;
+// import org.uengine.modeling.ElementView;
+// import org.uengine.modeling.IElement;
+//import org.uengine.modeling.IIntegrityElement;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,8 +47,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Jinyoung Jang
  * @see org.uengine.kernel.ComplexActivity
  */
-//@Face(ejsPath="dwr/metaworks/genericfaces/FormFace.ejs")
-public abstract class Activity implements IElement, Validatable, java.io.Serializable, Cloneable, ContextAware, IIntegrityElement{
+public abstract class Activity implements /*IElement,*/ Validatable, java.io.Serializable, Cloneable, ContextAware, IIntegrityElement{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	
 	final public static String ACTIVITY_DONE=		"activity done";
@@ -138,7 +137,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	String viewId;
-	@Hidden
 		public String getViewId() {
 			return viewId;
 		}
@@ -148,8 +146,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 
 	boolean breakpoint;
-	@Group(name="Debug")
-	@Order(1000)
 		public boolean isBreakpoint() {
 			return breakpoint;
 		}
@@ -159,10 +155,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 
     TextContext name;
-        @Name
-        @Face(displayName="이름")
-        @Order(1)
-//      @Available(where=MetaworksContext.WHERE_DIALOG)
         public String getName() {
             if (name == null) {
                 return null;
@@ -201,7 +193,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
         }
         
     TextContext description;
-        @Hidden
         public String getDescription() {
             if (description == null) {
                 description = TextContext.createInstance();
@@ -229,8 +220,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	 * tracingTag is a identifier for a certain activity within a process definition.
 	 */
 	String tracingTag;
-	@Id
-	//@Hidden
 		public String getTracingTag() {
 			return tracingTag;
 		}
@@ -250,7 +239,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	 * for ABC (Activity-Based Costing)
 	 */
 	int cost;
-	@Hidden
 		public int getCost() {
 			return cost;
 		}
@@ -259,7 +247,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	Hashtable extendedAttributes;
-	@Hidden
 		public Hashtable getExtendedAttributes(){
 			return extendedAttributes;
 		}
@@ -283,7 +270,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	 * retry limits for activity execution
 	 */
 	int retryLimit;
-	@Hidden
 		public int getRetryLimit() {
 			return retryLimit;
 		}
@@ -292,7 +278,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	int retryDelay;
-	@Hidden
 		public int getRetryDelay() {
 			return retryDelay;
 		}
@@ -301,7 +286,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 	
 	boolean isHidden = false;
-	@Hidden
 		public boolean isHidden() {
 			return isHidden;
 		}
@@ -311,7 +295,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 
 	int integrity;  //range:  1:  error,   2:  warn,   0:  complete
-	@Hidden
 		public int getIntegrity() {
 			return integrity;
 		}
@@ -348,7 +331,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	boolean isDynamicChangeAllowed = true;
-	@Hidden
 		public boolean isDynamicChangeAllowed() {
 			return isDynamicChangeAllowed;
 		}
@@ -357,7 +339,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 		
 	boolean isQueuingEnabled = false;
-	@Hidden
 		public boolean isQueuingEnabled() {
 			return isQueuingEnabled;
 		}
@@ -366,7 +347,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	String activityIcon;
-	@Hidden
 		public String getActivityIcon(){
 			return activityIcon;
 		}
@@ -375,7 +355,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 		
 	String statusCode;
-	@Hidden
 		public String getStatusCode() {
 			return statusCode;
 		}
@@ -385,7 +364,6 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 		
 	protected boolean isFaultTolerant = false;
-	@Hidden
 		public boolean isFaultTolerant() {
 			return isFaultTolerant;
 		}
@@ -1902,13 +1880,13 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		return tokenCount;
 	}
 
-	public ElementView createView(){
-		ElementView elementView = (ElementView) UEngineUtil.getComponentByEscalation(getClass(), "view");
+	// public ElementView createView(){
+	// 	ElementView elementView = (ElementView) UEngineUtil.getComponentByEscalation(getClass(), "view");
 
-		elementView.setElement(this);
+	// 	elementView.setElement(this);
 
-		return elementView;
-	}
+	// 	return elementView;
+	// }
 
 
 
@@ -1922,7 +1900,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 	ElementView elementView;
-		@Hidden
+		//@Hidden
 		public ElementView getElementView(){
 			return this.elementView;
 		}

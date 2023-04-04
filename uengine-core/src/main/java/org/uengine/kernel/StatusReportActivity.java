@@ -1,8 +1,5 @@
 package org.uengine.kernel;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
 
 /**
  * @author Jinyoung Jang
@@ -11,12 +8,12 @@ import org.metaworks.inputter.SelectInput;
 public class StatusReportActivity extends DefaultActivity{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd;
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd;
 		
-		fd = type.getFieldDescriptor("FieldName");
-		fd.setInputter(new SelectInput(new String[]{"Info","Ext1","Ext2","Ext3","Ext4","Ext5","Ext6","Ext7","Ext8","Ext9","Ext10"}));
-	}
+	// 	fd = type.getFieldDescriptor("FieldName");
+	// 	fd.setInputter(new SelectInput(new String[]{"Info","Ext1","Ext2","Ext3","Ext4","Ext5","Ext6","Ext7","Ext8","Ext9","Ext10"}));
+	// }
 	
 	
 	String content;

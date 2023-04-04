@@ -1,9 +1,5 @@
 package org.uengine.kernel;
 
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Id;
-import org.uengine.modeling.Relation;
-
 /**
  * Created by uengine on 2018. 3. 2..
  */
@@ -12,7 +8,6 @@ public abstract class AbstractFlow extends Relation implements java.io.Serializa
 
     private String sourceRef;
 
-    @Hidden
     public String getSourceRef() {
         return sourceRef;
     }
@@ -23,7 +18,6 @@ public abstract class AbstractFlow extends Relation implements java.io.Serializa
 
     private String targetRef;
 
-    @Hidden
     public String getTargetRef() {
         return targetRef;
     }
@@ -34,8 +28,6 @@ public abstract class AbstractFlow extends Relation implements java.io.Serializa
 
     String tracingTag;
 
-    @Id
-    @Hidden
     public String getTracingTag() {
         return tracingTag;
     }

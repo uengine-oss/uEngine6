@@ -9,11 +9,6 @@ import java.util.Map;
 
 import javax.xml.namespace.QName;
 
-import org.metaworks.ContextAware;
-import org.metaworks.MetaworksContext;
-import org.metaworks.annotation.*;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.dwr.SerializationSensitive;
 import org.uengine.contexts.ComplexType;
 import org.uengine.contexts.DatabaseSynchronizationOption;
 import org.uengine.contexts.JavaClassDefinition;
@@ -31,33 +26,8 @@ import org.uengine.util.UEngineUtil;
 public class ProcessVariable implements java.io.Serializable, NeedArrangementToSerialize, Cloneable, ContextAware, SerializationSensitive, Validatable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
-	@Hidden
-	transient MetaworksContext metaworksContext;
-		public MetaworksContext getMetaworksContext() {
-			return metaworksContext;
-		}
-		public void setMetaworksContext(MetaworksContext metaworksContext) {
-			this.metaworksContext = metaworksContext;
-		}
-
-//	String uuid;
-//	@Face(displayName = "",
-//			ejsPath="dwr/metaworks/org/uengine/kernel/UUID.ejs")
-//		public String getUuid() {
-//			return uuid;
-//		}
-//		public void setUuid(String uuid) {
-//			this.uuid = uuid;
-//		}
 
 	String name;
-	@Id
-	@Order(1)
-//	@Available(when={MetaworksContext.WHEN_EDIT})
-	@Name
-	@ValidatorSet({
-		@Validator(name=ValidatorContext.VALIDATE_NOTNULL, message="변수이름을 입력하세요."),
-	})
 		public String getName() {
 			return name;
 		}
@@ -66,8 +36,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 
 	TextContext displayName = org.uengine.contexts.TextContext.createInstance();
-	@Order(2)
-	@Available(when={MetaworksContext.WHEN_EDIT})
 		public TextContext getDisplayName(){
 			if(displayName.getText()==null){
 				TextContext result = TextContext.createInstance();
@@ -91,7 +59,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 	
 	Class type; 
-		@Hidden
 		public Class getType(){
 			if(type==null){
 				if(getXmlBindingClassName()!=null){
@@ -119,7 +86,7 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 			this.global = global;
 		}
 
-	@Range(options={"BPMS", "REST", "DBMS"}, values={"bpms", "rest", "dbms"})
+	//@Range(options={"BPMS", "REST", "DBMS"}, values={"bpms", "rest", "dbms"})
 	String persistOption;
 		public String getPersistOption() {
 			return persistOption;
@@ -128,13 +95,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 			this.persistOption = persistOption;
 		}
 
-
-
-	@Face(faceClassName = "org.uengine.kernel.face.ProcessVariableTypeSelector", displayName = "변수 유형",
-			options = {"vue-component"},
-			values = {"class-selector"}
-
-	)
 	private String typeClassName;
 		public String getTypeClassName() {
 			return typeClassName;
@@ -156,7 +116,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 	
 		
 	Role openRole;
-	@Hidden
 		public Role getOpenRole() {
 			return openRole;
 		}
@@ -165,7 +124,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 	
 	String xmlBindingClsName;
-	@Hidden
 		public String getXmlBindingClassName(){
 			if(getQName()!=null && xmlBindingClsName==null)
 				xmlBindingClsName = org.uengine.util.UEngineUtil.QName2ClassName(getQName());
@@ -177,7 +135,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 
 	QName qname;
-	@Hidden
 		public QName getQName(){
 			return qname;
 		}
@@ -225,7 +182,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 */
 	
 	boolean askWhenInit = false;
-	@Hidden
 		public boolean isAskWhenInit() {
 			return askWhenInit;
 		}
@@ -234,9 +190,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 
 	Object defaultValue = null;
-	@Order(4)
-	@Hidden
-	//@Face(faceClass= GenericValueFace.class)
 		public Object getDefaultValue() {
 			if((getType()==ComplexType.class) && (defaultValue instanceof String))
 				return null;
@@ -259,7 +212,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 
 
 	boolean isVolatile;
-	@Hidden
 		public boolean isVolatile() {
 			return isVolatile;
 		}
@@ -460,7 +412,6 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 	}
 	
 	boolean isDatabaseSynchronized;
-	@Hidden
 		public boolean isDatabaseSynchronized() {
 			return isDatabaseSynchronized;
 		}
@@ -469,7 +420,6 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 		}
 			
 	DatabaseSynchronizationOption databaseSynchronizationOption;
-	@Hidden
 		public DatabaseSynchronizationOption getDatabaseSynchronizationOption() {
 			return databaseSynchronizationOption;
 		}

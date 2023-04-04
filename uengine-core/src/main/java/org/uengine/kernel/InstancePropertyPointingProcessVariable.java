@@ -5,8 +5,6 @@ import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Map;
 
-import org.metaworks.inputter.InputterAdapter;
-import org.metaworks.inputter.TextInput;
 import org.uengine.kernel.CommandVariableValue;
 import org.uengine.kernel.GlobalContext;
 

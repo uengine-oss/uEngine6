@@ -7,22 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Calendar;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.TextAreaInput;
-import org.metaworks.validator.NotNullValid;
-import org.metaworks.validator.Validator;
-
 public class RevisionInfo implements Serializable{
-	
-	
-	public static void metaworksCallback_changeMetadata(Type type){
-		type.removeFieldDescriptor("AuthorId");
-		type.removeFieldDescriptor("ChangeTime");
-		type.removeFieldDescriptor("Version");
-		type.setFieldOrder(new String[]{"AuthorName", "AuthorEmailAddress", "AuthorCompany", "ChangeDescription"});
-		type.getFieldDescriptor("ChangeDescription").setInputter(new TextAreaInput(30,5));
-	}
 	
 	
 	String authorName;

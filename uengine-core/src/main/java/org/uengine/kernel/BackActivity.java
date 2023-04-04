@@ -2,9 +2,6 @@ package org.uengine.kernel;
 
 import java.util.HashMap;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.RadioInput;
 import org.uengine.contexts.ActivitySelectionContext;
 
 public class BackActivity extends DefaultActivity{
@@ -21,24 +18,6 @@ public class BackActivity extends DefaultActivity{
 		setName("back");
 	}
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-	
-		FieldDescriptor fd = type.getFieldDescriptor("TargetSource");
-		fd.setInputter(new RadioInput(
-				new String[]{
-						"TargetActivityPV",
-						"TargetActivity",
-						"TargetActivityPV or targetActivity",
-						"Flag"
-				}, new Object[]{
-						BackActivity.TargetActivityPV, 
-						BackActivity.TargetActivity,
-						BackActivity.TargetActivityPV_OR_TargetActivity,
-						BackActivity.Flag
-				}
-			)
-		);
-	}
 	
 	public void executeActivity(ProcessInstance instance)
 		throws Exception {

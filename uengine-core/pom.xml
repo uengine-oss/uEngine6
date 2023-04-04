@@ -2,11 +2,12 @@
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 		xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.uengine</groupId>
-		<artifactId>uengine</artifactId>
-		<version>4.1.0-SNAPSHOT</version>
-	</parent>
+    <parent>
+        <groupId>org.uengine</groupId>
+        <artifactId>uengine-five</artifactId>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
+	
 	<artifactId>uengine-core</artifactId>
 	<name>uengine-core</name>
 	<url>http://maven.apache.org</url>
@@ -22,11 +23,11 @@
 			<artifactId>uengine-resource-manager</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.uengine</groupId>
 			<artifactId>uengine-uml</artifactId>
 			<version>${project.version}</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.uengine</groupId>
 			<artifactId>uengine-commons</artifactId>
@@ -90,22 +91,7 @@
 			<version>4.0.2</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-web</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-jdbc</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.integration</groupId>
-			<artifactId>spring-integration-core</artifactId>
-			<version>${org.springframework-version}</version>
-			<scope>compile</scope>
-		</dependency>
+
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
@@ -170,12 +156,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context-support</artifactId>
-			<version>${org.springframework-version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
 			<version>4.2.5</version>
@@ -186,21 +166,10 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.0</version>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-            <version>RELEASE</version>
-        </dependency>
-
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
 			<version>2.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-commons</artifactId>
-			<version>RELEASE</version>
 		</dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

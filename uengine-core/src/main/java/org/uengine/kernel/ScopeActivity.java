@@ -6,8 +6,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-import org.metaworks.Type;
-import org.metaworks.annotation.Hidden;
+//import org.metaworks.Type;
+//import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.bpmn.FlowActivity;
 import org.uengine.util.UEngineUtil;
 

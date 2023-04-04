@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Name;
-import org.metaworks.dwr.MetaworksRemoteService;
+// import org.metaworks.annotation.Face;
+// import org.metaworks.annotation.Hidden;
+// import org.metaworks.annotation.Name;
+// import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.contexts.TextContext;
-import org.uengine.modeling.HasThumbnail;
-import org.uengine.modeling.resource.Describable;
+//import org.uengine.modeling.HasThumbnail;
+//import org.uengine.modeling.resource.Describable;
 import org.uengine.processmanager.ProcessManagerFactoryBean;
 import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.processmanager.ProcessTransactionContext;
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Jinyoung Jang
  */
 
-@Face(displayName="BPMN")
+//@Face(displayName="BPMN")
 public class ProcessDefinition extends ScopeActivity implements Serializable, IDefinitionModel, Describable, HasThumbnail {
     
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
@@ -153,7 +153,7 @@ public class ProcessDefinition extends ScopeActivity implements Serializable, ID
 
 
 	boolean isGlobal;
-	@Hidden
+	//@Hidden
 		public boolean isGlobal() {
 			return isGlobal;
 		}
@@ -401,8 +401,8 @@ public class ProcessDefinition extends ScopeActivity implements Serializable, ID
 		}
 		
     TextContext shortDescription = null;
-        @Name
-        @Face(displayName="Description")       
+        //@Name
+        //@Face(displayName="Description")       
         public TextContext getShortDescription() {
             if (shortDescription == null) {
                 return TextContext.createInstance();

@@ -6,8 +6,6 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.codehaus.janino.ScriptEvaluator;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
 import org.uengine.util.UEngineUtil;
 
 
@@ -23,7 +21,6 @@ public class AssignActivity extends DefaultActivity{
 	public final static int SIMPLE_STYLE	= 3;
 
 	int assignStyle;
-		@Hidden
 		public int getAssignStyle() {
 			if (this.assignStyle == 0 ) {
 				return JAVA_STYLE;
@@ -39,7 +36,6 @@ public class AssignActivity extends DefaultActivity{
 	 */
 	@Deprecated
 	String assignValueInputType;
-		@Hidden
 		@Deprecated
 		public String getAssignValueInputType() {
 			return assignValueInputType;
@@ -50,7 +46,6 @@ public class AssignActivity extends DefaultActivity{
 		}
 
 	ProcessVariable variable;
-		@Face(displayName="대상변수")
 		public ProcessVariable getVariable() {
 			return variable;
 		}
@@ -59,7 +54,6 @@ public class AssignActivity extends DefaultActivity{
 		}
 	
 	Object val;
-		@Hidden
 		public Object getVal() {
 			return val;
 		}
@@ -68,7 +62,6 @@ public class AssignActivity extends DefaultActivity{
 		}
 		
 	String assignValue;
-		@Face(displayName="할당값")
 		public String getAssignValue() {
 			return assignValue;
 		}

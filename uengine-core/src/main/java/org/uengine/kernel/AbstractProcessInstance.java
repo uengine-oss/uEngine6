@@ -6,7 +6,6 @@ import java.io.*;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.util.*;

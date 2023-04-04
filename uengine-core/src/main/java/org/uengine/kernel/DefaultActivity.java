@@ -2,12 +2,6 @@ package org.uengine.kernel;
 
 import javax.naming.InitialContext;
 
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Group;
-import org.metaworks.annotation.Order;
-import org.metaworks.component.MetaWorksComponentCenter;
-import org.uengine.modeling.ElementView;
-import org.uengine.modeling.IDocument;
 import org.uengine.util.UEngineUtil;
 
 /**
@@ -31,33 +25,6 @@ public class DefaultActivity extends Activity{
 
 		fireComplete(instance);
 	}
-
-//	IDocument document;
-//
-//	@Order(value=2)
-//	@Face(options="hideLabel", values="true")
-//	//@Valid
-//	public IDocument getDocument() {
-//		return document;
-//	}
-//	public void setDocument(IDocument document) {
-//		this.document = document;
-//	}
-//
-//	public void createDocument(){
-//		try {
-//			setDocument((IDocument)Thread.currentThread().getContextClassLoader().loadClass("org.uengine.essencia.model.DefaultActivityDocument").newInstance());
-//		} catch (InstantiationException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IllegalAccessException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (ClassNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
 
 
 	String document;

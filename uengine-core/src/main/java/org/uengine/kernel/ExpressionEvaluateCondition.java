@@ -3,11 +3,6 @@ package org.uengine.kernel;
 
 import org.apache.bsf.BSFEngine;
 import org.apache.bsf.BSFManager;
-import org.metaworks.MetaworksContext;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.annotation.AutowiredFromClient;
-import org.metaworks.annotation.ServiceMethod;
-import org.metaworks.widget.ModalWindow;
 import org.uengine.kernel.bpmn.face.ProcessVariablePanel;
 import org.uengine.util.UEngineUtil;
 
@@ -89,14 +84,5 @@ public class ExpressionEvaluateCondition extends Condition {
         }
     }
 
-    @ServiceMethod(target = ServiceMethodContext.TARGET_POPUP, callByContent = true, inContextMenu = true)
-    public ModalWindow edit(@AutowiredFromClient ProcessVariablePanel processVariablePanel){
-        ModalWindow modalWindow = new ModalWindow(this);
-        modalWindow.setMetaworksContext(new MetaworksContext());
-        modalWindow.getMetaworksContext().setWhen(MetaworksContext.WHEN_EDIT);
-        modalWindow.getMetaworksContext().setHow("full-fledged");
-
-        return modalWindow;
-    }
 
 }

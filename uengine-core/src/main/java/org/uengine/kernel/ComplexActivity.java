@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.bpmn.Pool;
 import org.uengine.processmanager.ProcessManagerFactoryBean;
 import org.uengine.processmanager.ProcessManagerRemote;
@@ -30,7 +29,6 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 	private List<Activity> childActivities;
 	
 	private List<Pool> pools;
-		@Hidden
 		public List<Pool> getPools() {
 			return pools;
 		}
@@ -39,7 +37,6 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		}
 
 	private Role[] roles;
-	@Hidden
 	public Role[] getRoles(){
 		return roles;
 	}
@@ -47,7 +44,6 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		this.roles = roles;
 		firePropertyChangeEvent(new PropertyChangeEvent(this, "roles", roles, roles));
 	}
-	@Hidden
 	public Role getRole(String roleName){
 
 		if(roles != null)
@@ -116,7 +112,6 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		pools = new ArrayList<Pool>();
 	}
 
-	@Hidden
 	public List<Activity> getChildActivities() {
 		return childActivities;
 	}
