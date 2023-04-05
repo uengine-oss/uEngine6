@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
-import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.*;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.TransactionContext;
@@ -30,7 +29,6 @@ public class FlowActivity extends ComplexActivity {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
 	ArrayList<SequenceFlow> sequenceFlows;
-	@Hidden
 		public ArrayList<SequenceFlow> getSequenceFlows() {
 			if (this.sequenceFlows == null) {
 				this.setSequenceFlows(new ArrayList<SequenceFlow>());

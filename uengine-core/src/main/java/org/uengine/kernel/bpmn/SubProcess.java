@@ -1,12 +1,7 @@
 package org.uengine.kernel.bpmn;
 
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Range;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.*;
-import org.uengine.kernel.bpmn.face.ProcessVariableSelectorFace;
-import org.uengine.kernel.bpmn.face.SubProcessParameterContextListFace;
 
 import java.io.Serializable;
 import java.util.*;
@@ -42,7 +37,6 @@ public class SubProcess extends ScopeActivity{
 
 
     String instanceId;
-    @Hidden
     public String getInstanceId() {
         return instanceId;
     }
@@ -51,7 +45,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     String alias;
-    @Hidden
     public String getAlias() {
         return alias;
     }
@@ -62,7 +55,6 @@ public class SubProcess extends ScopeActivity{
 
 
     List<SubProcessParameterContext> variableBindings = new ArrayList<SubProcessParameterContext>();
-    	@Face(faceClass = SubProcessParameterContextListFace.class)
         public List<SubProcessParameterContext> getVariableBindings() {
             return variableBindings;
         }
@@ -72,7 +64,6 @@ public class SubProcess extends ScopeActivity{
 
 
     RoleParameterContext[] roleBindings;
-    @Hidden
     public RoleParameterContext[] getRoleBindings() {
         return roleBindings;
     }
@@ -81,7 +72,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     boolean runAndForget;
-    @Hidden
     public boolean isRunAndForget() {
         return runAndForget;
     }
@@ -90,7 +80,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     boolean createAsRootProcess;
-    @Hidden
     public boolean isCreateAsRootProcess() {
         return createAsRootProcess;
     }
@@ -99,7 +88,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     TextContext multipleInstanceLabel = org.uengine.contexts.TextContext.createInstance();
-    @Hidden
     public TextContext getMultipleInstanceLabel() {
         return multipleInstanceLabel;
     }
@@ -108,7 +96,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     Role forEachRole;
-    @Hidden
     public Role getForEachRole() {
         return forEachRole;
     }
@@ -117,8 +104,6 @@ public class SubProcess extends ScopeActivity{
     }
 
     ProcessVariable forEachVariable;
-        @Face(faceClass=ProcessVariableSelectorFace.class)
-
         public ProcessVariable getForEachVariable() {
             return forEachVariable;
         }
@@ -1067,7 +1052,7 @@ public class SubProcess extends ScopeActivity{
         this.multipleInstanceOption = multipleInstanceOption;
     }
 
-    @Range(options={"Parallel", "Loop"}, values = {"parallel", "loop"})
+    //@Range(options={"Parallel", "Loop"}, values = {"parallel", "loop"})
     public String getMultipleInstanceOption() {
         return multipleInstanceOption;
     }

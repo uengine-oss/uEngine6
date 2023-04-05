@@ -20,14 +20,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
 
-import static org.metaworks.dwr.MetaworksRemoteService.getComponent;
-import static org.metaworks.dwr.MetaworksRemoteService.wrapReturn;
-
 public class DefaultResource implements IResource {
 
 	private String path;
-		@Id
-		@Hidden
 		public String getPath() {
 			return this.path;
 		}
@@ -36,16 +31,6 @@ public class DefaultResource implements IResource {
 		}
 
 	private IContainer parent;
-	protected MetaworksContext metaworksContext;
-//
-//	boolean isSelected;
-//		public boolean isSelected() {
-//			return isSelected;
-//		}
-//		public void setIsSelected(boolean isSelected) {
-//			this.isSelected = isSelected;
-//		}
-
 
 
 	@Autowired
@@ -81,8 +66,7 @@ public class DefaultResource implements IResource {
 
 	String displayName;
 
-	@Name
-	@Face(displayName = "name")
+	
 	/**
 	 *
 	 * @return Returns only the file name **WITHOUT** the extension name
@@ -138,7 +122,6 @@ public class DefaultResource implements IResource {
 	}
 
 
-	@Hidden
 	public IContainer getParent() {
 		if (this.parent == null && "/".equals(this.getPath())) {
 			return null;
@@ -154,84 +137,7 @@ public class DefaultResource implements IResource {
 
 
 
-	/**
-	 * 
-	 * @param resourceControlDelegate
-	 */
-	@Order(6)
-	@Face(displayName="open")
-	@ServiceMethod(callByContent=true, except="children", eventBinding=EventContext.EVENT_DBLCLICK, inContextMenu=true, target=ServiceMethodContext.TARGET_POPUP)
-	public void open(@AutowiredFromClient
-							  ResourceControlDelegate resourceControlDelegate
-
-	) throws Exception {
-
-		if(resourceControlDelegate!=null)
-			resourceControlDelegate.onDoubleClicked(this);
-		else
-			_newAndOpen(false);
-	}
-
-
-	@Hidden
-	@ServiceMethod(callByContent = true, except = "children", inContextMenu = true)
-	public SelectedResource select() throws Exception {
-		SelectedResource selectedResource = new SelectedResource();
-
-		selectedResource.setPath(getPath());
-
-		return selectedResource;
-	}
-
-	public void newOpen() throws Exception {
-		_newAndOpen(true);
-	}
-
-	public void reopen() throws Exception {
-		_newAndOpen(false);
-	}
-
-//	@ServiceMethod(target=ServiceMethod.TARGET_POPUP, inContextMenu = true)
-//	public void openAsNewWindow() throws Exception{
-//		MetaworksRemoteService.wrapReturn(new NewBrowserWindow("/"));
-//	}
-
-	public EditorPanel _newAndOpen(boolean isNew) throws Exception {
-		EditorPanel editorPanel = getComponent(EditorPanel.class);
-		editorPanel.setResourcePath(getPath());
-		editorPanel.setMetaworksContext(new MetaworksContext());
-		editorPanel.getMetaworksContext().setWhen(MetaworksContext.WHEN_EDIT);
-		editorPanel.setNew(isNew);
-
-		String type = getType();
-		String classNamePrefix = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
-
-		Class editorClass = Thread.currentThread().getContextClassLoader().loadClass("org.uengine.modeling.resource.editor." + classNamePrefix + "Editor");
-
-		IEditor editor = (IEditor) editorClass.newInstance();
-
-		if(isNew){
-			editor.setEditingObject(editor.newObject(this));
-			editorPanel.setNew(true);
-
-		} else{
-			editor.setEditingObject(load());
-		}
-
-		editorPanel.setEditor(editor);
-		wrapReturn(new Refresh(editorPanel));
-
-		return editorPanel;
-	}
-
-	public Object load() throws Exception {
-		Object object = resourceManager.getObject(this);
-
-		if(object instanceof IModel)
-			((IModel)object).setId(getPath());
-
-		return object;
-	}
+	
 
 	@Override
 	public void accept(IResourceVisitor visitor) {
@@ -242,32 +148,6 @@ public class DefaultResource implements IResource {
 	public void accept(IResourceVisitor visitor, boolean admin) {
 		visitor.visit(this);
 	}
-
-	@Override
-	public MetaworksContext getMetaworksContext() {
-		return metaworksContext;
-	}
-
-	@Override
-	public void setMetaworksContext(MetaworksContext metaworksContext) {
-		this.metaworksContext = metaworksContext;
-	}
-
-	@ServiceMethod(inContextMenu=true, needToConfirm=true)
-	@Order(7)
-	public void delete() throws IOException {
-		resourceManager.delete(this);
-
-		if(MetaworksRemoteService.metaworksCall()){
-			//refresh
-			try {
-				MetaworksRemoteService.addReturn(new ToEvent(new ResourceNavigator(), "refresh"));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 
 	@Override
 	public boolean isContainer() {
@@ -282,31 +162,31 @@ public class DefaultResource implements IResource {
 	}
 
 
-	public static IResource createResource(String path) throws Exception {
-		String type = new DefaultResource(path).getType();
+	// public static IResource createResource(String path) throws Exception {
+	// 	String type = new DefaultResource(path).getType();
 
-		try {
+	// 	try {
 
-			String classNamePrefix = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
-
-
-			Class resourceClass = Thread.currentThread().getContextClassLoader().loadClass(DefaultResource.class.getPackage().getName() + ".resources." + classNamePrefix + "Resource");
-
-			IResource resource = (IResource) MetaworksRemoteService.getComponent(resourceClass);
-			resource.setPath(path);
-
-			return resource;
+	// 		String classNamePrefix = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
 
 
-		}catch(ClassNotFoundException e){
+	// 		Class resourceClass = Thread.currentThread().getContextClassLoader().loadClass(DefaultResource.class.getPackage().getName() + ".resources." + classNamePrefix + "Resource");
 
-			DefaultResource defaultResource = new DefaultResource();
-			defaultResource.setPath(path);
+	// 		IResource resource = (IResource) GlobalContext.getComponent(resourceClass);
+	// 		resource.setPath(path);
 
-			return defaultResource;
+	// 		return resource;
 
-		}
-	}
+
+	// 	}catch(ClassNotFoundException e){
+
+	// 		DefaultResource defaultResource = new DefaultResource();
+	// 		defaultResource.setPath(path);
+
+	// 		return defaultResource;
+
+	// 	}
+	// }
 
 
 	@Override
@@ -314,20 +194,8 @@ public class DefaultResource implements IResource {
 		resourceManager.save(this, editingObject);
 	}
 
-	public Download download(String fileName, String mimeType) throws Exception {
-		return new Download(new FileTransfer(fileName, mimeType, resourceManager.getInputStream(this)));
-	}
-
 	public void copy(String desPath) throws Exception {
 		resourceManager.copy(this, desPath);
-	}
-
-	public void upload(InputStream is) {
-		try (OutputStream os = resourceManager.getOutputStream(this)) {
-			MetaworksFile.copyStream(is, os);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	public void move(IContainer container) throws IOException {

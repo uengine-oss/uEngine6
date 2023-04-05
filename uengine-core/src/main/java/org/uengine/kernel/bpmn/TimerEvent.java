@@ -1,10 +1,9 @@
 package org.uengine.kernel.bpmn;
 
 
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
-import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
@@ -59,7 +58,7 @@ public class TimerEvent extends Event{
 
 		job.getJobDataMap().put("tracingTag", getTracingTag());
 
-		StdSchedulerFactory schedulerFactoryBean = MetaworksRemoteService.getComponent(StdSchedulerFactory.class);
+		StdSchedulerFactory schedulerFactoryBean = GlobalContext.getComponent(StdSchedulerFactory.class);
 
 		Scheduler sched = schedulerFactoryBean.getScheduler();
 
@@ -135,7 +134,7 @@ public class TimerEvent extends Event{
 	}
 
 	protected void unschedule(ProcessInstance instance) {
-		StdSchedulerFactory schedulerFactoryBean = MetaworksRemoteService.getComponent(StdSchedulerFactory.class);
+		StdSchedulerFactory schedulerFactoryBean = GlobalContext.getComponent(StdSchedulerFactory.class);
 
 		try {
 			Scheduler sched = schedulerFactoryBean.getScheduler();

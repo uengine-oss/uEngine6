@@ -21,9 +21,9 @@
       <module>uengine-commons</module>
       <module>uengine-resource-manager</module>
       <module>uengine-core</module>
-        <module>uengine-five-api</module>
-        <module>definition-service</module>
-        <module>process-service</module>
+      <module>uengine-five-api</module>
+      <module>definition-service</module>
+      <module>process-service</module>
         <!-- <module>proxy</module> -->
         <!-- <module>semantic-entity</module> -->
         <!-- <module>event-consumer</module> -->
@@ -78,17 +78,17 @@
 
     <!-- uengine -->
 
-    <dependency>
+    <!-- <dependency>
         <groupId>org.uengine</groupId>
         <artifactId>uengine-core</artifactId>
         <version>4.1.0-SNAPSHOT</version>
-    </dependency>
+    </dependency> -->
 
-    <dependency>
+    <!-- <dependency>
         <groupId>org.uengine</groupId>
         <artifactId>uengine-resource-manager</artifactId>
         <version>4.1.0-SNAPSHOT</version>
-    </dependency>
+    </dependency> -->
 
 
 

@@ -1,8 +1,5 @@
 package org.uengine.kernel.bpmn;
 
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Range;
 import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.MessageListener;
 import org.uengine.kernel.ProcessInstance;
@@ -27,7 +24,6 @@ public class Event extends DefaultActivity implements MessageListener{
 //
 
 	String attachedToRef;
-	@Hidden
 		public String getAttachedToRef() {
 			return attachedToRef;
 		}
@@ -50,8 +46,7 @@ public class Event extends DefaultActivity implements MessageListener{
 	///// slightly different from the OMG's BPMN 2.0 xml schema model. but more simple.
 
 	String eventType;
-	@Hidden
-	@Range(options={"Catching","Throwing", "Non-Interrupting"}, values={"Catching", "Throwing", "Non-Interrupting"})
+//	@Range(options={"Catching","Throwing", "Non-Interrupting"}, values={"Catching", "Throwing", "Non-Interrupting"})
 		public String getEventType() {
 			return eventType;
 		}
@@ -60,7 +55,7 @@ public class Event extends DefaultActivity implements MessageListener{
 		}
 
 	boolean intermediate;
-	@Hidden
+	//@Hidden
 		public boolean isIntermediate() {
 			return intermediate;
 		}

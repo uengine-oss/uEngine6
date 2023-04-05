@@ -5,7 +5,6 @@ import org.codehaus.jackson.JsonNode;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.ServiceTask;
 import org.uengine.processdesigner.mapper.TransformerMapping;
-import org.uengine.uml.model.ObjectInstance;
 
 import java.io.Serializable;
 import java.util.HashMap;

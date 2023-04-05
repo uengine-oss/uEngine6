@@ -301,31 +301,31 @@ public class GlobalContext{
 		}
 	}
 
-	public static final String getSQL(String key){
-		if(sqls==null){
-			try {
-				String resourceURL = "org/uengine/resources/sqls/" + DAOFactory.getInstance(null).getDBMSProductName().toLowerCase() +".properties";
-				URL url = null;
+	// public static final String getSQL(String key){
+	// 	if(sqls==null){
+	// 		try {
+	// 			String resourceURL = "org/uengine/resources/sqls/" + DAOFactory.getInstance(null).getDBMSProductName().toLowerCase() +".properties";
+	// 			URL url = null;
 				
-				url = GlobalContext.class.getClassLoader().getResource(resourceURL);
+	// 			url = GlobalContext.class.getClassLoader().getResource(resourceURL);
 
-				if (url != null) {
-					InputStream is = url.openStream();
-					sqls = new Properties();
-					sqls.load(is);
-					is.close();
+	// 			if (url != null) {
+	// 				InputStream is = url.openStream();
+	// 				sqls = new Properties();
+	// 				sqls.load(is);
+	// 				is.close();
 
-					System.out.println("Loading sqls : " + url);
-				}else{
-					System.out.println("Please check whether resource '" + resourceURL +"' exists. It is very important to start uEngine.");
-				}
-			}catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+	// 				System.out.println("Loading sqls : " + url);
+	// 			}else{
+	// 				System.out.println("Please check whether resource '" + resourceURL +"' exists. It is very important to start uEngine.");
+	// 			}
+	// 		}catch (Exception e) {
+	// 			e.printStackTrace();
+	// 		}
+	// 	}
 					
-		return sqls.getProperty(key);
-	}
+	// 	return sqls.getProperty(key);
+	// }
 	
 	public static final String getLocalizedMessage(String key) {
 		return getLocalizedMessage(key, null);

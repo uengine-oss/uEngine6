@@ -27,7 +27,11 @@
 
     <dependencies>
 
-
+		<dependency>
+			<groupId>org.uengine</groupId>
+			<artifactId>uengine-five-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

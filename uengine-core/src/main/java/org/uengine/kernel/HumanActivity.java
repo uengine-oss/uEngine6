@@ -1095,7 +1095,7 @@ System.out.println("=========================== HARD-TO-FIND : HumanActivity.cre
 
 		ResultPayload rp = new ResultPayload();
 		rp.setExtendedValue(new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DELEGATED));
-		rp.setExtendedValue(new KeyedParameter("endDate", DAOFactory.getInstance(instance.getProcessTransactionContext()).getNow().getTime()));
+		rp.setExtendedValue(new KeyedParameter("endDate", new Date()));
 		rp.setExtendedValue(new KeyedParameter(KeyedParameter.DISPATCHINGOPTION, "" + Role.DISPATCHINGOPTION_ALL));
 		rp.setExtendedValue(new KeyedParameter("dispatchParam1", ""));
 		
@@ -1117,7 +1117,7 @@ System.out.println("=========================== HARD-TO-FIND : HumanActivity.cre
 	public void saveWorkItem(ProcessInstance instance, ResultPayload payload) throws Exception{
 		
 		savePayload(instance, payload);
-		Date now = DAOFactory.getInstance(instance.getProcessTransactionContext()).getNow().getTime();
+		Date now = new Date();//TODO: R.  DAOFactory.getInstance(instance.getProcessTransactionContext()).getNow().getTime();
 		
 		String[] taskIds = getTaskIds(instance);
 		if(taskIds == null || taskIds.length == 0){ 

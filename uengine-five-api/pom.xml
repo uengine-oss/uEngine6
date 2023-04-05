@@ -28,7 +28,11 @@
 
     <dependencies>
 
-
+		<dependency>
+			<groupId>org.uengine</groupId>
+			<artifactId>uengine-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

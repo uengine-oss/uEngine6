@@ -1,7 +1,6 @@
 package org.uengine.modeling.resource;
 
 import org.codehaus.jackson.map.util.LRUMap;
-import org.metaworks.dao.TransactionContext;
 
 import java.util.Map;
 

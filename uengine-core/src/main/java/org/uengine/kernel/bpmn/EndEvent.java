@@ -1,8 +1,5 @@
 package org.uengine.kernel.bpmn;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.RadioInput;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.UEngineException;

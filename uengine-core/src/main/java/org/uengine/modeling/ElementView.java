@@ -5,16 +5,11 @@ import java.io.Serializable;
 import javax.persistence.Id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.metaworks.*;
-import org.metaworks.annotation.AutowiredFromClient;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.ServiceMethod;
-import org.metaworks.dao.TransactionContext;
 
 /**
  * @author jyj
  */
-public abstract class ElementView implements Serializable, ContextAware, Cloneable {
+public abstract class ElementView implements Serializable, Cloneable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
@@ -160,7 +155,6 @@ public abstract class ElementView implements Serializable, ContextAware, Cloneab
     @JsonIgnore
     IElement element;
 
-    @Face(ejsPath = "dwr/metaworks/genericfaces/HiddenFace.ejs")
     public IElement getElement() {
         return element;
     }
@@ -172,49 +166,13 @@ public abstract class ElementView implements Serializable, ContextAware, Cloneab
         this.element = element;
     }
 
-    transient MetaworksContext metaworksContext;
-
-    public MetaworksContext getMetaworksContext() {
-        return metaworksContext;
-    }
-
-    public void setMetaworksContext(MetaworksContext metaworksContext) {
-        this.metaworksContext = metaworksContext;
-    }
-
+    
     public ElementView() {
-        this.metaworksContext = new MetaworksContext();
     }
 
     public ElementView(IElement element) {
         this();
         this.setElement(element);
-    }
-
-    public void fill(Symbol symbol) {
-        this.setShapeId(symbol.getShapeId());
-        this.setWidth((symbol.getWidth()));
-        this.setHeight((symbol.getHeight()));
-    }
-
-    public abstract Symbol createSymbol();
-//
-//    //TODO: should make interface for createSymbol()....
-//    public Symbol createSymbol(String type) {
-//        return null;
-//    }
-//
-//    public Symbol createSymbol(Class<? extends Symbol> symbolType) {
-//        return null;
-//    }
-//
-//    public Symbol createSymbol(String type, Class<? extends Symbol> symbolType) {
-//        return null;
-//    }
-
-    @ServiceMethod(callByContent = true, target = ServiceMethodContext.TARGET_APPEND)
-    public Object duplicate() {
-        return new Refresh(this, true, true);
     }
 
     String instStatus;
@@ -267,22 +225,6 @@ public abstract class ElementView implements Serializable, ContextAware, Cloneab
         this.propertyDialogWidth = propertyDialogWidth;
     }
 
-    @AutowiredFromClient
-    public ElementViewActionDelegate elementViewActionDelegate;
-
-    @ServiceMethod(callByContent = true, eventBinding = EventContext.EVENT_DBLCLICK, target = ServiceMethodContext.TARGET_POPUP)
-    public Object showProperty() throws Exception {
-
-        TransactionContext.getThreadLocalInstance().setMW3FaceOptionEnabled(true);
-
-        if(elementViewActionDelegate!=null){
-            elementViewActionDelegate.onDoubleClick(this);
-
-            return null;
-        }
-
-        return new PropertySettingDialog(this);
-    }
 
     /**
      * convert main object from RelationView to IRelation

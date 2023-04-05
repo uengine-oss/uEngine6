@@ -5,7 +5,7 @@ import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.QueryParam;
+//import javax.ws.rs.QueryParam;
 
 /**
  * Created by uengine on 2017. 8. 9..

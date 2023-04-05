@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.rest.core.annotation.HandleBeforeCreate;
 import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.stereotype.Component;
-import org.uengine.util.dao.AbstractGenericDAO;
+//import org.uengine.util.dao.AbstractGenericDAO;
 
 class DummyWorkList extends WorklistEntity {
 }

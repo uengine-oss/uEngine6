@@ -1,14 +1,13 @@
 package org.uengine.processmanager;
 
 import org.uengine.kernel.TransactionListener;
-import org.uengine.util.dao.ConnectionFactory;
 
 import java.util.List;
 
 /**
  * Created by uengine on 2018. 11. 16..
  */
-public interface TransactionContext extends ConnectionFactory{
+public interface TransactionContext {
     void addTransactionListener(TransactionListener tl);
 
     List getTransactionListeners();

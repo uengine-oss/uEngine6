@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,12 +16,13 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.kernel.DeployFilter;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.NeedArrangementToSerialize;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.UEngineException;
 import org.uengine.modeling.resource.*;
 //import org.uengine.processpublisher.BPMNUtil;
-import org.uengine.uml.model.ClassDefinition;
+//import org.uengine.uml.model.ClassDefinition;
 import org.uengine.util.UEngineUtil;
 
 import javax.annotation.PostConstruct;
@@ -94,14 +94,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @RequestMapping(value = "/version/{version}" + DEFINITION + "/", method = RequestMethod.GET)
     public CollectionModel<DefinitionResource> listVersionDefinitions(@PathVariable("version") String version, String basePath) throws Exception {
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
 
         return _listDefinition(versionManager.versionDirectoryOf(new Version(version)), basePath);
     }
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
     public CollectionModel<VersionResource> listVersions() throws Exception {
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
 
         List<VersionResource> versionResources = new ArrayList<VersionResource>();
         for (Version version : versionManager.listVersions()) {
@@ -117,7 +117,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = "/version", method = RequestMethod.POST)
     public CollectionModel<VersionResource> versionUp(Version version, @QueryParam("major") boolean major, @QueryParam("makeProduction") boolean makeProduction) throws Exception {
 
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
         versionManager.load("codi", null);
 
         if(major)
@@ -132,7 +132,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = "/version/{version:.+}/production", method = RequestMethod.POST)
     public VersionResource makeProduction(@PathVariable("version") String version) throws Exception {
 
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
         versionManager.load("codi", null);
 
         Version versionObj = new Version(version);
@@ -146,7 +146,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = "/version/production", method = RequestMethod.GET)
     public VersionResource getProduction() throws Exception {
 
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
         versionManager.load("codi", null);
 
         Version versionObj = versionManager.getProductionVersion();
@@ -157,7 +157,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = "/version/{version:.+}", method = RequestMethod.GET)
     public VersionResource getVersion(@PathVariable("version") String version) throws Exception {
 
-        VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+        VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
         List<Version> versions = versionManager.listVersions();
 
         for(Version theVersion : versions){
@@ -340,11 +340,13 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             ProcessDefinition processDefinition = (ProcessDefinition) org.uengine.modeling.resource.Serializer.deserialize(bai);
             resourceManager.save(resource, processDefinition);
             definitionDeployed = processDefinition;
-        } else if (fileExt.endsWith("class")) {
-            ClassDefinition classDefinition = objectMapper.readValue(definition, ClassDefinition.class);
-            resourceManager.save(resource, classDefinition);
-            definitionDeployed = classDefinition;
-        } else if (fileExt.endsWith("json")) {
+        } 
+        // else if (fileExt.endsWith("class")) {
+        //     ClassDefinition classDefinition = objectMapper.readValue(definition, ClassDefinition.class);
+        //     resourceManager.save(resource, classDefinition);
+        //     definitionDeployed = classDefinition;
+        // }
+         else if (fileExt.endsWith("json")) {
             DefinitionWrapper definitionWrapper = objectMapper.readValue(definition, DefinitionWrapper.class);
             if (definitionWrapper.getDefinition() == null) {
                 throw new Exception("DefinitionResource is corrupt.");
@@ -371,7 +373,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
         
-        Map<String, DeployFilter> filters = MetaworksRemoteService.getInstance().getBeanFactory().getBeansOfType(DeployFilter.class);
+        Map<String, DeployFilter> filters = GlobalContext.getComponents(DeployFilter.class);
         if (filters != null && filters.size() > 0) {
             for (DeployFilter theFilter : filters.values()) {
                 try {
@@ -421,7 +423,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         //replace to production version if requested:
         if(production){
-            VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
+            VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
             versionManager.load("codi", null);
 
             definitionPath = versionManager.getProductionResourcePath(definitionPath);

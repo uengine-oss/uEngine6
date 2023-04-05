@@ -7,7 +7,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.TrustStrategy;
-import org.metaworks.dwr.MetaworksRemoteService;
 //import org.springframework.cloud.client.ServiceInstance;
 //import org.springframework.cloud.client.discovery.DiscoveryClient;
 //import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;

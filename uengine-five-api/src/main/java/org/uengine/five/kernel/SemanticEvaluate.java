@@ -1,8 +1,8 @@
 package org.uengine.five.kernel;
 
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.five.service.SemanticEntityService;
 import org.uengine.kernel.Evaluate;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.util.UEngineUtil;
 
@@ -16,7 +16,7 @@ public class SemanticEvaluate extends Evaluate {
 
         if("means".equals(getCondition())){
 
-            SemanticEntityService semanticEntityService = MetaworksRemoteService.getComponent(SemanticEntityService.class);
+            SemanticEntityService semanticEntityService = GlobalContext.getComponent(SemanticEntityService.class);
 
             Object text = null;
 

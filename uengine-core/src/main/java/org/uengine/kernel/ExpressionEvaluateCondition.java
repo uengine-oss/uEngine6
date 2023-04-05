@@ -3,7 +3,6 @@ package org.uengine.kernel;
 
 import org.apache.bsf.BSFEngine;
 import org.apache.bsf.BSFManager;
-import org.uengine.kernel.bpmn.face.ProcessVariablePanel;
 import org.uengine.util.UEngineUtil;
 
 

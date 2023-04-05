@@ -7,7 +7,6 @@
 package org.uengine.kernel;
 
 import org.uengine.contexts.TextContext;
-import org.uengine.kernel.bpmn.face.SubProcessParameterContextListFace;
 import org.uengine.modeling.resource.VersionManager;
 import org.uengine.util.UEngineUtil;
 

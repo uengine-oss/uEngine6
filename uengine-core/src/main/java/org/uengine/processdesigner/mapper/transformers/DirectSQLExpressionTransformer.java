@@ -2,10 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
-import org.metaworks.inputter.TextInput;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;
 
@@ -35,18 +31,18 @@ public class DirectSQLExpressionTransformer extends Transformer {
 	}
 
 
-	public static void metaworksCallback_changeMetadata(Type type) {
+	// public static void metaworksCallback_changeMetadata(Type type) {
 
-		FieldDescriptor fd1 = type.getFieldDescriptor("Type");
-		fd1.setInputter(new SelectInput(
-			new Object[]{ "String", "Integer", "Double", "Long" },
-			new Object[]{ 'S', 'I', 'L', 'D' }
-		));
+	// 	FieldDescriptor fd1 = type.getFieldDescriptor("Type");
+	// 	fd1.setInputter(new SelectInput(
+	// 		new Object[]{ "String", "Integer", "Double", "Long" },
+	// 		new Object[]{ 'S', 'I', 'L', 'D' }
+	// 	));
 		
-		FieldDescriptor fd2 = type.getFieldDescriptor("value");
-		fd2.setInputter(new TextInput());
+	// 	FieldDescriptor fd2 = type.getFieldDescriptor("value");
+	// 	fd2.setInputter(new TextInput());
 		
-	}
+	// }
 
 
 	@Override

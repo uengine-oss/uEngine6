@@ -2,7 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.Type;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;

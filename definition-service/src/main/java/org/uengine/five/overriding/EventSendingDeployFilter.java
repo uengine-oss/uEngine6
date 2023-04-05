@@ -1,6 +1,5 @@
 package org.uengine.five.overriding;
 
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.uengine.contexts.TextContext;
-import org.uengine.kernel.bpmn.face.ProcessVariableSelectorFace;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 
 /**

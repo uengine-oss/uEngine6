@@ -1,6 +1,5 @@
 package org.uengine.kernel.bpmn;
 
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -8,6 +7,7 @@ import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.processmanager.ProcessManagerRemote;
 
 import java.rmi.RemoteException;
@@ -19,7 +19,7 @@ import java.rmi.RemoteException;
 public class TimerEventJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        TimerEventJob timerEventJob = MetaworksRemoteService.getComponent(TimerEventJob.class);
+        TimerEventJob timerEventJob = GlobalContext.getComponent(TimerEventJob.class);
 
         try {
             timerEventJob.fireEvent(jobExecutionContext.getJobDetail().getJobDataMap());

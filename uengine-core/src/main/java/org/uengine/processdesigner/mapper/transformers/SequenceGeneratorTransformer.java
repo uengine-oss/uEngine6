@@ -9,13 +9,7 @@ import java.util.Map;
 
 import javax.swing.JRootPane;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
-import org.metaworks.inputter.TextInput;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.persistence.dao.DAOFactory;
-import org.uengine.persistence.dao.KeyGeneratorDAO;
 import org.uengine.processdesigner.mapper.Transformer;
 
 /**
@@ -36,17 +30,17 @@ public class SequenceGeneratorTransformer extends Transformer {
 	}
 
 
-	public static void metaworksCallback_changeMetadata(Type type) {
+	// public static void metaworksCallback_changeMetadata(Type type) {
 
-		FieldDescriptor fdSequence = type.getFieldDescriptor("Sequence");
-		fdSequence.setInputter(new SelectInput(
-				new Object[] {"BPM_ACLTABLE", "BPM_PROCDEF", "BPM_PROCDEFVER", "BPM_PROCINST", "BPM_PROCVAR", "BPM_ROLEMAPPING", "BPM_WORKITEM"}, 
-				new Object[] {"ACLTABLE", "PROCDEF", "PROCDEFVER", "PROCINST", "PROCVAR", "ROLEMAPPING", "WORKITEM"})
-		);
+	// 	FieldDescriptor fdSequence = type.getFieldDescriptor("Sequence");
+	// 	fdSequence.setInputter(new SelectInput(
+	// 			new Object[] {"BPM_ACLTABLE", "BPM_PROCDEF", "BPM_PROCDEFVER", "BPM_PROCINST", "BPM_PROCVAR", "BPM_ROLEMAPPING", "BPM_WORKITEM"}, 
+	// 			new Object[] {"ACLTABLE", "PROCDEF", "PROCDEFVER", "PROCINST", "PROCVAR", "ROLEMAPPING", "WORKITEM"})
+	// 	);
 		
-		FieldDescriptor fdType = type.getFieldDescriptor("sequence");
-		fdType.setInputter(new TextInput());
-	}
+	// 	FieldDescriptor fdType = type.getFieldDescriptor("sequence");
+	// 	fdType.setInputter(new TextInput());
+	// }
 
 
 	public String getSequence() {
@@ -62,12 +56,14 @@ public class SequenceGeneratorTransformer extends Transformer {
 	public Object transform(ProcessInstance instance, Map parameterMap, Map options) {
 		Object result = null;
 		try {
-			DAOFactory df = DAOFactory.getInstance(instance.getProcessTransactionContext());
 
-			KeyGeneratorDAO kgd = df.createKeyGenerator(getSequence(), new HashMap());
-			kgd.select();
-			kgd.next();
-			result = kgd.getKeyNumber();
+			//TODO: R
+			// DAOFactory df = DAOFactory.getInstance(instance.getProcessTransactionContext());
+
+			// KeyGeneratorDAO kgd = df.createKeyGenerator(getSequence(), new HashMap());
+			// kgd.select();
+			// kgd.next();
+			// result = kgd.getKeyNumber();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

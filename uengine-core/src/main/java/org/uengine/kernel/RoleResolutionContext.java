@@ -8,18 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.Type;
-import org.metaworks.annotation.ServiceMethod;
 
 /**
  * @author Jinyoung Jang
  */
 public abstract class RoleResolutionContext implements java.io.Serializable, Transferable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
-	public static void metaworksCallback_changeMetadata(Type type){
-		type.removeFieldDescriptor("Name");
-	}
 	
 	public RoleResolutionContext(){
 		
@@ -76,8 +70,4 @@ public abstract class RoleResolutionContext implements java.io.Serializable, Tra
 		return getDisplayName();
 	}
 	
-	@ServiceMethod(callByContent=true, target=ServiceMethodContext.TARGET_POPUP)
-	public Object openPicker() throws Exception{
-		return null;
-	}
 }

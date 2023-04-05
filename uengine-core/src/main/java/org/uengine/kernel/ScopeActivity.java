@@ -72,8 +72,6 @@ public class ScopeActivity extends FlowActivity implements MessageListener{
         }
 	}
 
-	EventHandlerPanel eventHandlerPanel;
-
 	EventHandler[] eventHandlers;
 		public EventHandler[] getEventHandlers() {
 			return eventHandlers;

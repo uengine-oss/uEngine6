@@ -1,12 +1,6 @@
 package org.uengine.modeling;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.metaworks.ContextAware;
-import org.metaworks.EventContext;
-import org.metaworks.MetaworksContext;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.ServiceMethod;
 
 import javax.persistence.Id;
 import java.io.Serializable;
@@ -14,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author jyj
  */
-public class RelationView implements Serializable, ContextAware, Cloneable {
+public class RelationView implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1234L;
     public final static String SHAPE_ID = "OG.shape.bpmn.C_Flow";
@@ -174,7 +168,6 @@ public class RelationView implements Serializable, ContextAware, Cloneable {
     @JsonIgnore
     IRelation relation;
 
-    @Face(ejsPath = "dwr/metaworks/genericfaces/HiddenFace.ejs")
     public IRelation getRelation() {
         return relation;
     }
@@ -183,66 +176,12 @@ public class RelationView implements Serializable, ContextAware, Cloneable {
         this.relation = relation;
     }
 
-    transient MetaworksContext metaworksContext;
-
-    public MetaworksContext getMetaworksContext() {
-        return metaworksContext;
-    }
-
-    public void setMetaworksContext(MetaworksContext metaworksContext) {
-        this.metaworksContext = metaworksContext;
-    }
-
     public RelationView() {
         setShapeId(SHAPE_ID);
     }
 
     public RelationView(IRelation relation) {
         this.setRelation(relation);
-    }
-
-    public void fill(Symbol symbol) {
-        this.setShapeId(symbol.getShapeId());
-        this.setWidth(symbol.getWidth());
-        this.setHeight(symbol.getHeight());
-    }
-
-    public static Symbol createSymbol() {
-        Symbol symbol = new Symbol();
-        symbol.setName("Flow");
-
-        return fillSymbol(symbol);
-    }
-
-    public static Symbol createSymbol(Class<? extends Symbol> symbolType) {
-        Symbol symbol = new Symbol();
-        try {
-            symbol = (Symbol) Thread.currentThread().getContextClassLoader().loadClass(symbolType.getName()).newInstance();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        symbol.setName("Flow");
-        return fillSymbol(symbol);
-    }
-
-    private static Symbol fillSymbol(Symbol symbol) {
-
-        symbol.setShapeId(SHAPE_ID);
-        symbol.setHeight(150);
-        symbol.setWidth(200);
-        symbol.setElementClassName(Relation.class.getName());
-        symbol.setShapeType("EDGE");
-
-        return symbol;
-    }
-
-    @ServiceMethod(callByContent = true, eventBinding = EventContext.EVENT_DBLCLICK, target = ServiceMethodContext.TARGET_POPUP)
-    public RelationPropertiesView showProperty() throws Exception {
-        return new RelationPropertiesView(this);
     }
 
     /**

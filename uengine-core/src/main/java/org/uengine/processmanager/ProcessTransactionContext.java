@@ -4,8 +4,6 @@ import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.util.dao.ConnectionFactory;
-import org.uengine.util.dao.DataSourceConnectionFactory;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -16,7 +14,7 @@ import java.util.Map;
 /**
  * Created by uengine on 2018. 11. 16..
  */
-public interface ProcessTransactionContext extends ConnectionFactory, TransactionContext {
+public interface ProcessTransactionContext extends TransactionContext {
     void addDebugInfo(Object message);
 
     StringBuilder getDebugInfo();
@@ -24,8 +22,6 @@ public interface ProcessTransactionContext extends ConnectionFactory, Transactio
     ServletRequest getServletRequest();
 
     ServletResponse getServletResponse();
-
-    ProcessManagerBean getProcessManager();
 
     boolean isManagedTransaction();
 
@@ -36,8 +32,6 @@ public interface ProcessTransactionContext extends ConnectionFactory, Transactio
     void addExecutedActivityInstanceContext(ActivityInstanceContext activityInstanceContext);
 
     Map<String, ProcessInstance> getProcessInstancesInTransaction();
-
-    Connection createManagedExternalConnection(DataSourceConnectionFactory connectionFactory) throws Exception;
 
     void registerProcessInstance(DefaultProcessInstance defaultProcessInstance);
 

@@ -16,7 +16,6 @@ import org.uengine.contexts.TextContext;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.VersionManager;
-import org.uengine.uml.model.ClassDefinition;
 import org.uengine.util.UEngineUtil;
 
 /**

@@ -1,10 +1,5 @@
 package org.uengine.modeling.resource;
 
-import org.metaworks.MetaworksContext;
-import org.metaworks.ServiceMethodContext;
-import org.metaworks.annotation.*;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.widget.ModalWindow;
 
 import java.util.*;
 
@@ -33,7 +28,6 @@ public class ContainerResource extends DefaultResource implements IContainer {
 //		super.open(resourceControlDelegate);
 //	}
 
-	@Children
 //	@Available(when = MetaworksContext.WHEN_VIEW)
 	public List<IResource> getChildren() {
 		if (children == null) {
@@ -50,7 +44,6 @@ public class ContainerResource extends DefaultResource implements IContainer {
 		}catch (Exception e){}
 	}
 
-	@Field(descriptor = "container")
 	public boolean isContainer() {
 		return isContainer;
 	}
@@ -82,10 +75,6 @@ public class ContainerResource extends DefaultResource implements IContainer {
 		}
 	}
 
-	@Order(6)
-	@Face(displayName="refresh")
-	@Available(condition="metaworksContext.how == 'tree' && metaworksContext.where == 'navigator'")
-	@ServiceMethod(callByContent=true, eventBinding="refresh", bindingHidden=true, inContextMenu=true, target=ServiceMethodContext.TARGET_SELF)
 	public void refresh() throws Exception {
 		this.setChildren(this.list());
 	}
@@ -168,28 +157,7 @@ public class ContainerResource extends DefaultResource implements IContainer {
 
 	}
 
-	@Override
-	public void initMetaworksContext(MetaworksContext metaworksContext) {
-		List<IResource> resourceList = this.getChildren();
-		Iterator<IResource> resourceIterator = resourceList.iterator();
 
-		this.setMetaworksContext(metaworksContext);
-
-		while(resourceIterator.hasNext()){
-
-			IResource resourceItem = resourceIterator.next();
-
-			if(resourceItem instanceof ContainerResource){
-
-				((ContainerResource)resourceItem).initMetaworksContext(metaworksContext);
-
-			}else{
-
-				resourceItem.setMetaworksContext(metaworksContext);
-
-			}
-		}
-	}
 
 	protected void filterResource(IResource resource){
 		List<IResource> resourceList = this.getChildren();
@@ -222,27 +190,5 @@ public class ContainerResource extends DefaultResource implements IContainer {
 //	}
 
 
-	@Override
-	@Hidden
-	@ServiceMethod(target=ServiceMethod.TARGET_NONE)
-	public void open(@AutowiredFromClient ResourceControlDelegate resourceControlDelegate) throws Exception {
-	//	super.open(resourceControlDelegate);
-	}
-
-	@ServiceMethod(target = ServiceMethod.TARGET_POPUP, inContextMenu = true)
-	public VersionManager versionManager() throws Exception {
-
-		String[] paths = getPath().split("/");
-		String appName = paths[0];
-		String moduleName = paths.length > 1 ? paths[1] : null;
-
-		VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
-		versionManager.load(appName, moduleName);
-
-		MetaworksRemoteService.wrapReturn(new ModalWindow(versionManager));
-
-		return versionManager;
-	}
-
-
+	
 }

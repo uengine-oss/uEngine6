@@ -1,8 +1,6 @@
 package org.uengine.modeling.resource;
 
 import org.apache.commons.io.FileUtils;
-import org.metaworks.MetaworksContext;
-import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -49,7 +47,7 @@ public abstract class AbstractStorage implements Storage{
     }
 
     protected String getTenantBasePath() {
-        String tenantId = TenantContext.getThreadLocalInstance().getTenantId();
+        String tenantId = null;// TenantContext.getThreadLocalInstance().getTenantId();
 
         if(tenantId==null){
             tenantId = "default";
