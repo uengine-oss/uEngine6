@@ -20,17 +20,17 @@ public class HumanApprovalLineActivity extends ScopeActivity {
 
 	public final static String KEY_APPR_LINE_STATUS = "KEY_APPR_LINE_STATUS";
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("ReferencerRole");
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("ReferencerRole");
 
-		fd = type.getFieldDescriptor("ReceiverRole");
+	// 	fd = type.getFieldDescriptor("ReceiverRole");
 	
-		//TODO loopingOption
-		fd = type.getFieldDescriptor("LoopingOption");
-		fd.setInputter(new RadioInput(new String[]{"Auto","Loop","Finish"}, new Integer[]{HumanApprovalLineActivity.LOOPINGOPTION_AUTO, HumanApprovalLineActivity.LOOPINGOPTION_REPEATONREJECT, HumanApprovalLineActivity.LOOPINGOPTION_FINISHONREJECT}));
-		//fd.setDisplayName("");
+	// 	//TODO loopingOption
+	// 	fd = type.getFieldDescriptor("LoopingOption");
+	// 	fd.setInputter(new RadioInput(new String[]{"Auto","Loop","Finish"}, new Integer[]{HumanApprovalLineActivity.LOOPINGOPTION_AUTO, HumanApprovalLineActivity.LOOPINGOPTION_REPEATONREJECT, HumanApprovalLineActivity.LOOPINGOPTION_FINISHONREJECT}));
+	// 	//fd.setDisplayName("");
 		
-	}
+	// }
 	
 	public HumanApprovalLineActivity(){
 		setName("");

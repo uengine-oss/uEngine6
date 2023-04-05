@@ -17,20 +17,20 @@ public class HTTPInvocationActivity extends DefaultActivity{
 		setName("HTTP");
 	}
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd;
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd;
 		
-		fd = type.getFieldDescriptor("InvocationType");	
-		fd.setInputter(
-			new RadioInput(
-				new String[]{"GET", "POST"}, 
-				new Integer[]{
-					new Integer(INVOC_TYPE_GET), 
-					new Integer(INVOC_TYPE_POST)
-				}
-			)
-		);
-	}
+	// 	fd = type.getFieldDescriptor("InvocationType");	
+	// 	fd.setInputter(
+	// 		new RadioInput(
+	// 			new String[]{"GET", "POST"}, 
+	// 			new Integer[]{
+	// 				new Integer(INVOC_TYPE_GET), 
+	// 				new Integer(INVOC_TYPE_POST)
+	// 			}
+	// 		)
+	// 	);
+	// }
 
 	String host;
 

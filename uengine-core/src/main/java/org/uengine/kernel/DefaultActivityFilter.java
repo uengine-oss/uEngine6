@@ -13,10 +13,10 @@ public class DefaultActivityFilter implements ActivityFilter{
 
 	ActivityFilter activityFilter;
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("AfterExecuteScript");
-		fd.setInputter(new DateInput());
-	}
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("AfterExecuteScript");
+	// 	fd.setInputter(new DateInput());
+	// }
 	
 	protected void runScript(String script, Activity activity, ProcessInstance instance) throws BSFException{
 		BSFManager manager = new BSFManager();

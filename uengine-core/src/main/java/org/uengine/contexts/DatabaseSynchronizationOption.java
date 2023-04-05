@@ -12,7 +12,6 @@ import org.uengine.processmanager.DefaultTransactionContext;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.util.dao.ConnectiveDAO;
 import org.uengine.util.dao.IDAO;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class DatabaseSynchronizationOption implements SpecializedVariableValue{
 	

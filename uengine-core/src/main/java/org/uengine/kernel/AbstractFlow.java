@@ -1,5 +1,7 @@
 package org.uengine.kernel;
 
+import org.uengine.modeling.Relation;
+
 /**
  * Created by uengine on 2018. 3. 2..
  */

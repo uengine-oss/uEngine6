@@ -10,7 +10,7 @@ import org.uengine.processdesigner.mapper.TransformerMapping;
 /**
  * @author Jinyoung Jang
  */
-public class ParameterContext implements Serializable , ContextAware{
+public class ParameterContext implements Serializable{
 	
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
@@ -21,7 +21,6 @@ public class ParameterContext implements Serializable , ContextAware{
 
 
 	public ParameterContext(){
-		this.setMetaworksContext(new MetaworksContext());
 	}
 	
 	TextContext argument = org.uengine.contexts.TextContext.createInstance();

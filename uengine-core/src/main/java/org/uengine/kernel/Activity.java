@@ -29,6 +29,7 @@ import org.springframework.context.expression.MapAccessor;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
+import org.uengine.modeling.ElementView;
 // import org.uengine.modeling.ElementView;
 // import org.uengine.modeling.IElement;
 //import org.uengine.modeling.IIntegrityElement;
@@ -97,14 +98,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 	public static final String STATUS_RESERVED = "Reserved";
 	static ObjectMapper objectMapper = new ObjectMapper();
 
-
-	transient MetaworksContext metaworksContext;
-		public MetaworksContext getMetaworksContext() {
-			return metaworksContext;
-		}
-		public void setMetaworksContext(MetaworksContext metaworksContext) {
-			this.metaworksContext = metaworksContext;
-		}
 		
 	public int getLoopBackCount(ProcessInstance instance) throws Exception {
 	    if (instance == null) {
@@ -442,8 +435,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 	public Activity(){
 		setRetryLimit(0);
 		setRetryDelay(60);
-		
-		setMetaworksContext(new MetaworksContext());
 	}
 
 	public Activity(String activityName){	// for manual-coding
@@ -489,7 +480,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 	 * returns the process definition of this (child) activity.
 	 * @return
 	 */
-	@Hidden
 	@JsonIgnore
 	public ProcessDefinition getProcessDefinition(){
 		Activity root = getRootActivity();
@@ -1763,7 +1753,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 	@JsonIgnore
 	private transient List<SequenceFlow> outgoingSequenceFlows;
 	
-	@Hidden
 	public List<SequenceFlow> getIncomingSequenceFlows() {
 		if (incomingSequenceFlows == null) {
 			incomingSequenceFlows = new ArrayList<SequenceFlow>();
@@ -1775,7 +1764,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 		this.incomingSequenceFlows = incomingSequenceFlows;
 	}
 	
-	@Hidden
 	public List<SequenceFlow> getOutgoingSequenceFlows() {
 		if (outgoingSequenceFlows == null) {
 			outgoingSequenceFlows = new ArrayList<SequenceFlow>();
@@ -1891,7 +1879,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 
 
 	transient boolean checked;
-		@Hidden
 		public boolean isChecked() {
 			return checked;
 		}
@@ -1900,7 +1887,6 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 		}
 
 	ElementView elementView;
-		//@Hidden
 		public ElementView getElementView(){
 			return this.elementView;
 		}

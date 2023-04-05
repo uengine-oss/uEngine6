@@ -13,7 +13,7 @@ import org.metaworks.annotation.Group;
 import org.metaworks.annotation.Hidden;
 
 
-public class ReceiveActivity extends DefaultActivity implements MessageListener, NeedArrangementToSerialize, IModelingTimeSensitive {
+public class ReceiveActivity extends DefaultActivity implements MessageListener, NeedArrangementToSerialize {
     private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
     String message;
@@ -248,116 +248,116 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     ///// implementation of ModelingTimeSensitive features. /////
 
-    MappingContext mapper;
+    // MappingContext mapper;
 
-    public MappingContext getMapper() {
-        return mapper;
-    }
+    // public MappingContext getMapper() {
+    //     return mapper;
+    // }
 
-    public void setMapper(MappingContext mapper) {
-        this.mapper = mapper;
-    }
+    // public void setMapper(MappingContext mapper) {
+    //     this.mapper = mapper;
+    // }
 
-    MappingContext mapperIn;
+    // MappingContext mapperIn;
 
-    public MappingContext getMapperIn() {
-        return mapperIn;
-    }
+    // public MappingContext getMapperIn() {
+    //     return mapperIn;
+    // }
 
-    public void setMapperIn(MappingContext mapperIn) {
-        this.mapperIn = mapperIn;
-    }
-
-
-    ParameterContext[] mappingContexts;
-
-    public ParameterContext[] getMappingContexts() {
-        return mappingContexts;
-    }
-
-    public void setMappingContexts(ParameterContext[] mappingContexts) {
-        this.mappingContexts = mappingContexts;
-    }
-
-    ParameterContext[] mappingContextsIn;
-
-    public ParameterContext[] getMappingContextsIn() {
-        return mappingContextsIn;
-    }
-
-    public void setMappingContextsIn(ParameterContext[] mappingContextsIn) {
-        this.mappingContextsIn = mappingContextsIn;
-    }
+    // public void setMapperIn(MappingContext mapperIn) {
+    //     this.mapperIn = mapperIn;
+    // }
 
 
-    protected void dataMapping(ProcessInstance instance, ParameterContext[] mappingContexts) throws Exception {
+    // ParameterContext[] mappingContexts;
 
-        if (mappingContexts == null) return;
+    // public ParameterContext[] getMappingContexts() {
+    //     return mappingContexts;
+    // }
 
-        for (ParameterContext param : mappingContexts) {
+    // public void setMappingContexts(ParameterContext[] mappingContexts) {
+    //     this.mappingContexts = mappingContexts;
+    // }
 
-            String srcVariableName = null;
-            String targetFieldName = param.getArgument().getText();
-            Object value = null;
+    // ParameterContext[] mappingContextsIn;
 
-            if (param.getVariable() == null && param.getTransformerMapping() != null) {
-                value = param.getTransformerMapping().getTransformer().letTransform(instance, param.getTransformerMapping().getLinkedArgumentName());
-            } else {
-                srcVariableName = param.getVariable().getName();
-                if (srcVariableName.startsWith("[activities]") || srcVariableName.startsWith("[instance]") || srcVariableName.startsWith("[roles]")) {
-                    value = instance.getBeanProperty(srcVariableName); // varA
-                } else {
-                    String[] wholePartPath = srcVariableName.replace('.', '@').split("@");
-                    // wholePartPath.length >= 1 이 되는 이유는 안쪽에 객체의 값을 참조하려고 하는 부분이기때문에 따로 값을 가져와야함
-                    if (wholePartPath.length >= 2) {
-                        String rootObjectName = wholePartPath[1];
-                        if (wholePartPath.length > 2) {
-                            for (int j = 2; j < wholePartPath.length; j++) {
-                                rootObjectName += "." + wholePartPath[j];
-                            }
-                        }
-                        // 이걸 바로 호출
-                        Object rootObject = instance.getBeanProperty(wholePartPath[0]);
-                        if (rootObject != null) {
-                            value = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
-                        }
-                    } else {
-                        value = instance.getBeanProperty(srcVariableName); // varA
-                    }
-                }
-            }
+    // public ParameterContext[] getMappingContextsIn() {
+    //     return mappingContextsIn;
+    // }
 
-            instance.setBeanProperty(targetFieldName, value);
-        }
+    // public void setMappingContextsIn(ParameterContext[] mappingContextsIn) {
+    //     this.mappingContextsIn = mappingContextsIn;
+    // }
 
-    }
 
-    @Override
-    public void onModelingTime() {
-        mapper = new MappingContext(this, null, getMappingContexts());
-        mapperIn = new MappingContext(this, null, getMappingContexts());
+    // protected void dataMapping(ProcessInstance instance, ParameterContext[] mappingContexts) throws Exception {
 
-        autowire(mapper);
-        autowire(mapperIn);
-    }
+    //     if (mappingContexts == null) return;
 
-    @Override
-    public void afterModelingTime() {
-        ParameterContext[] mappingElements =
-                mapper.getMappingCanvas().getMappingElements();
+    //     for (ParameterContext param : mappingContexts) {
 
-        setMappingContexts(mappingElements);
+    //         String srcVariableName = null;
+    //         String targetFieldName = param.getArgument().getText();
+    //         Object value = null;
 
-        setMapper(null);
+    //         if (param.getVariable() == null && param.getTransformerMapping() != null) {
+    //             value = param.getTransformerMapping().getTransformer().letTransform(instance, param.getTransformerMapping().getLinkedArgumentName());
+    //         } else {
+    //             srcVariableName = param.getVariable().getName();
+    //             if (srcVariableName.startsWith("[activities]") || srcVariableName.startsWith("[instance]") || srcVariableName.startsWith("[roles]")) {
+    //                 value = instance.getBeanProperty(srcVariableName); // varA
+    //             } else {
+    //                 String[] wholePartPath = srcVariableName.replace('.', '@').split("@");
+    //                 // wholePartPath.length >= 1 이 되는 이유는 안쪽에 객체의 값을 참조하려고 하는 부분이기때문에 따로 값을 가져와야함
+    //                 if (wholePartPath.length >= 2) {
+    //                     String rootObjectName = wholePartPath[1];
+    //                     if (wholePartPath.length > 2) {
+    //                         for (int j = 2; j < wholePartPath.length; j++) {
+    //                             rootObjectName += "." + wholePartPath[j];
+    //                         }
+    //                     }
+    //                     // 이걸 바로 호출
+    //                     Object rootObject = instance.getBeanProperty(wholePartPath[0]);
+    //                     if (rootObject != null) {
+    //                         value = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
+    //                     }
+    //                 } else {
+    //                     value = instance.getBeanProperty(srcVariableName); // varA
+    //                 }
+    //             }
+    //         }
 
-        ////
+    //         instance.setBeanProperty(targetFieldName, value);
+    //     }
 
-        ParameterContext[] mappingElementsIn =
-                mapperIn.getMappingCanvas().getMappingElements();
+    // }
 
-        setMappingContexts(mappingElementsIn);
+    // @Override
+    // public void onModelingTime() {
+    //     mapper = new MappingContext(this, null, getMappingContexts());
+    //     mapperIn = new MappingContext(this, null, getMappingContexts());
 
-        setMapperIn(null);
-    }
+    //     autowire(mapper);
+    //     autowire(mapperIn);
+    // }
+
+    // @Override
+    // public void afterModelingTime() {
+    //     ParameterContext[] mappingElements =
+    //             mapper.getMappingCanvas().getMappingElements();
+
+    //     setMappingContexts(mappingElements);
+
+    //     setMapper(null);
+
+    //     ////
+
+    //     ParameterContext[] mappingElementsIn =
+    //             mapperIn.getMappingCanvas().getMappingElements();
+
+    //     setMappingContexts(mappingElementsIn);
+
+    //     setMapperIn(null);
+    // }
 
 }

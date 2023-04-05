@@ -591,5 +591,13 @@ System.out.println("GlobalContext::deserialize: the case that source is a busine
 
 	}
 
+    public static <T> T getComponent(Class<T> clazz, Object[] objects) {
+        return null;
+    }
+
+    public static <T> T getComponent(Class<T> clazz) {
+        return getComponent(clazz, null);
+    }
+
 
 }

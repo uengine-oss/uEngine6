@@ -130,114 +130,114 @@ public class Evaluate extends Condition{
     			}else{
     				String compareString = (String)val;
     				compareVal = instance.getProcessDefinition().getProcessVariable(compareString).get(instance, "");
-    				if(compareVal instanceof ITool){
-    					ObjectInstance returnValObjInst = (ObjectInstance) MetaworksRemoteService.getInstance().getMetaworksType(compareVal.getClass().getName() ).metaworks2Type().createInstance();
-    					returnValObjInst.setObject(compareVal);
-    					FieldDescriptor fields[] = returnValObjInst.getFieldDescriptors();
-    					Object keyVal = null;
-    					String [] wholePartPath = compareString.replace('.','@').split("@");
-    					if( wholePartPath.length >= 2 ){
-    						Object rootObject = instance.getBeanProperty(wholePartPath[0]);
-    						String rootObjectName = wholePartPath[1] ;
-    						if( wholePartPath.length > 2 ){
-    							for(int j = 2 ; j < wholePartPath.length; j++){
-    								rootObjectName += "."+ wholePartPath[j];
-    							}
-    						}
-    						if( rootObject != null ){
-    							compareVal = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
-    						}
-    					}else{
-    						for(int j=0; j<fields.length; j++){
-    							FieldDescriptor fd = fields[j];
-    							if( key.equalsIgnoreCase( compareVal.getClass().getSimpleName() + "." + fd.getName() ) ){
-    								compareVal = returnValObjInst.getFieldValue(fd.getName());
-    							}
-    						}
-    					}
-    				}
+    				// if(compareVal instanceof ITool){
+    				// 	ObjectInstance returnValObjInst = (ObjectInstance) MetaworksRemoteService.getInstance().getMetaworksType(compareVal.getClass().getName() ).metaworks2Type().createInstance();
+    				// 	returnValObjInst.setObject(compareVal);
+    				// 	FieldDescriptor fields[] = returnValObjInst.getFieldDescriptors();
+    				// 	Object keyVal = null;
+    				// 	String [] wholePartPath = compareString.replace('.','@').split("@");
+    				// 	if( wholePartPath.length >= 2 ){
+    				// 		Object rootObject = instance.getBeanProperty(wholePartPath[0]);
+    				// 		String rootObjectName = wholePartPath[1] ;
+    				// 		if( wholePartPath.length > 2 ){
+    				// 			for(int j = 2 ; j < wholePartPath.length; j++){
+    				// 				rootObjectName += "."+ wholePartPath[j];
+    				// 			}
+    				// 		}
+    				// 		if( rootObject != null ){
+    				// 			compareVal = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
+    				// 		}
+    				// 	}else{
+    				// 		for(int j=0; j<fields.length; j++){
+    				// 			FieldDescriptor fd = fields[j];
+    				// 			if( key.equalsIgnoreCase( compareVal.getClass().getSimpleName() + "." + fd.getName() ) ){
+    				// 				compareVal = returnValObjInst.getFieldValue(fd.getName());
+    				// 			}
+    				// 		}
+    				// 	}
+    				// }
     			}
     		}
     		// compare with ComplexType
-    		if(returnVal instanceof ITool){
+    		// if(returnVal instanceof ITool){
     			
-    			ObjectInstance returnValObjInst = (ObjectInstance) MetaworksRemoteService.getInstance().getMetaworksType(returnVal.getClass().getName() ).metaworks2Type().createInstance();
-    			returnValObjInst.setObject(returnVal);
-    			FieldDescriptor fields[] = returnValObjInst.getFieldDescriptors();
-    			Object keyVal = null;
-    			String [] wholePartPath = getKey().replace('.','@').split("@");
-    			if( wholePartPath.length >= 2 ){
-    				Object rootObject = instance.getBeanProperty(wholePartPath[0]);
-    				String rootObjectName = wholePartPath[1] ;
-    				if( wholePartPath.length > 2 ){
-    					for(int j = 2 ; j < wholePartPath.length; j++){
-    						rootObjectName += "."+ wholePartPath[j];
-    					}
-    				}
-    				if( rootObject != null ){
-    					keyVal = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
-    				}
-    			}else{
-    				for(int j=0; j<fields.length; j++){
-    					FieldDescriptor fd = fields[j];
-    					if( key.equalsIgnoreCase( returnVal.getClass().getSimpleName() + "." + fd.getName() ) ){
-    						keyVal = returnValObjInst.getFieldValue(fd.getName());
-    					}
-    				}
-    			}
-    			if(keyVal != null){
-    				if( condition.equals( "!=")){
-    					return !( keyVal.equals(compareVal) );
-    				}
-    				//use default comparator
-    				if( condition.equals( "==")){
-    					return keyVal.equals(compareVal);
-    				}
-    				if(!( keyVal instanceof Comparable) && (condition.startsWith(">") || condition.startsWith("<")))
-    					throw new UEngineException("The value type ["+ returnVal.getClass() +"] cannot be compared.");
+    		// 	ObjectInstance returnValObjInst = (ObjectInstance) MetaworksRemoteService.getInstance().getMetaworksType(returnVal.getClass().getName() ).metaworks2Type().createInstance();
+    		// 	returnValObjInst.setObject(returnVal);
+    		// 	FieldDescriptor fields[] = returnValObjInst.getFieldDescriptors();
+    		// 	Object keyVal = null;
+    		// 	String [] wholePartPath = getKey().replace('.','@').split("@");
+    		// 	if( wholePartPath.length >= 2 ){
+    		// 		Object rootObject = instance.getBeanProperty(wholePartPath[0]);
+    		// 		String rootObjectName = wholePartPath[1] ;
+    		// 		if( wholePartPath.length > 2 ){
+    		// 			for(int j = 2 ; j < wholePartPath.length; j++){
+    		// 				rootObjectName += "."+ wholePartPath[j];
+    		// 			}
+    		// 		}
+    		// 		if( rootObject != null ){
+    		// 			keyVal = UEngineUtil.getBeanProperty(rootObject, rootObjectName);
+    		// 		}
+    		// 	}else{
+    		// 		for(int j=0; j<fields.length; j++){
+    		// 			FieldDescriptor fd = fields[j];
+    		// 			if( key.equalsIgnoreCase( returnVal.getClass().getSimpleName() + "." + fd.getName() ) ){
+    		// 				keyVal = returnValObjInst.getFieldValue(fd.getName());
+    		// 			}
+    		// 		}
+    		// 	}
+    		// 	if(keyVal != null){
+    		// 		if( condition.equals( "!=")){
+    		// 			return !( keyVal.equals(compareVal) );
+    		// 		}
+    		// 		//use default comparator
+    		// 		if( condition.equals( "==")){
+    		// 			return keyVal.equals(compareVal);
+    		// 		}
+    		// 		if(!( keyVal instanceof Comparable) && (condition.startsWith(">") || condition.startsWith("<")))
+    		// 			throw new UEngineException("The value type ["+ returnVal.getClass() +"] cannot be compared.");
     
-    				if(keyVal instanceof Comparable){
-    					int compareResult = 0;
-    					try {
-    						/*
-    						 * example : 숫자형을 compareTo 했을때 데이터형이 달라서 String 으로 바꿔서
-    						 * 비교를 한다면 예로 9 와 10을 비교하면 음수가 나오는것이 아니라 양수가 나오게 된다.
-    						 * 따라서 숫자형일때는 그형에 맞춰서 비교를 하고 나머지일 경우는 객체 자체를 비교
-    						 * 그래도 에러가 난다면 문자열로 형변환한 다음에 비교를 하도록 수정하였다.
-    						 */
-    						if (compareVal instanceof Integer) {
-    							compareResult = ((Integer)Integer.parseInt(String.valueOf(keyVal))).compareTo((Integer)compareVal);
-    						} else if (compareVal instanceof Long) {
-    							compareResult = ((Long)Long.parseLong(String.valueOf(keyVal))).compareTo((Long)compareVal);
-    						} else if (compareVal instanceof Float) {
-    							compareResult = ((Float)Float.parseFloat(String.valueOf(keyVal))).compareTo((Float)compareVal);
-    						} else if (compareVal instanceof Double) {
-    							compareResult = ((Double)Double.parseDouble(String.valueOf(keyVal))).compareTo((Double)compareVal);
-    						} else {
-    							compareResult = ((Comparable)keyVal).compareTo(compareVal);	
-    						}
-    					} catch(Exception e) {
-    						compareResult = String.valueOf(keyVal).compareTo(String.valueOf(compareVal));
-    					}
+    		// 		if(keyVal instanceof Comparable){
+    		// 			int compareResult = 0;
+    		// 			try {
+    		// 				/*
+    		// 				 * example : 숫자형을 compareTo 했을때 데이터형이 달라서 String 으로 바꿔서
+    		// 				 * 비교를 한다면 예로 9 와 10을 비교하면 음수가 나오는것이 아니라 양수가 나오게 된다.
+    		// 				 * 따라서 숫자형일때는 그형에 맞춰서 비교를 하고 나머지일 경우는 객체 자체를 비교
+    		// 				 * 그래도 에러가 난다면 문자열로 형변환한 다음에 비교를 하도록 수정하였다.
+    		// 				 */
+    		// 				if (compareVal instanceof Integer) {
+    		// 					compareResult = ((Integer)Integer.parseInt(String.valueOf(keyVal))).compareTo((Integer)compareVal);
+    		// 				} else if (compareVal instanceof Long) {
+    		// 					compareResult = ((Long)Long.parseLong(String.valueOf(keyVal))).compareTo((Long)compareVal);
+    		// 				} else if (compareVal instanceof Float) {
+    		// 					compareResult = ((Float)Float.parseFloat(String.valueOf(keyVal))).compareTo((Float)compareVal);
+    		// 				} else if (compareVal instanceof Double) {
+    		// 					compareResult = ((Double)Double.parseDouble(String.valueOf(keyVal))).compareTo((Double)compareVal);
+    		// 				} else {
+    		// 					compareResult = ((Comparable)keyVal).compareTo(compareVal);	
+    		// 				}
+    		// 			} catch(Exception e) {
+    		// 				compareResult = String.valueOf(keyVal).compareTo(String.valueOf(compareVal));
+    		// 			}
     
-    					if( condition.equals(">")){
-    						return (compareResult>0);
-    					}
+    		// 			if( condition.equals(">")){
+    		// 				return (compareResult>0);
+    		// 			}
     						
-    					if( condition.equals("<")){
-    						return (compareResult<0);
-    					}
+    		// 			if( condition.equals("<")){
+    		// 				return (compareResult<0);
+    		// 			}
     					
-    					if( condition.equals(">=")){
-    						return (compareResult>0 || compareResult==0);
-    					}
+    		// 			if( condition.equals(">=")){
+    		// 				return (compareResult>0 || compareResult==0);
+    		// 			}
     						
-    					if( condition.equals("<=")){
-    						return (compareResult<0 || compareResult==0);
-    					}
-    				}
-    			}
-    		}	// end compare with ComplexType
+    		// 			if( condition.equals("<=")){
+    		// 				return (compareResult<0 || compareResult==0);
+    		// 			}
+    		// 		}
+    		// 	}
+    		// }	// end compare with ComplexType
     		if(val instanceof ProcessVariable){
     			ProcessVariable variable = (ProcessVariable)val;
     			compareVal = instance.getProcessDefinition().getProcessVariable(variable.getName()).get(instance, "");
@@ -453,16 +453,6 @@ public class Evaluate extends Condition{
 		return contain;
 	}
 
-
-	@ServiceMethod(target = ServiceMethodContext.TARGET_POPUP, callByContent = true, inContextMenu = true)
-	public ModalWindow edit(@AutowiredFromClient ProcessVariablePanel processVariablePanel){
-		ModalWindow modalWindow = new ModalWindow(this);
-		modalWindow.setMetaworksContext(new MetaworksContext());
-		modalWindow.getMetaworksContext().setWhen(MetaworksContext.WHEN_EDIT);
-		modalWindow.getMetaworksContext().setHow("full-fledged");
-
-		return modalWindow;
-	}
 
 
 }

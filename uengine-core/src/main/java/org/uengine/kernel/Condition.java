@@ -2,14 +2,15 @@ package org.uengine.kernel;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Vector;
+
+import org.uengine.contexts.TextContext;
 
 
 /**
  * @author Jinyoung Jang
  */
 
-public abstract class Condition implements Validatable, Serializable, ContextAware{
+public abstract class Condition implements Validatable, Serializable{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	public abstract boolean isMet(ProcessInstance instance, String scope) throws Exception;
 	public ValidationContext validate(Map options){
@@ -32,8 +33,6 @@ public abstract class Condition implements Validatable, Serializable, ContextAwa
 	}
 
 	public String getName(){
-		if(getMetaworksContext()!=null && "removed".equals(getMetaworksContext().getWhere()))
-			return "<strike> "+toString()+" </strike>";
 
 		return toString();
 	}

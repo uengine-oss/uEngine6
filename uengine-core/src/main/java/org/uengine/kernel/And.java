@@ -60,8 +60,6 @@ public class And extends Condition{
 
 	
 	public Condition[] getConditions(){
-		refresh();
-
 		if(conditionsVt==null)
 			return null;
 

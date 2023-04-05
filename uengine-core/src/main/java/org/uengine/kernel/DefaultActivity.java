@@ -28,8 +28,6 @@ public class DefaultActivity extends Activity{
 
 
 	String document;
-	@Face(ejsPath = "dwr/metaworks/genericfaces/richText.ejs", options={"rows", "cols"}, values = {"7", "130"})
-	@Group(name = "Documentation")
 		public String getDocument() {
 			return document;
 		}

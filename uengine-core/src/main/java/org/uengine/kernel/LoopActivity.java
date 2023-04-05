@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.uengine.modeling.ElementView;
+
 
 
 /**
@@ -133,23 +135,6 @@ public class LoopActivity extends ComplexActivity{
 		return vc;
 	}
 	
-	public ElementView createView(){
-		ElementView elementView = null;
-		try {
-			elementView = (ElementView)Thread.currentThread().getContextClassLoader().loadClass("org.uengine.kernel.designer.ui.LoopActivityView").newInstance();
-			elementView.setElement(this);
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return elementView;
-	}
 
 }
 

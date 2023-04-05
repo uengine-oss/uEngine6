@@ -11,6 +11,8 @@ import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.util.*;
 import org.uengine.webservices.worklist.WorkList;
 
+import net.bytebuddy.agent.builder.AgentBuilder.CircularityLock.Global;
+
 /**
  * @author Jinyoung Jang
  */
@@ -207,7 +209,8 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 					@Override
 					public void afterCommit(TransactionContext tx) throws Exception {
 
-						IActivityEventQueue activityEventQueue = MetaworksRemoteService.getComponent(IActivityEventQueue.class);
+						//TODO: R
+						IActivityEventQueue activityEventQueue = GlobalContext.getComponent(IActivityEventQueue.class);
 
 						activityEventQueue.queue(instanceIdAndExecutionScopeThatTime, activity.getTracingTag(), 0, null);
 					}
@@ -578,7 +581,7 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 			return new DefaultProcessInstance(def, name, options);
 		}
 
-		return MetaworksRemoteService.getInstance().getBeanFactory().getBean(
+		return GlobalContext.getComponent(
 				org.uengine.kernel.ProcessInstance.class,
 				new Object[]{
 						def,

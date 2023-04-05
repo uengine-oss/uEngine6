@@ -23,7 +23,7 @@ import org.uengine.util.UEngineUtil;
  * @author Jinyoung Jang
  */
 
-public class ProcessVariable implements java.io.Serializable, NeedArrangementToSerialize, Cloneable, ContextAware, SerializationSensitive, Validatable {
+public class ProcessVariable implements java.io.Serializable, NeedArrangementToSerialize, Cloneable, Validatable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
 
