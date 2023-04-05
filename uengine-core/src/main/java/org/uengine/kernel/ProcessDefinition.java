@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 
 //@Face(displayName="BPMN")
-public class ProcessDefinition extends ScopeActivity implements Serializable, IDefinitionModel, Describable, HasThumbnail {
+public class ProcessDefinition extends ScopeActivity implements Serializable, IDefinitionModel {
     
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	private transient static ActivityFilter[] defaultActivityFilters;

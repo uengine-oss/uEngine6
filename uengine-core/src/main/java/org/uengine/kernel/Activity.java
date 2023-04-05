@@ -47,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Jinyoung Jang
  * @see org.uengine.kernel.ComplexActivity
  */
-public abstract class Activity implements /*IElement,*/ Validatable, java.io.Serializable, Cloneable, ContextAware, IIntegrityElement{
+public abstract class Activity implements /*IElement,*/ Validatable, java.io.Serializable, Cloneable{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	
 	final public static String ACTIVITY_DONE=		"activity done";
