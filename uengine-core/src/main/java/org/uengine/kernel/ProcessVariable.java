@@ -231,8 +231,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		org.uengine.util.UEngineUtil.initializeProperties(this, settings);
 	}
 	public ProcessVariable(){
-		this.setMetaworksContext(new MetaworksContext());
-		this.getMetaworksContext().setWhen(MetaworksContext.WHEN_NEW);
 		this.setDefaultValue(new String());
 
 //		this.setUuid(UUID.randomUUID().toString());
@@ -476,105 +474,6 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 		}catch(Exception e){
 			throw new RuntimeException(e);
 		}
-	}
-
-	public Serializable createNewValue(){
-
-		Serializable processVariableValue = null;
-
-		Class variableType = getType();
-
-//		if(getDefaultValue()!=null)
-//			return (Serializable) getDefaultValue();
-
-		if ((variableType == ComplexType.class || variableType == null) && typeClassName!=null){
-			if(typeClassName.indexOf("/") > 0) {
-
-				ResourceManager resourceManager = MetaworksRemoteService.getComponent(ResourceManager.class);
-
-
-				try {
-
-					VersionManager versionManager = MetaworksRemoteService.getComponent(VersionManager.class);
-					versionManager.setAppName("codi");
-					String resourcePath = versionManager.getProductionResourcePath(getTypeClassName());
-
-					///// Need to be cached.
-
-					Object variableObject = resourceManager.getStorage().getObject(new DefaultResource(resourcePath));
-
-					if(variableObject instanceof ClassDefinition){
-
-						ClassDefinition classDefinition = null;
-						classDefinition = (ClassDefinition) variableObject;
-
-						processVariableValue = classDefinition.createObjectInstance();
-					}else if(variableObject instanceof JavaClassDefinition){
-						Class javaClass = Thread.currentThread().getContextClassLoader().loadClass(((JavaClassDefinition) variableObject).getClassName());
-
-						processVariableValue = (Serializable) javaClass.newInstance();
-
-					}
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}else {
-				if(typeClassName.startsWith("java.lang")){
-					try {
-						Class<?> primitiveType = Class.forName(typeClassName);
-
-						if(Number.class.isAssignableFrom(primitiveType)){
-							processVariableValue = (Serializable) primitiveType.getConstructor(new Class[]{String.class}).newInstance(new Object[]{"0"});
-						}else{
-							processVariableValue = (Serializable) primitiveType.newInstance();
-						}
-
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-				}else {
-					try {
-						processVariableValue = (Serializable) MetaworksRemoteService.getComponent(Thread.currentThread().getContextClassLoader().loadClass(typeClassName));
-					} catch (ClassNotFoundException e) {
-						throw new RuntimeException(e);
-					}
-
-				}
-
-			}
-		} else {
-
-			if (variableType == Boolean.class) {
-				processVariableValue = new Boolean(false);
-			} else if (variableType == Number.class) {
-				processVariableValue = new Integer(0);
-			} else if (variableType == String.class) {
-				if (processVariableValue == null) {
-					processVariableValue = new String();
-				}
-			} else
-				try {
-					processVariableValue = (Serializable) variableType.newInstance();
-				} catch (InstantiationException e) {
-					throw new RuntimeException(e);
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException(e);
-				}
-		}
-
-
-		return processVariableValue;
-
-	}
-
-	@Override
-	public void afterMWDeserialization() {
-		afterDeserialization();
-	}
-
-	@Override
-	public void beforeMWSerialization() {
-		beforeSerialization();
 	}
 
 	@Override

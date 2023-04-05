@@ -80,7 +80,6 @@ public class SQLActivity extends DefaultActivity{
 		}
 		
 	ParameterContext[] selectMappings;
-		@Face(faceClass = ParameterContextArrayFace.class)
 		public ParameterContext[] getSelectMappings() {
 			return selectMappings;
 		}

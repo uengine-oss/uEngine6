@@ -41,7 +41,7 @@ public class ProcessDefinitionFactory {
 	public static ProcessDefinitionFactory getInstance(
 			ProcessTransactionContext tc) {
 
-		return MetaworksRemoteService.getComponent(ProcessDefinitionFactory.class);
+		return GlobalContext.getComponent(ProcessDefinitionFactory.class);
 	}
 
 	protected ProcessDefinitionFactory(ProcessTransactionContext tc) {

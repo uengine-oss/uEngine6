@@ -1,7 +1,5 @@
 package org.uengine.kernel.bpmn;
 
-import org.metaworks.annotation.Available;
-import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.*;
 import org.uengine.modeling.RelationView;
 import org.uengine.util.UEngineUtil;
@@ -30,8 +28,6 @@ public class SequenceFlow extends AbstractFlow implements java.io.Serializable, 
 		}
 
 	Condition condition;
-    //@Face(faceClass=ConditionFace.class)
-	@Available(condition = "!otherwise")
 		public Condition getCondition() {
 			return condition;
 		}
@@ -48,7 +44,6 @@ public class SequenceFlow extends AbstractFlow implements java.io.Serializable, 
 		}
 
 
-	@Hidden
 	public Activity getSourceActivity(){
 		return (Activity)this.getSourceElement();
 	}
@@ -56,7 +51,6 @@ public class SequenceFlow extends AbstractFlow implements java.io.Serializable, 
 		this.setSourceElement(activity);
 	}
 	
-    @Hidden
 	public Activity getTargetActivity(){
 		return (Activity)this.getTargetElement();
 	}

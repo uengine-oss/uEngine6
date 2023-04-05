@@ -343,12 +343,6 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 		return null;
 	}
 
-
-	public Object[] cancel(){
-		ModalWindow modalWindow = new ModalWindow();
-		return new Object[]{new Remover(modalWindow , true)};
-		
-	}
 	
 
 	ElementView elementView;

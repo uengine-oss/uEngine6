@@ -491,7 +491,7 @@ System.out.println("=========================== HARD-TO-FIND : HumanActivity.cre
 						currentLogin = instance.getRootProcessInstance().getRoleMapping("Initiator");
 					}else{
 						currentLogin = RoleMapping.create();
-						currentLogin.setEndpoint(TenantContext.getThreadLocalInstance().getUserId());
+						currentLogin.setEndpoint(GlobalContext.getUserId());
 					}
 				}catch(Exception e){
 					cause = e;
@@ -646,7 +646,7 @@ System.out.println("=========================== HARD-TO-FIND : HumanActivity.cre
 			//TODO: later spring security will be utilized
 //			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //			Map principal = (Map) authentication.getPrincipal();
-			roleMapping.setEndpoint(TenantContext.getThreadLocalInstance().getUserId());
+			roleMapping.setEndpoint(GlobalContext.getUserId());
 			instance.putRoleMapping(getRole().getName(), roleMapping);
 			//roleMapping.setResourceName((String) principal.get("user"));
 

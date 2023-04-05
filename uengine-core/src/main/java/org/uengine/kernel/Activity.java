@@ -30,6 +30,7 @@ import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.modeling.ElementView;
+import org.uengine.modeling.IElement;
 // import org.uengine.modeling.ElementView;
 // import org.uengine.modeling.IElement;
 //import org.uengine.modeling.IIntegrityElement;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Jinyoung Jang
  * @see org.uengine.kernel.ComplexActivity
  */
-public abstract class Activity implements /*IElement,*/ Validatable, java.io.Serializable, Cloneable{
+public abstract class Activity implements IElement, Validatable, java.io.Serializable, Cloneable{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	
 	final public static String ACTIVITY_DONE=		"activity done";
@@ -1868,14 +1869,13 @@ public abstract class Activity implements /*IElement,*/ Validatable, java.io.Ser
 		return tokenCount;
 	}
 
-	// public ElementView createView(){
-	// 	ElementView elementView = (ElementView) UEngineUtil.getComponentByEscalation(getClass(), "view");
+	public ElementView createView(){
+		ElementView elementView = (ElementView) UEngineUtil.getComponentByEscalation(getClass(), "view");
 
-	// 	elementView.setElement(this);
+		elementView.setElement(this);
 
-	// 	return elementView;
-	// }
-
+		return elementView;
+	}
 
 
 	transient boolean checked;

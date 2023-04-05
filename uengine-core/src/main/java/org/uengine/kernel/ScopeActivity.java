@@ -16,18 +16,13 @@ public class ScopeActivity extends FlowActivity implements MessageListener{
 
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-		//type.setName((String)ProcessDesigner.getInstance().getActivityTypeNameMap().get(ScopeActivity.class));
-	}
 
 	ProcessVariable[] processVariableDescriptors;
 
 	transient Hashtable processVariableDescriptorsHT;
-		@Hidden
 		public ProcessVariable[] getProcessVariables(){
 			return processVariableDescriptors;
 		}		
-		@Hidden
 		public ProcessVariable getProcessVariable(String pvName) {
 
 			if(pvName==null)
@@ -80,7 +75,6 @@ public class ScopeActivity extends FlowActivity implements MessageListener{
 	EventHandlerPanel eventHandlerPanel;
 
 	EventHandler[] eventHandlers;
-		@Hidden
 		public EventHandler[] getEventHandlers() {
 			return eventHandlers;
 		}
@@ -110,7 +104,6 @@ public class ScopeActivity extends FlowActivity implements MessageListener{
 		}
 
 	boolean isCollapsed;
-	@Hidden
 		public boolean isCollapsed() {
 			return isCollapsed;
 		}

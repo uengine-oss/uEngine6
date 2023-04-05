@@ -338,7 +338,7 @@ public class ProcessDefinition extends ScopeActivity implements Serializable, ID
 			if(!GlobalContext.isDesignTime() && defaultActivityFilters == null){
 
 
-				Map<String, ActivityFilter> filters = MetaworksRemoteService.getInstance().getBeanFactory().getBeansOfType(ActivityFilter.class);
+				Map<String, ActivityFilter> filters = GlobalContext.getComponents(ActivityFilter.class);
 
 				if(filters!=null && filters.size()>0){
 					defaultActivityFilters = new ActivityFilter[filters.size()];

@@ -64,7 +64,7 @@ public class DatabaseSynchronizationOption implements SpecializedVariableValue{
 */		
 		if(instance==null) throw new UEngineException("Instance is null");
 
-		throw new NotImplementedException();
+		throw new RuntimeException("Not Implemented Yet!");
 //
 //		if("bpm_procinst".equalsIgnoreCase(getTableName()) && instance instanceof EJBProcessInstance){
 //			dao = ((EJBProcessInstance)instance).getProcessInstanceDAO();
@@ -119,7 +119,7 @@ public class DatabaseSynchronizationOption implements SpecializedVariableValue{
 	
 	public boolean set(ProcessInstance instance, String scope, Serializable value) throws Exception {
 
-		throw new NotImplementedException();
+		throw new RuntimeException("Not Implemented Here");
 
 //		if("bpm_procinst".equalsIgnoreCase(getTableName()) && instance instanceof EJBProcessInstance){
 //			IDAO dao = ((EJBProcessInstance)instance).getProcessInstanceDAO();
