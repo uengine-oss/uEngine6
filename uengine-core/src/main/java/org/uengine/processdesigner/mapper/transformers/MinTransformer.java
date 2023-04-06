@@ -2,9 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.UEngineException;
 import org.uengine.processdesigner.mapper.Transformer;
@@ -15,17 +12,17 @@ public class MinTransformer extends Transformer {
 		setName("Min");
 	}
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("InputType");
-		fd.setInputter(new SelectInput(
-			new Object[]{
-				"Double",
-				"Long",
-				"String"
-			},
-			new Object[]{ 'D', 'L', 'S' }
-		));
-	}
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("InputType");
+	// 	fd.setInputter(new SelectInput(
+	// 		new Object[]{
+	// 			"Double",
+	// 			"Long",
+	// 			"String"
+	// 		},
+	// 		new Object[]{ 'D', 'L', 'S' }
+	// 	));
+	// }
 	
 	public String[] getInputArguments() {
 		return (new String[]{"value1", "value2"});

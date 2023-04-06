@@ -2,9 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;
 
@@ -14,18 +11,18 @@ public class SumTransformer extends Transformer{
 		setName("Sum");
 	}
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("InputType");
-		fd.setDisplayName("Number Type");
-		fd.setInputter(new SelectInput(
-			new Object[]{
-				"Double",
-				"Integer",
-				"Long"
-			},
-			new Object[]{ 'D', 'I', 'L' }
-		));
-	}	
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("InputType");
+	// 	fd.setDisplayName("Number Type");
+	// 	fd.setInputter(new SelectInput(
+	// 		new Object[]{
+	// 			"Double",
+	// 			"Integer",
+	// 			"Long"
+	// 		},
+	// 		new Object[]{ 'D', 'I', 'L' }
+	// 	));
+	// }	
 
 	public String[] getInputArguments() {
 		return new String[]{"val1", "val2", "val3", "val4", "val5"};

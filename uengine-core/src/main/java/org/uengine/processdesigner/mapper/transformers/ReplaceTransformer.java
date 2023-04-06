@@ -2,8 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;
 
@@ -43,13 +41,13 @@ public class ReplaceTransformer extends Transformer{
 		setName("Replace");
 	}
 
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("OldString");
-		fd.setDisplayName("Old String");
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("OldString");
+	// 	fd.setDisplayName("Old String");
 		
-		fd = type.getFieldDescriptor("NewString");
-		fd.setDisplayName("New String");
-	}	
+	// 	fd = type.getFieldDescriptor("NewString");
+	// 	fd.setDisplayName("New String");
+	// }	
 
 	public String[] getInputArguments() {
 		return new String[]{"input"};

@@ -4,9 +4,6 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;
 
@@ -36,29 +33,29 @@ public class NumberFormatTransformer extends Transformer{
 		setName("NumberFormat");
 	}
 	
-	public static void metaworksCallback_changeMetadata(Type type){
-		FieldDescriptor fd = type.getFieldDescriptor("InputType");
-		fd.setDisplayName("Input Number Type");
-		fd.setInputter(new SelectInput(
-				new Object[]{
-					"Long",
-					"Double"
-				},
-				new Object[]{ 'L', 'D' }
-			));
+	// public static void metaworksCallback_changeMetadata(Type type){
+	// 	FieldDescriptor fd = type.getFieldDescriptor("InputType");
+	// 	fd.setDisplayName("Input Number Type");
+	// 	fd.setInputter(new SelectInput(
+	// 			new Object[]{
+	// 				"Long",
+	// 				"Double"
+	// 			},
+	// 			new Object[]{ 'L', 'D' }
+	// 		));
 
-		fd = type.getFieldDescriptor("ToType");
-		fd.setDisplayName("Output Format");
-		fd.setInputter(new SelectInput(
-				new Object[]{
-						"Integer",
-						"Currency",
-						"Number",
-						"Percent"
-				},
-				new Object[]{ 'I', 'C', 'N', 'P' }
-		));
-	}	
+	// 	fd = type.getFieldDescriptor("ToType");
+	// 	fd.setDisplayName("Output Format");
+	// 	fd.setInputter(new SelectInput(
+	// 			new Object[]{
+	// 					"Integer",
+	// 					"Currency",
+	// 					"Number",
+	// 					"Percent"
+	// 			},
+	// 			new Object[]{ 'I', 'C', 'N', 'P' }
+	// 	));
+	// }	
 
 	public String[] getInputArguments() {
 		return new String[]{"input", "locale"};

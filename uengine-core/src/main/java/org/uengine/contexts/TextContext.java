@@ -4,15 +4,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.metaworks.annotation.AutowiredFromClient;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Name;
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.modeling.LanguageSelector;
 
 /**
  * This class holds descriptive string in multi-lingual support. 
@@ -38,7 +33,6 @@ public class TextContext implements Serializable{
 	}
 	
 	String text;
-		@Name
 		public String getText() {
 
 //			if(MetaworksRemoteService.metaworksCall()) {
@@ -96,12 +90,7 @@ public class TextContext implements Serializable{
 			
 			localedTexts.put(locale, value);
 		}
-
-	@AutowiredFromClient
-	transient public LanguageSelector languageSelector;
-		
 	Map localedTexts;
-		@Hidden
 		public Map getLocaledTexts() {
 			return localedTexts;
 		}

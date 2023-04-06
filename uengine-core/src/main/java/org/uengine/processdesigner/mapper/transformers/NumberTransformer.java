@@ -2,9 +2,6 @@ package org.uengine.processdesigner.mapper.transformers;
 
 import java.util.Map;
 
-import org.metaworks.FieldDescriptor;
-import org.metaworks.Type;
-import org.metaworks.inputter.SelectInput;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.UEngineException;
@@ -16,18 +13,18 @@ public class NumberTransformer extends Transformer{
 		setName("To Number");
 	}
 
-	public static void metaworksCallback_changeMetadata(Type type){
+	// public static void metaworksCallback_changeMetadata(Type type){
 		
-		FieldDescriptor fd = type.getFieldDescriptor("ToType");
-		fd.setInputter(new SelectInput(
-			new Object[]{
-				"Integer",
-				"Long",
-				"Double"
-			},
-			new Object[]{ 'I', 'L', 'D' }
-		));
-	}
+	// 	FieldDescriptor fd = type.getFieldDescriptor("ToType");
+	// 	fd.setInputter(new SelectInput(
+	// 		new Object[]{
+	// 			"Integer",
+	// 			"Long",
+	// 			"Double"
+	// 		},
+	// 		new Object[]{ 'I', 'L', 'D' }
+	// 	));
+	// }
 
 	public Object transform(ProcessInstance instance, Map parameterMap,  Map options) throws UEngineException {
 		Object value = null;
