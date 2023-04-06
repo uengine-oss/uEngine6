@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.uengine.processmanager.DefaultTransactionContext;
 import org.uengine.processmanager.ProcessTransactionContext;
 
 public class DebuggingContext implements NeedArrangementToSerialize{

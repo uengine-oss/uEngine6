@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.uengine.kernel.bpmn.Pool;
-import org.uengine.processmanager.ProcessManagerFactoryBean;
 import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.util.ActivityForLoop;
@@ -737,83 +736,83 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 	}
 
 
-	public ActivityReference getInitiatorHumanActivityReference(final ProcessTransactionContext ptc){
+	// public ActivityReference getInitiatorHumanActivityReference(final ProcessTransactionContext ptc){
 
-		//		if(!isInitiateByFirstWorkitem())
-		//			throw new RuntimeException("this process definition is not allowed to be initiated by the first workitem.");
+	// 	//		if(!isInitiateByFirstWorkitem())
+	// 	//			throw new RuntimeException("this process definition is not allowed to be initiated by the first workitem.");
 
-		ActivityForLoop findingLoop = new ActivityForLoop(){
-			public void logic(Activity activity){
-				if(activity instanceof HumanActivity){
-					stop(activity);
-				}else if(activity instanceof SubProcessActivity){
-					stop(null);
-					if(GlobalContext.isDesignTime()){
-						return;
-					}
+	// 	ActivityForLoop findingLoop = new ActivityForLoop(){
+	// 		public void logic(Activity activity){
+	// 			if(activity instanceof HumanActivity){
+	// 				stop(activity);
+	// 			}else if(activity instanceof SubProcessActivity){
+	// 				stop(null);
+	// 				if(GlobalContext.isDesignTime()){
+	// 					return;
+	// 				}
 
-					SubProcessActivity spAct = (SubProcessActivity)activity;
+	// 				SubProcessActivity spAct = (SubProcessActivity)activity;
 
-					ProcessManagerRemote pm = null;
-					try{
-						if(ptc.getProcessManager()!=null)
-							pm = ptc.getProcessManager();
-						else
-							pm = (new ProcessManagerFactoryBean()).getProcessManagerForReadOnly();
+	// 				ProcessManagerRemote pm = null;
+	// 				try{
+	// 					if(ptc.getProcessManager()!=null)
+	// 						pm = ptc.getProcessManager();
+	// 					else
+	// 						pm = (new ProcessManagerFactoryBean()).getProcessManagerForReadOnly();
 
-						ProcessDefinition spDef = ProcessDefinitionFactory.getInstance(ptc).getDefinition(spAct.getDefinitionId());
+	// 					ProcessDefinition spDef = ProcessDefinitionFactory.getInstance(ptc).getDefinition(spAct.getDefinitionId());
 
-						if(spDef.isInitiateByFirstWorkitem()){
-							ActivityReference actRefReturnedFromSP = spDef.getInitiatorHumanActivityReference(ptc);
+	// 					if(spDef.isInitiateByFirstWorkitem()){
+	// 						ActivityReference actRefReturnedFromSP = spDef.getInitiatorHumanActivityReference(ptc);
 
-							if(actRefReturnedFromSP==null){
-								stop(null);
-								return;
-							}
+	// 						if(actRefReturnedFromSP==null){
+	// 							stop(null);
+	// 							return;
+	// 						}
 
-							String scopeOfActFromSP = actRefReturnedFromSP.getAbsoluteTracingTag();
+	// 						String scopeOfActFromSP = actRefReturnedFromSP.getAbsoluteTracingTag();
 
-							if(scopeOfActFromSP == null){
-								if(actRefReturnedFromSP.getActivity()!=null){
-									actRefReturnedFromSP.setAbsoluteTracingTag(spAct.getTracingTag() + "@" + actRefReturnedFromSP.getActivity().getTracingTag());
-									stop(actRefReturnedFromSP);
-									return;
-								}
+	// 						if(scopeOfActFromSP == null){
+	// 							if(actRefReturnedFromSP.getActivity()!=null){
+	// 								actRefReturnedFromSP.setAbsoluteTracingTag(spAct.getTracingTag() + "@" + actRefReturnedFromSP.getActivity().getTracingTag());
+	// 								stop(actRefReturnedFromSP);
+	// 								return;
+	// 							}
 
-								stop(null);
-								return;
-							}
+	// 							stop(null);
+	// 							return;
+	// 						}
 
-							actRefReturnedFromSP.setAbsoluteTracingTag(spAct.getTracingTag() + "@" + scopeOfActFromSP);
+	// 						actRefReturnedFromSP.setAbsoluteTracingTag(spAct.getTracingTag() + "@" + scopeOfActFromSP);
 
-							stop(actRefReturnedFromSP);
-						}
-					}catch(Exception e){
-						throw new RuntimeException(e);
-					}finally{
-						if(ptc!=null && ptc.getProcessManager()==null)
-							try {
-								pm.remove();
-							} catch (Exception e) {
-							}
-					}
-				}
-			}
-		};
+	// 						stop(actRefReturnedFromSP);
+	// 					}
+	// 				}catch(Exception e){
+	// 					throw new RuntimeException(e);
+	// 				}finally{
+	// 					if(ptc!=null && ptc.getProcessManager()==null)
+	// 						try {
+	// 							pm.remove();
+	// 						} catch (Exception e) {
+	// 						}
+	// 				}
+	// 			}
+	// 		}
+	// 	};
 
-		findingLoop.run(this);
+	// 	findingLoop.run(this);
 
-		Object result = findingLoop.getReturnValue();
-		if(result instanceof HumanActivity){			
-			ActivityReference ref = new ActivityReference();
-			ref.setActivity((Activity)result);
-			ref.setAbsoluteTracingTag(((Activity)result).getTracingTag());
+	// 	Object result = findingLoop.getReturnValue();
+	// 	if(result instanceof HumanActivity){			
+	// 		ActivityReference ref = new ActivityReference();
+	// 		ref.setActivity((Activity)result);
+	// 		ref.setAbsoluteTracingTag(((Activity)result).getTracingTag());
 
-			return ref;
-		}else{
-			return (ActivityReference)result;
-		}
-	}
+	// 		return ref;
+	// 	}else{
+	// 		return (ActivityReference)result;
+	// 	}
+	// }
 
 	public void usabilityCheck(Map values){
 		super.usabilityCheck(values);
