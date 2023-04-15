@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * @author jyj
  */
-public abstract class ElementView implements Serializable, Cloneable {
+public class ElementView implements Serializable, Cloneable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {

@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.PropertyListable;
@@ -100,7 +102,7 @@ public class ComplexType implements Serializable, PropertyListable{
 			// }
 
 
-            return Arrays.stream(clazz.getFields()).map(field->field.getName()).toList();
+            return Arrays.stream(clazz.getFields()).map(field->field.getName()).collect(Collectors.toList());
 			
 			//return fieldNames;
 			

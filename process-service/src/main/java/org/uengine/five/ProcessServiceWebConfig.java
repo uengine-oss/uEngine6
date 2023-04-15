@@ -121,10 +121,10 @@ public class ProcessServiceWebConfig {
     //     return new TenantAwareFilter();
     // }
 
-    @Bean
-    public ProcessDefinitionFactory processDefinitionFactory() {
-        return new ProcessDefinitionFactory();
-    }
+    // @Bean
+    // public ProcessDefinitionFactory processDefinitionFactory() {
+    //     return new ProcessDefinitionFactory();
+    // }
 
     // @Bean
     // public ProcessManagerRemote processManagerRemote() {
