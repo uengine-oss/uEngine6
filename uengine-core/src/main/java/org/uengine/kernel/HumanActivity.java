@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.StartEvent;
-import org.uengine.persistence.dao.DAOFactory;
 import org.uengine.util.ActivityForLoop;
 import org.uengine.util.UEngineUtil;
 import org.uengine.webservices.worklist.DefaultWorkList;
@@ -1222,76 +1221,76 @@ System.out.println("=========================== HARD-TO-FIND : HumanActivity.cre
 	
 	protected void saveSnapshotHTML(ProcessInstance instance) throws Exception {
 		
-		if(!"true".equals(GlobalContext.getPropertyString("humanactivity.save.snapshot.html", "false"))) return;
+		// if(!"true".equals(GlobalContext.getPropertyString("humanactivity.save.snapshot.html", "false"))) return;
 
 		
-		if("defaultHandler".equals(getTool()) || "codiReplyHandler".equals(getTool())) {
+		// if("defaultHandler".equals(getTool()) || "codiReplyHandler".equals(getTool())) {
 			
-			boolean wasIsJBoss = "JBOSS".equals(GlobalContext.getPropertyString("was.type", "TOMCAT"));
-			HttpServletRequest request = (HttpServletRequest)instance.getProcessTransactionContext().getServletRequest();
-			HttpServletResponse response = (HttpServletResponse)instance.getProcessTransactionContext().getServletResponse();
+		// 	boolean wasIsJBoss = "JBOSS".equals(GlobalContext.getPropertyString("was.type", "TOMCAT"));
+		// 	HttpServletRequest request = (HttpServletRequest)instance.getProcessTransactionContext().getServletRequest();
+		// 	HttpServletResponse response = (HttpServletResponse)instance.getProcessTransactionContext().getServletResponse();
 			
-			/***********************
-			 * Save Snapshot File 
-			 **********************/
-			request.setAttribute("instanceForSnapshot", instance);
-			request.setAttribute("currActivityForSnapshot", this);
+		// 	/***********************
+		// 	 * Save Snapshot File 
+		// 	 **********************/
+		// 	request.setAttribute("instanceForSnapshot", instance);
+		// 	request.setAttribute("currActivityForSnapshot", this);
 			
-			RequestDispatcher dis = request.getRequestDispatcher(
-					(wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "") 
-					+ "/wih/wihDefaultTemplate/snapshot_showInputForm.jsp");
+		// 	RequestDispatcher dis = request.getRequestDispatcher(
+		// 			(wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "") 
+		// 			+ "/wih/wihDefaultTemplate/snapshot_showInputForm.jsp");
 			
-			if("codiReplyHandler".equals(getTool())){
-			    dis = request.getRequestDispatcher(
-					(wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "") 
-					+ "/wih/codiReplyHandler/snapshot_showInputForm.jsp?isReply=true");
-			}
+		// 	if("codiReplyHandler".equals(getTool())){
+		// 	    dis = request.getRequestDispatcher(
+		// 			(wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "") 
+		// 			+ "/wih/codiReplyHandler/snapshot_showInputForm.jsp?isReply=true");
+		// 	}
 			
-			final StringWriter sw = new StringWriter();
-			OutputStreamWriter osw = null;
+		// 	final StringWriter sw = new StringWriter();
+		// 	OutputStreamWriter osw = null;
 			
-			try {
-				dis.include(request, new HttpServletResponseWrapper(response){
-					public PrintWriter getWriter() throws IOException {	
-						return new PrintWriter(sw);
-					}
-				});
+		// 	try {
+		// 		dis.include(request, new HttpServletResponseWrapper(response){
+		// 			public PrintWriter getWriter() throws IOException {	
+		// 				return new PrintWriter(sw);
+		// 			}
+		// 		});
 				
-				/**************************
-				 * Append Tag Div
-				 **************************/
-				String Tags = request.getParameter("tags");
-				if(UEngineUtil.isNotEmpty(Tags)){
-					StringBuffer buff = sw.getBuffer();
+		// 		/**************************
+		// 		 * Append Tag Div
+		// 		 **************************/
+		// 		String Tags = request.getParameter("tags");
+		// 		if(UEngineUtil.isNotEmpty(Tags)){
+		// 			StringBuffer buff = sw.getBuffer();
 					
-					buff.append("<div id='tags'>");
-					buff.append(Tags.replaceAll(";", ",").substring(0,Tags.length()-1));
-					buff.append("</div>");
-				}
-				sw.flush();
+		// 			buff.append("<div id='tags'>");
+		// 			buff.append(Tags.replaceAll(";", ",").substring(0,Tags.length()-1));
+		// 			buff.append("</div>");
+		// 		}
+		// 		sw.flush();
 				
-				request.removeAttribute("instanceForSnapshot");
-				request.removeAttribute("currActivityForSnapshot");
+		// 		request.removeAttribute("instanceForSnapshot");
+		// 		request.removeAttribute("currActivityForSnapshot");
 				
-				File newFile = new File(createSnapshotHtmlFilePath(instance , this));
-				File dir = newFile.getParentFile();
-				if (!dir.exists()) {
-					dir.mkdirs();
-				}
+		// 		File newFile = new File(createSnapshotHtmlFilePath(instance , this));
+		// 		File dir = newFile.getParentFile();
+		// 		if (!dir.exists()) {
+		// 			dir.mkdirs();
+		// 		}
 				
-				osw = new OutputStreamWriter(new FileOutputStream(newFile), GlobalContext.ENCODING);
-				osw.write(sw.toString());
-			} catch (Exception e) {
-				throw e;
-			} finally {
-				if (osw != null) {
-					osw.close();
-				}
-				if (sw != null) {
-					sw.close();
-				}
-			}
-		}
+		// 		osw = new OutputStreamWriter(new FileOutputStream(newFile), GlobalContext.ENCODING);
+		// 		osw.write(sw.toString());
+		// 	} catch (Exception e) {
+		// 		throw e;
+		// 	} finally {
+		// 		if (osw != null) {
+		// 			osw.close();
+		// 		}
+		// 		if (sw != null) {
+		// 			sw.close();
+		// 		}
+		// 	}
+		// }
 	}
 
 	//	transient String parentEditorId;

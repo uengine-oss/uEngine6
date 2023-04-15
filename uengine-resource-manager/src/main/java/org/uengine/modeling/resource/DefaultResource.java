@@ -1,17 +1,7 @@
 package org.uengine.modeling.resource;
 
 import org.apache.commons.lang.StringUtils;
-import org.directwebremoting.Browser;
-import org.directwebremoting.ScriptSessions;
-import org.directwebremoting.io.FileTransfer;
-import org.metaworks.*;
-import org.metaworks.annotation.*;
-import org.metaworks.annotation.Face;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.widget.Download;
-import org.metaworks.widget.ToBlank;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.uengine.modeling.IModel;
 
 import javax.persistence.Id;
 import java.io.File;
@@ -162,31 +152,17 @@ public class DefaultResource implements IResource {
 	}
 
 
-	// public static IResource createResource(String path) throws Exception {
-	// 	String type = new DefaultResource(path).getType();
+	public static IResource createResource(String path) throws Exception {
+		
+		
 
-	// 	try {
+			DefaultResource defaultResource = new DefaultResource();
+			defaultResource.setPath(path);
 
-	// 		String classNamePrefix = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
+			return defaultResource;
 
-
-	// 		Class resourceClass = Thread.currentThread().getContextClassLoader().loadClass(DefaultResource.class.getPackage().getName() + ".resources." + classNamePrefix + "Resource");
-
-	// 		IResource resource = (IResource) GlobalContext.getComponent(resourceClass);
-	// 		resource.setPath(path);
-
-	// 		return resource;
-
-
-	// 	}catch(ClassNotFoundException e){
-
-	// 		DefaultResource defaultResource = new DefaultResource();
-	// 		defaultResource.setPath(path);
-
-	// 		return defaultResource;
-
-	// 	}
-	// }
+		
+	}
 
 
 	@Override
@@ -216,5 +192,17 @@ public class DefaultResource implements IResource {
 
 		return this.getName().compareTo(resource.getName());
 	}
+
+	public Object load() throws Exception {
+		Object object = resourceManager.getObject(this);
+
+		return object;
+	}
+
+	public void delete() throws IOException {
+		resourceManager.delete(this);
+	}
+
+	
 }
 

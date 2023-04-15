@@ -1,7 +1,5 @@
 package org.uengine.modeling.resource;
 
-import org.uengine.modeling.IModel;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

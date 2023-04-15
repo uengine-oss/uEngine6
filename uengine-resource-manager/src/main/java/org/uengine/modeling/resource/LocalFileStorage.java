@@ -1,11 +1,8 @@
 package org.uengine.modeling.resource;
 
 import org.apache.commons.io.FileUtils;
-import org.metaworks.MetaworksContext;
-import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.uengine.modeling.IModel;
 import static java.nio.file.StandardCopyOption.*;
 
 import java.io.*;
@@ -84,7 +81,6 @@ public class LocalFileStorage extends AbstractStorage{
                 ContainerResource subContainerResource = (ContainerResource) containerResource.getClass().newInstance();
 
                 subContainerResource.setPath(relativePath);
-                subContainerResource.setMetaworksContext(new MetaworksContext());
 
 //                if(false)
 //                    subContainerResource.setChildren(listFiles(subContainerResource));

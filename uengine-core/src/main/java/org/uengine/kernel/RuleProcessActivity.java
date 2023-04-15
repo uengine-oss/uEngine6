@@ -6,7 +6,6 @@
  */
 package org.uengine.kernel;
 
-import org.metaworks.Type;
 
 public class RuleProcessActivity extends SubProcessActivity {
   private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;

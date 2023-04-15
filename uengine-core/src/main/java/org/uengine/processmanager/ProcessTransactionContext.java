@@ -19,9 +19,9 @@ public interface ProcessTransactionContext extends TransactionContext {
 
     StringBuilder getDebugInfo();
 
-    ServletRequest getServletRequest();
+    // ServletRequest getServletRequest();
 
-    ServletResponse getServletResponse();
+    // ServletResponse getServletResponse();
 
     boolean isManagedTransaction();
 

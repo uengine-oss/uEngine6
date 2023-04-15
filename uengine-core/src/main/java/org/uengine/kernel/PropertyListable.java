@@ -1,7 +1,7 @@
 package org.uengine.kernel;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface PropertyListable {
-	ArrayList<String> listProperties();
+	List<String> listProperties();
 }

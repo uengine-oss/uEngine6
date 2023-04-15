@@ -1,8 +1,5 @@
 package org.uengine.modeling.resource;
 
-import org.metaworks.MetaworksFile;
-import org.metaworks.dao.TransactionContext;
-import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Component;
@@ -69,9 +66,6 @@ public class ResourceManager implements Storage{
 
     @Override
     public Object getObject(IResource resource) throws Exception {
-        if(TransactionContext.getThreadLocalInstance()!=null)
-            TransactionContext.getThreadLocalInstance().setSharedContext("resourceManager.resourcePath", resource.getPath());
-
         Object object = getStorage().getObject(resource);
 
         if(object instanceof List && object != null){
@@ -82,22 +76,15 @@ public class ResourceManager implements Storage{
             }
         }
 
-        if(TransactionContext.getThreadLocalInstance()!=null)
-            TransactionContext.getThreadLocalInstance().setSharedContext("resourceManager.resourcePath", null);
-
         return object;
 
     }
 
     @Override
     public void save(IResource resource, Object object) throws Exception {
-        if(TransactionContext.getThreadLocalInstance()!=null)
-            TransactionContext.getThreadLocalInstance().setSharedContext("resourceManager.resourcePath", resource.getPath());
 
         getStorage().save(resource, object);
 
-        if(TransactionContext.getThreadLocalInstance()!=null)
-            TransactionContext.getThreadLocalInstance().setSharedContext("resourceManager.resourcePath", null);
     }
 
     @Override

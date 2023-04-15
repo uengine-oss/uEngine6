@@ -1,10 +1,5 @@
 package org.uengine.modeling.resource;
 
-import org.metaworks.ContextAware;
-import org.metaworks.annotation.Face;
-import org.metaworks.annotation.Hidden;
-import org.metaworks.annotation.Name;
-import org.metaworks.widget.Download;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,8 +9,7 @@ import java.io.InputStream;
 //import java.io.InputStream;
 //import java.io.OutputStream;
 
-@Face(ejsPath="dwr/metaworks/genericfaces/TreeFace.ejs")
-public interface IResource extends ContextAware, Comparable<IResource>{
+public interface IResource extends Comparable<IResource>{
 	
 	public static String TYPE_FOLDER = "folder";
 
@@ -46,7 +40,6 @@ public interface IResource extends ContextAware, Comparable<IResource>{
 	 *
 	 * @return      only file name will be returned
 	 */
-	 @Name
 	public String getDisplayName();
 	
 	/**
@@ -88,7 +81,6 @@ public interface IResource extends ContextAware, Comparable<IResource>{
 	public void accept(IResourceVisitor visitor);
 	public void accept(IResourceVisitor visitor, boolean admin);
 	
-	@Hidden
 	public boolean isContainer();
 
 	public void setPath(String path);
@@ -97,17 +89,15 @@ public interface IResource extends ContextAware, Comparable<IResource>{
 
 	void delete() throws IOException;
 
-	Download download(String fileName, String mimeType) throws Exception;
-
 	void copy(String desPath) throws Exception;
 
-	void upload(InputStream is);
+	//void upload(InputStream is);
 
 	void move(IContainer container) throws IOException;
 
-	void newOpen() throws Exception;
+	//void newOpen() throws Exception;
 
-	void reopen() throws Exception;
+	//void reopen() throws Exception;
 
 
 	public Object load() throws Exception;

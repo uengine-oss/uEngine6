@@ -1,10 +1,5 @@
 package org.uengine.modeling.resource;
 
-import org.metaworks.MetaworksContext;
-import org.metaworks.annotation.ServiceMethod;
-import org.metaworks.dao.TransactionContext;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.widget.Label;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -54,16 +49,6 @@ public class SimpleVersionManager implements VersionManager{
         }
 
 
-    MetaworksContext metaworksContext;
-    @Override
-    public MetaworksContext getMetaworksContext() {
-        return metaworksContext;
-    }
-    @Override
-    public void setMetaworksContext(MetaworksContext metaworksContext) {
-        this.metaworksContext = metaworksContext;
-    }
-
 
     @Autowired
     public ResourceManager resourceManager;
@@ -73,9 +58,6 @@ public class SimpleVersionManager implements VersionManager{
     public void load(String appName, String moduleName) throws Exception {
         setAppName(appName);
         setModuleName(moduleName);
-
-        setMetaworksContext(new MetaworksContext());
-        getMetaworksContext().setWhen(MetaworksContext.WHEN_EDIT);
 
         setVersions(listVersions());
 
@@ -138,7 +120,6 @@ public class SimpleVersionManager implements VersionManager{
             return getRootPath() + VERSION_DIR;
     }
 
-    @ServiceMethod(callByContent = true, target=ServiceMethod.TARGET_SELF)
     public void minorVersionUp() throws Exception {
 
         Version lastVersion = getLastVersion();
@@ -150,17 +131,14 @@ public class SimpleVersionManager implements VersionManager{
     }
 
 
-    @ServiceMethod(callByContent = true, target=ServiceMethod.TARGET_SELF)
     public void majorVersionUp() throws Exception {
         Version lastVersion = getLastVersion();
 
         lastVersion.setMajor(lastVersion.getMajor() + 1);
         lastVersion.setDate(Calendar.getInstance());
         versionUp(lastVersion);
-
     }
 
-    @ServiceMethod(callByContent = true, target=ServiceMethod.TARGET_SELF)
     public void restore(Version version) throws Exception {
         IContainer dev = new ContainerResource();
         dev.setPath(getRootPath());
@@ -174,9 +152,7 @@ public class SimpleVersionManager implements VersionManager{
 
         resourceManager.getStorage().delete(dev);
         resourceManager.getStorage().copy(versionDirectory, dev.getPath()); //TODO: filter interface is needed.
-        prodVersion.makeAsProduction(this);
-
-        MetaworksRemoteService.wrapReturn(new Label("<div class='alert alert-success' role='alert'>Version has been restored.</div>"));
+//        prodVersion.makeAsProduction(this);
     }
 
     private Version getLastVersion() {
@@ -207,12 +183,9 @@ public class SimpleVersionManager implements VersionManager{
         }
 
         if(isMakeThisVersionAsProduction()){
-            MetaworksRemoteService.autowire(lastVersion);
-            lastVersion.makeAsProduction(this);
+            //lastVersion.makeAsProduction(this);
         }
 
-        if(TransactionContext.getThreadLocalInstance()!=null)
-            MetaworksRemoteService.wrapReturn(new Label("<div class='alert alert-success' role='alert'>Version has been set as " + lastVersion.getMajor() + "." + lastVersion.getMinor() + "</div>"));
     }
 
 
@@ -241,8 +214,6 @@ public class SimpleVersionManager implements VersionManager{
     public void makeProductionVersion(Version version) throws Exception {
         DefaultResource productionInfoXML = getProductionVersionInfo();
 
-        ResourceManager resourceManager = MetaworksRemoteService.getComponent(ResourceManager.class);
-
         resourceManager.getStorage().save(productionInfoXML, version);
 
     }
@@ -262,11 +233,6 @@ public class SimpleVersionManager implements VersionManager{
 //        detectModuleName(resourcePath);
 
 
-
-        Boolean isDevelopmentTime = (Boolean) (TransactionContext.getThreadLocalInstance()!=null && (Boolean)TransactionContext.getThreadLocalInstance().getSharedContext("isDevelopmentTime"));
-        if(isDevelopmentTime!=null && isDevelopmentTime)
-            return original;
-
         Version productionVersion = getProductionVersion();
 
         if(productionVersion!=null) {
@@ -278,9 +244,8 @@ public class SimpleVersionManager implements VersionManager{
         }
 
         {// if there's no resource in production, return original one.
-            ResourceManager resourceManager1 = MetaworksRemoteService.getComponent(ResourceManager.class);
             try {
-                if(!resourceManager1.getStorage().exists(new DefaultResource(resourcePath))){
+                if(!resourceManager.getStorage().exists(new DefaultResource(resourcePath))){
                     return original;
                 }
             } catch (Exception e) {

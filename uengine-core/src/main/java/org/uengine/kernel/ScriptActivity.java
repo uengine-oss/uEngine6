@@ -108,20 +108,20 @@ public class ScriptActivity extends DefaultActivity {
 			if(instance !=null)
 				manager.declareBean("instance", instance, ProcessInstance.class);
 
-			try{
-				manager.declareBean("request", instance.getProcessTransactionContext().getServletRequest(), HttpServletRequest.class);
-			}catch(Exception e){
-			}
+			// try{
+			// 	manager.declareBean("request", instance.getProcessTransactionContext().getServletRequest(), HttpServletRequest.class);
+			// }catch(Exception e){
+			// }
 
 			manager.declareBean("activity", this, Activity.class);
 			manager.declareBean("definition", getProcessDefinition(), ProcessDefinition.class);
 //			manager.declareBean("globalContext", GlobalContext.getInstance(), GlobalContext.class);
 			manager.declareBean("util", new ScriptUtil(), ScriptUtil.class);
 			
-			try{
-				manager.declareBean("loggedRoleMapping", instance.getProcessTransactionContext().getProcessManager().getGenericContext().get(HumanActivity.GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING), RoleMapping.class);
-			}catch(Exception e){
-			}
+			// try{
+			// 	manager.declareBean("loggedRoleMapping", instance.getProcessTransactionContext().getProcessManager().getGenericContext().get(HumanActivity.GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING), RoleMapping.class);
+			// }catch(Exception e){
+			// }
 			
 			BSFEngine engine = manager.loadScriptingEngine("javascript");
 				
@@ -130,16 +130,16 @@ public class ScriptActivity extends DefaultActivity {
 		}else{
 			
 			RoleMapping loggedRoleMapping = null;
-			try{
-				loggedRoleMapping = (RoleMapping) instance.getProcessTransactionContext().getProcessManager().getGenericContext().get(HumanActivity.GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING);
-			}catch(Exception e){
-			}
+			// try{
+			// 	loggedRoleMapping = (RoleMapping) instance.getProcessTransactionContext().getProcessManager().getGenericContext().get(HumanActivity.GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING);
+			// }catch(Exception e){
+			// }
 			
 			HttpServletRequest request = null;
-			try{
-				request = (HttpServletRequest) instance.getProcessTransactionContext().getServletRequest();
-			}catch(Exception e){
-			}
+			// try{
+			// 	request = (HttpServletRequest) instance.getProcessTransactionContext().getServletRequest();
+			// }catch(Exception e){
+			// }
 			
 			
 			String[] parameterNames= {"instance", "activity", "definition", "util", "loggedRoleMapping", "request"};

@@ -10,7 +10,6 @@ import java.util.Map;
 import javax.xml.namespace.QName;
 
 import org.uengine.contexts.ComplexType;
-import org.uengine.contexts.DatabaseSynchronizationOption;
 import org.uengine.contexts.JavaClassDefinition;
 import org.uengine.contexts.TextContext;
 import org.uengine.modeling.resource.DefaultResource;
@@ -253,10 +252,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 			}
 		}
 
-		if(isDatabaseSynchronized()){
-			if(getDatabaseSynchronizationOption().set(instance, scope, value));
-				return;
-		}
 		
 		if(getType()!=null && (value==null || !value.getClass().isAssignableFrom(getType()))){		
 			if(value instanceof String){
@@ -281,16 +276,6 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 				return instance.getRootProcessInstance().get(scope, getName());
 		}
 
-
-		if(isDatabaseSynchronized()){
-			Serializable value = getDatabaseSynchronizationOption().get(instance, scope);
-			
-			if(value instanceof ProcessVariableValue){
-				return ((ProcessVariableValue)value).getValue();
-			}else{
-				return value;
-			}
-		}
 		
 		if(instance==null ) return (Serializable)getDefaultValue();
 		
@@ -310,21 +295,7 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 				return getMultiple(instance.getRootProcessInstance(), scope, key);
 		}
 
-		if(isDatabaseSynchronized()){
-			
-			Serializable value = getDatabaseSynchronizationOption().get(instance, scope);
-			ProcessVariableValue pvv;
-			
-			if(value instanceof ProcessVariableValue){
-				pvv = (ProcessVariableValue)value;
-			}else{
-				pvv = new ProcessVariableValue();
-				pvv.setValue(value);
-			}
-			
-			pvv.setName(getName());
-			return pvv;
-		}
+		
 
 		return instance.getMultiple(scope, getName());
 	}
@@ -415,16 +386,7 @@ System.out.println("ProcessVariable:: converting from String to Integer");
 		public void setDatabaseSynchronized(boolean isDatabaseSynchronized) {
 			this.isDatabaseSynchronized = isDatabaseSynchronized;
 		}
-			
-	DatabaseSynchronizationOption databaseSynchronizationOption;
-		public DatabaseSynchronizationOption getDatabaseSynchronizationOption() {
-			return databaseSynchronizationOption;
-		}
-		public void setDatabaseSynchronizationOption(
-				DatabaseSynchronizationOption databaseSynchronizationOption) {
-			this.databaseSynchronizationOption = databaseSynchronizationOption;
-		}
-		
+	
 //	String validationScript;
 //		public String getValidationScript() {
 //			return validationScript;

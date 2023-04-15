@@ -13,11 +13,6 @@ public class ContainerResource extends DefaultResource implements IContainer {
 		setContainer(true);
 	}
 
-	@Override
-	public SelectedResource select() throws Exception {
-		return super.select();
-	}
-
 	public ContainerResource(String path) {
 		this();
 		setPath(path);

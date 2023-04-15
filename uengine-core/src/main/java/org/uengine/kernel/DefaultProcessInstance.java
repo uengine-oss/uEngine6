@@ -3,8 +3,10 @@ package org.uengine.kernel;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.uengine.processmanager.ProcessTransactionContext;
+import org.uengine.processmanager.SimulatorTransactionContext;
 import org.uengine.util.ActivityForLoop;
 import org.uengine.util.UEngineUtil;
+import org.uengine.webservices.worklist.SimulatorWorkList;
 import org.uengine.webservices.worklist.WorkList;
 
 import java.io.Serializable;
