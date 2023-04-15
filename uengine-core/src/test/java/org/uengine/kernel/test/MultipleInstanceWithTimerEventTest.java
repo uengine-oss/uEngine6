@@ -1,13 +1,10 @@
 package org.uengine.kernel.test;
 
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.test.TestMetaworksRemoteService;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.uengine.kernel.*;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.kernel.bpmn.TimerEvent;
-import org.uengine.processmanager.ProcessManagerBean;
 import org.uengine.processmanager.ProcessManagerRemote;
 
 import java.io.FileOutputStream;
@@ -35,12 +32,6 @@ public class MultipleInstanceWithTimerEventTest extends UEngineTest{
      */
     public void setUp() throws Exception {
 
-        //Set application context for testing
-        new TestMetaworksRemoteService(
-                new ClassPathXmlApplicationContext(
-                        "org/uengine/kernel/test/TimerEventTestContext.xml"
-                )
-        );
 
         processDefinition = new ProcessDefinition();
 
@@ -135,10 +126,7 @@ public class MultipleInstanceWithTimerEventTest extends UEngineTest{
         subProcess.setMultipleInstanceOption("loop");
 
 
-        ProcessManagerBean processManagerBean = (ProcessManagerBean) MetaworksRemoteService.getComponent(ProcessManagerRemote.class);
-            Map options = new HashMap<String, Object>();
-            options.put("ptc", processManagerBean.getTransactionContext());
-            ProcessInstance instance = processDefinition.createInstance("test", options);
+            ProcessInstance instance = processDefinition.createInstance("test", null);
 
         ProcessVariableValue pvv = new ProcessVariableValue();
         pvv.setName("var1");

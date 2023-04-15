@@ -1,6 +1,7 @@
 package org.uengine.five.kernel;
 
 import org.uengine.five.service.SemanticEntityService;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.processdesigner.mapper.Transformer;
 

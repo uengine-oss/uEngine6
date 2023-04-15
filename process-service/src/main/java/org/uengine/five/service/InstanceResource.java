@@ -1,23 +1,24 @@
 package org.uengine.five.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.springframework.hateoas.EntityLinks;
-import org.springframework.hateoas.ResourceSupport;
-import org.springframework.hateoas.core.Relation;
 import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.util.UEngineUtil;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.methodOn;
+
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
+
 
 /**
  * Created by uengine on 2017. 11. 11..
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Relation(value = "instance", collectionRelation = "instances")
-public class InstanceResource extends ResourceSupport {
+public class InstanceResource extends RepresentationModel {
 
     String name;
 
@@ -100,13 +101,13 @@ public class InstanceResource extends ResourceSupport {
             }
         }
 
-        EntityLinks entityLinks = MetaworksRemoteService.getInstance().getBeanFactory().getBean(EntityLinks.class);
+        // EntityLinks entityLinks = GlobalContext.getComponent(EntityLinks.class);
 
-        if(entityLinks!=null){
-            add(
-                    entityLinks.linkForSingleResource(ProcessInstanceEntity.class, new Long(processInstance.getInstanceId())).withRel("entity")
-            );
-        }
+        // if(entityLinks!=null){
+        //     add(
+        //             entityLinks.linkForSingleResource(ProcessInstanceEntity.class, new Long(processInstance.getInstanceId())).withRel("entity")
+        //     );
+        // }
 
     }
 

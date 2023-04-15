@@ -1,10 +1,10 @@
 package org.uengine.five.overriding;
 
-import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.five.entity.AuditEntity;
 import org.uengine.five.repository.AuditEntityRepository;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
@@ -19,7 +19,7 @@ public class AuditActivityFilter implements ActivityFilter {
 
     @Override
     public void afterExecute(Activity activity, ProcessInstance instance) throws Exception {
-        AuditEntityRepository auditEntityRepository = MetaworksRemoteService.getComponent(AuditEntityRepository.class);
+        AuditEntityRepository auditEntityRepository = GlobalContext.getComponent(AuditEntityRepository.class);
 
         AuditEntity auditEntity = new AuditEntity();
         auditEntity.setFullTracingTag(activity.getTracingTag()); //TODO: root 를 찾아서 12@3@5  형식으로 ...

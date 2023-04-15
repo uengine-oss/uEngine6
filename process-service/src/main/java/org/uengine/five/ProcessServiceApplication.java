@@ -29,6 +29,13 @@ public class ProcessServiceApplication {
 
     public static ApplicationContext applicationContext;
 
+    public static ObjectMapper objectMapper = createTypedJsonObjectMapper();
+
+    public static ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+
     public static void main(String[] args) {
         applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
     }

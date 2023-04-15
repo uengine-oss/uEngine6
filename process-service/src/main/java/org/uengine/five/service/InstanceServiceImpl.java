@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
-import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
@@ -38,7 +37,6 @@ import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
-import org.uengine.uml.model.ObjectInstance;
 import org.uengine.util.UEngineUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -69,7 +67,7 @@ public class InstanceServiceImpl implements InstanceService {
 
              //FIXME:  remove me
              String userId = SecurityAwareServletFilter.getUserId();
-             TenantContext.getThreadLocalInstance().setUserId(userId);
+             GlobalContext.setUserId(userId);
              //   
         
         Object definition = definitionService.getDefinition(filePath, !simulation); //if simulation time, use the version under construction
@@ -260,7 +258,7 @@ public class InstanceServiceImpl implements InstanceService {
         if(path == null || path.length()==0)
             throw new ResourceNotFoundException();
 
-        ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository.findOne(path.substring(SERVICES_ROOT.length()+2));
+        ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository.findById(path.substring(SERVICES_ROOT.length()+2)).get();
 
         if(serviceEndpointEntity==null)
             throw new ResourceNotFoundException();
@@ -268,7 +266,7 @@ public class InstanceServiceImpl implements InstanceService {
         //find the correlated instance:
         List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
         Object correlationData = null;
-        ObjectInstance objectInstance = new ObjectInstance();
+        // ObjectInstance objectInstance = new ObjectInstance();
 
         if("POST".equals(request.getMethod())) {
 
@@ -295,7 +293,7 @@ public class InstanceServiceImpl implements InstanceService {
                 } else
                     converted = childNode;
 
-                objectInstance.setBeanProperty(fieldName, converted);
+             //   objectInstance.setBeanProperty(fieldName, converted);
             }
 
             correlationData = jsonNode.get(serviceEndpointEntity.getCorrelationKey());
@@ -348,7 +346,7 @@ public class InstanceServiceImpl implements InstanceService {
                 if (activity instanceof CatchingRestMessageEvent) {
                     CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
 
-                    boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), objectInstance);
+                    boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
                     if (treated) neverTreated = false;
                 }
             }

@@ -141,13 +141,17 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                 getProcessInstanceEntity().setRootInstId(getProcessInstanceEntity().getInstId());
             }
         } else { // else, load the instance
-            setProcessInstanceEntity(processInstanceRepository.findOne(Long.valueOf(getInstanceId())));
+            processInstanceRepository.findById(Long.valueOf(getInstanceId())).ifPresent(entity ->{
+                setProcessInstanceEntity(entity);
 
+            });
+            
             if(getProcessInstanceEntity()==null)
                 throw new UEngineException("No such process instance where id = " + getInstanceId());
-
+                
             Map variables = loadVariables();
             setVariables(variables);
+
         }
 
         setInstanceId(String.valueOf(getProcessInstanceEntity().getInstId()));

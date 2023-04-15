@@ -1,12 +1,9 @@
 package org.uengine.kernel.test;
 
-import org.metaworks.dwr.MetaworksRemoteService;
-import org.metaworks.test.TestMetaworksRemoteService;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.uengine.kernel.*;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.TimerEvent;
-import org.uengine.processmanager.ProcessManagerBean;
 import org.uengine.processmanager.ProcessManagerRemote;
 
 import java.util.HashMap;
@@ -33,14 +30,6 @@ public class TimerEventTest extends UEngineTest{
      * @throws Exception
      */
     public void setUp() throws Exception {
-
-        //Set application context for testing
-        new TestMetaworksRemoteService(
-                new ClassPathXmlApplicationContext(
-                          getClass().getName().replaceAll("\\.", "\\/") + "Context.xml"
-                )
-        );
-
 
         processDefinition = new ProcessDefinition();
 
@@ -143,11 +132,8 @@ public class TimerEventTest extends UEngineTest{
 
     public void testTimerEvent() throws Exception {
 
-        ProcessManagerBean processManagerBean = (ProcessManagerBean) MetaworksRemoteService.getComponent(ProcessManagerRemote.class);
 
-        Map options = new HashMap<String, Object>();
-        options.put("ptc", processManagerBean.getTransactionContext());
-        ProcessInstance instance = processDefinition.createInstance("test", options);
+        ProcessInstance instance = processDefinition.createInstance("test", null);
 
         instance.execute();
         assertExecutionPathEquals("Running Before Event", new String[]{

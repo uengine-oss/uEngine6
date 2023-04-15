@@ -596,8 +596,12 @@ System.out.println("GlobalContext::deserialize: the case that source is a busine
         return getComponent(clazz, null);
     }
 
+
 	public static String getUserId() {
 		return null;
+	}
+	public static void setUserId(String userId) {
+		
 	}
 
     public static <T> Map<String, T> getComponents(Class<T> clazz) {

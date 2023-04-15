@@ -14,13 +14,10 @@ import javax.servlet.http.HttpServletResponse;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-import org.metaworks.annotation.Order;
-import org.oce.garuda.multitenancy.TenantContext;
 import org.springframework.stereotype.Component;
 import org.uengine.five.framework.ProcessTransactionContext;
 
 @Component
-@Order(1)
 public class SecurityAwareServletFilter implements Filter {
 
     static String userId;

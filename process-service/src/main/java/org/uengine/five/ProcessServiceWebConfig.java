@@ -2,17 +2,9 @@ package org.uengine.five;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.metaworks.multitenancy.ClassManager;
-import org.metaworks.multitenancy.DefaultMetadataService;
-import org.metaworks.multitenancy.MetadataService;
-import org.metaworks.multitenancy.persistence.MultitenantRepositoryImpl;
-import org.metaworks.multitenancy.tenantawarefilter.TenantAwareFilter;
-import org.metaworks.rest.MetaworksRestService;
-import org.metaworks.springboot.configuration.Metaworks4WebConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.repository.query.spi.EvaluationContextExtension;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -26,13 +18,11 @@ import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.bpmn.TimerEventJob;
-import org.uengine.modeling.resource.CachedResourceManager;
 import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
 import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.webservices.worklist.WorkList;
-import org.uengine.five.spring.TenantSecurityEvaluationContextExtension;
 
 import javax.servlet.Filter;
 import java.util.HashMap;
@@ -40,9 +30,7 @@ import java.util.Map;
 
 @EnableWebMvc
 @Configuration
-@ComponentScan(basePackageClasses = {ProcessDefinitionFactory.class, ProcessInstanceEntity.class, MetaworksRestService.class, ClassManager.class, MetadataService.class, MultitenantRepositoryImpl.class})
-@EnableJpaRepositories(basePackageClasses = {MultitenantRepositoryImpl.class, ProcessInstanceRepository.class})
-public class ProcessServiceWebConfig extends Metaworks4WebConfig {
+public class ProcessServiceWebConfig {
 
 //    @Override
 //    public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -57,12 +45,12 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
 //        super.addViewControllers(registry);
 //    }
 
-    @Bean
-    public ResourceManager resourceManager() {
-        ResourceManager resourceManager = new CachedResourceManager();
-        resourceManager.setStorage(storage());
-        return resourceManager;
-    }
+    // @Bean
+    // public ResourceManager resourceManager() {
+    //     ResourceManager resourceManager = new CachedResourceManager();
+    //     resourceManager.setStorage(storage());
+    //     return resourceManager;
+    // }
 
 //    @Bean
 //    public DataSource dataSource() {
@@ -79,7 +67,7 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
 //        }
 //    }
 
-    @Bean
+ //   @Bean
     /**
      *
      * <bean class="CouchbaseStorage">
@@ -88,28 +76,28 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
      <property name="serverIp" value="localhost"/>
      </bean>
      */
-    public Storage storage() {
-        LocalFileStorage storage = new LocalFileStorage();
-//        storage.setBasePath("/oce/repository");
-        String UserName = System.getenv("USER");
-        storage.setBasePath("/Users/" + UserName);
+//     public Storage storage() {
+//         LocalFileStorage storage = new LocalFileStorage();
+// //        storage.setBasePath("/oce/repository");
+//         String UserName = System.getenv("USER");
+//         storage.setBasePath("/Users/" + UserName);
 
 
-        return storage;
-    }
+//         return storage;
+//     }
 
 //    @Bean
 //    public TenantAwareFilter tenantAwareFilter(){
 //        return new TenantAwareFilter();
 //    }
 
-    @Bean
-    public MetadataService metadataService() {
-        DefaultMetadataService metadataService = new DefaultMetadataService();
-        metadataService.setResourceManager(resourceManager());
+    // @Bean
+    // public MetadataService metadataService() {
+    //     DefaultMetadataService metadataService = new DefaultMetadataService();
+    //     metadataService.setResourceManager(resourceManager());
 
-        return metadataService;
-    }
+    //     return metadataService;
+    // }
 
 
     @Bean
@@ -128,20 +116,20 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
         return new JPAWorkList();
     }
 
-    @Bean
-    public Filter webFilter() {
-        return new TenantAwareFilter();
-    }
+    // @Bean
+    // public Filter webFilter() {
+    //     return new TenantAwareFilter();
+    // }
 
     @Bean
     public ProcessDefinitionFactory processDefinitionFactory() {
         return new ProcessDefinitionFactory();
     }
 
-    @Bean
-    public ProcessManagerRemote processManagerRemote() {
-        return new ProcessManagerBean();
-    }
+    // @Bean
+    // public ProcessManagerRemote processManagerRemote() {
+    //     return new ProcessManagerBean();
+    // }
 
     @Bean
     public TimerEventJob timerEventJob() {
@@ -149,10 +137,10 @@ public class ProcessServiceWebConfig extends Metaworks4WebConfig {
     }
 
 
-    @Bean
-    EvaluationContextExtension securityExtension() {
-        return new TenantSecurityEvaluationContextExtension();
-    }
+    // @Bean
+    // EvaluationContextExtension securityExtension() {
+    //     return new TenantSecurityEvaluationContextExtension();
+    // }
 }
 
 

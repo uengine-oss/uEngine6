@@ -96,7 +96,7 @@ public class JPAWorkList implements WorkList {
             Long taskId;
             if(reservedTaskId!=null){
                 taskId = new Long(reservedTaskId);
-                wl = worklistRepository.findOne(taskId);
+                wl = worklistRepository.findById(taskId).get();
             }
             else{
                 wl = new WorklistEntity();
@@ -193,7 +193,7 @@ public class JPAWorkList implements WorkList {
 
         try{
 
-            WorklistEntity wl = worklistRepository.findOne(new Long(taskID));
+            WorklistEntity wl = worklistRepository.findById(new Long(taskID)).get();
 
             if(wl==null) return;
 
@@ -218,7 +218,7 @@ public class JPAWorkList implements WorkList {
         try{
             Calendar now = Calendar.getInstance();
 
-            WorklistEntity wl = worklistRepository.findOne(new Long(taskID));
+            WorklistEntity wl = worklistRepository.findById(new Long(taskID)).get();
             wl.setStatus(DefaultWorkList.WORKITEM_STATUS_COMPLETED);
             wl.setEndDate(new Timestamp(now.getTimeInMillis()));
 
@@ -238,7 +238,7 @@ public class JPAWorkList implements WorkList {
 
         try{
 
-            WorklistEntity wlDAO = worklistRepository.findOne(new Long(taskId));
+            WorklistEntity wlDAO = worklistRepository.findById(new Long(taskId)).get();
 
             if(userId!=null)
                 wlDAO.setEndpoint(userId);

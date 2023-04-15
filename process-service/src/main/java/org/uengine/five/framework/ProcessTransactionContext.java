@@ -1,10 +1,8 @@
 package org.uengine.five.framework;
 
 import org.uengine.kernel.*;
-import org.uengine.processmanager.ProcessManagerBean;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.util.ForLoop;
-import org.uengine.util.dao.DataSourceConnectionFactory;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -70,11 +68,7 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
         return processInstances;
     }
 
-    @Override
-    public Connection createManagedExternalConnection(DataSourceConnectionFactory connectionFactory) throws Exception {
-        return null;
-    }
-
+   
     @Override
     public void registerProcessInstance(DefaultProcessInstance defaultProcessInstance) {
 
@@ -155,10 +149,6 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
         return commitable;
     }
 
-    @Override
-    public Connection getConnection() throws Exception {
-        return null;
-    }
 
     @Override
     public void addDebugInfo(Object message) {
@@ -170,20 +160,20 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
         return null;
     }
 
-    @Override
-    public ServletRequest getServletRequest() {
-        return null;
-    }
+    // @Override
+    // public ServletRequest getServletRequest() {
+    //     return null;
+    // }
 
-    @Override
-    public ServletResponse getServletResponse() {
-        return null;
-    }
+    // @Override
+    // public ServletResponse getServletResponse() {
+    //     return null;
+    // }
 
-    @Override
-    public ProcessManagerBean getProcessManager() {
-        return null;
-    }
+    // @Override
+    // public ProcessManagerBean getProcessManager() {
+    //     return null;
+    // }
 
     @Override
     public boolean isManagedTransaction() {
