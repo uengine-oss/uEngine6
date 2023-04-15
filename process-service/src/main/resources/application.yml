@@ -49,11 +49,9 @@
 server:
   port: 9094
 
-eureka:
-  client:
-    enabled: false
-
 spring:
+  main:
+    allow-bean-definition-overriding: true
   # profiles: default
   cloud:
     stream:

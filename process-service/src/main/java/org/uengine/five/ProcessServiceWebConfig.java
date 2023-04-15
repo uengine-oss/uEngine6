@@ -131,10 +131,10 @@ public class ProcessServiceWebConfig {
     //     return new ProcessManagerBean();
     // }
 
-    @Bean
-    public TimerEventJob timerEventJob() {
-        return new TimerEventJob();
-    }
+    // @Bean
+    // public TimerEventJob timerEventJob() {
+    //     return new TimerEventJob();
+    // }
 
 
     // @Bean

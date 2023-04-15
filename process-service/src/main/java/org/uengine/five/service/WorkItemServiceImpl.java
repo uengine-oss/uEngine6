@@ -8,7 +8,6 @@ import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactional;
 import org.uengine.five.repository.WorklistRepository;
 import org.uengine.kernel.*;
-import org.uengine.modeling.resource.ResourceManager;
 
 import javax.annotation.PostConstruct;
 import java.io.Serializable;
@@ -28,8 +27,6 @@ import java.util.Map;
 @RestController
 public class WorkItemServiceImpl {
 
-    @Autowired
-    ResourceManager resourceManager;
 
     @Autowired
     DefinitionServiceUtil definitionService; // bind automatically for the remote api?
