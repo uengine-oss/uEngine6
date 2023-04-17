@@ -45,12 +45,12 @@ public class ProcessServiceWebConfig {
 //        super.addViewControllers(registry);
 //    }
 
-    // @Bean
-    // public ResourceManager resourceManager() {
-    //     ResourceManager resourceManager = new CachedResourceManager();
-    //     resourceManager.setStorage(storage());
-    //     return resourceManager;
-    // }
+    @Bean
+    public ResourceManager resourceManager() {
+        ResourceManager resourceManager = new CachedResourceManager();
+        resourceManager.setStorage(storage());
+        return resourceManager;
+    }
 
 //    @Bean
 //    public DataSource dataSource() {
@@ -76,15 +76,15 @@ public class ProcessServiceWebConfig {
      <property name="serverIp" value="localhost"/>
      </bean>
      */
-//     public Storage storage() {
-//         LocalFileStorage storage = new LocalFileStorage();
-// //        storage.setBasePath("/oce/repository");
-//         String UserName = System.getenv("USER");
-//         storage.setBasePath("/Users/" + UserName);
+    public Storage storage() {
+        LocalFileStorage storage = new LocalFileStorage();
+//        storage.setBasePath("/oce/repository");
+        String UserName = System.getenv("USER");
+        storage.setBasePath("/Users/" + UserName);
 
 
-//         return storage;
-//     }
+        return storage;
+    }
 
 //    @Bean
 //    public TenantAwareFilter tenantAwareFilter(){

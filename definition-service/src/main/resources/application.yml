@@ -26,13 +26,10 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-        event-in:
-          group: definition
+        bpm-topic:
           destination: bpm.topic
           contentType: application/json
-        event-out:
-          destination: bpm.topic
-          contentType: application/json
+          
 
 logging:
   level:
@@ -61,12 +58,9 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-        event-in:
-          group: store
-          destination: food.delivery
+        bpm-topic:
+          destination: bpm.topic
           contentType: application/json
-        event-out:
-          destination: food.delivery
-          contentType: application/json
+          
 
 
