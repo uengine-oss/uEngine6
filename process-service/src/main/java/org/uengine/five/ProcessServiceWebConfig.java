@@ -18,6 +18,7 @@ import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.bpmn.TimerEventJob;
+import org.uengine.modeling.resource.CachedResourceManager;
 import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
