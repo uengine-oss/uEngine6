@@ -11,6 +11,8 @@ import org.uengine.five.ProcessServiceApplication;
 import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.bpmn.SequenceFlow;
+import org.uengine.kernel.bpmn.StartEvent;
+
 
 @SpringBootTest(classes = ProcessServiceApplication.class)
 public class KernelTest {
@@ -29,7 +31,7 @@ public class KernelTest {
 
         ProcessDefinition processDefinition = new ProcessDefinition();
 
-        DefaultActivity act1 = new DefaultActivity();
+        StartEvent act1 = new StartEvent();
         act1.setName("act1");
 
         processDefinition.addChildActivity(act1);
