@@ -38,13 +38,13 @@ public class KernelTest {
 
 
         StartEvent act1 = new StartEvent();
-        act1.setName("act1");
+        act1.setName("start");
 
         processDefinition.addChildActivity(act1);
 
         RPAActivity act2 = new RPAActivity();
         act2.setName("act2");
-        act2.setArgument(ProcessVariable.forName("variable1"));
+        act2.setArgument(ProcessVariable.forName("var1"));
 
         processDefinition.addChildActivity(act2);
 
@@ -72,9 +72,9 @@ public class KernelTest {
 
         try {
             String testValue = "Test Value";
-            instance.set("", "variable1", testValue);
+            instance.set("", "var1", testValue);
             instance.execute();
-            Object value2 = instance.get("variable1");
+            Object value2 = instance.get("var1");
             assertEquals(value2, testValue + "_");
         } catch (Exception e) {
             // TODO Auto-generated catch block

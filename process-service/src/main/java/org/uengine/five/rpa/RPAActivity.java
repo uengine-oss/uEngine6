@@ -12,12 +12,27 @@ public class RPAActivity extends ReceiveActivity{
         // TODO Auto-generated method stub
         super.executeActivity(instance);
 
-        Object argValue = getArgument().get(instance, null);
+        //TODO: python 명령을 보내는 부분 -> kafka event publish 
 
-        getArgument().set(instance, null, argValue + "_");
+        Object argValue = getArgument().get(instance, "");
+
+        getArgument().set(instance, "", argValue + "_");
     }
 
     
+
+    
+    @Override
+    protected void onReceive(ProcessInstance instance, Object payload) throws Exception {
+        // TODO Auto-generated method stub
+        super.onReceive(instance, payload);
+
+        //....
+    }
+
+
+
+
     ProcessVariable argument;
         public ProcessVariable getArgument() {
             return argument;
