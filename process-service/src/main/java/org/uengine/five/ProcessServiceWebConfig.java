@@ -80,9 +80,10 @@ public class ProcessServiceWebConfig {
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
 //        storage.setBasePath("/oce/repository");
-        String UserName = System.getenv("USER");
-        storage.setBasePath("/Users/" + UserName);
+        //String UserName = System.getenv("USER");
+        //storage.setBasePath("/Users/" + UserName);
 
+        storage.setBasePath(".");
 
         return storage;
     }
