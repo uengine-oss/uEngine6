@@ -14,4 +14,5 @@ public class ActivityDone extends BusinessEvent{
     }
 
     ActivityInfo activityInfo;
+
 }

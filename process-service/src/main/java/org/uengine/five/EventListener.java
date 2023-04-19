@@ -17,6 +17,7 @@ import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.Activity;
 
 import org.uengine.kernel.UEngineException;
@@ -43,6 +44,69 @@ public class EventListener {
         if(!activityDone.checkMyEvent()) return;
 
         System.out.println("Received: ");
+
+
+        ProcessInstance instance = instanceService.getProcessInstanceLocal(activityDone.getActivityInfo().getInstanceId());
+
+        try {
+            Activity activity = instance.getProcessDefinition(false).getActivity(activityDone.getActivityInfo().getTracingTag());
+
+            if(activity instanceof ReceiveActivity){
+                ((ReceiveActivity)activity).fireReceived(instance, activityDone.getResult());
+            }
+            instance.execute(activityQueued.getActivityInfo().getTracingTag());
+
+            ActivityDone activityDone = new ActivityDone();
+            activityDone.setActivityInfo(new ActivityInfo());
+            activityDone.getActivityInfo().setInstanceId(activityQueued.getActivityInfo().getInstanceId());
+            activityDone.getActivityInfo().setTracingTag(activityQueued.getActivityInfo().getTracingTag());
+
+            MessageChannel messageChannel = streams.outboundChannel();
+            messageChannel.send(MessageBuilder
+                    .withPayload(activityDone)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
+                    .build());
+
+
+        }catch(Exception e){
+
+            ActivityFailed activityFailed = new ActivityFailed();
+            activityFailed.setActivityInfo(new ActivityInfo());
+            activityFailed.getActivityInfo().setInstanceId(activityQueued.getActivityInfo().getInstanceId());
+            activityFailed.getActivityInfo().setTracingTag(activityQueued.getActivityInfo().getTracingTag());
+
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            e.printStackTrace(printWriter);
+            activityFailed.setMessage("[" + e.getClass().getName() + "]" + e.getMessage() + ":" + stringWriter.toString());
+
+            MessageChannel messageChannel = streams.outboundChannel();
+            messageChannel.send(MessageBuilder
+                    .withPayload(activityFailed)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
+                    .build());
+
+
+            //// retry
+            Activity activity = instance.getProcessDefinition().getActivity(activityFailed.getActivityInfo().getTracingTag());
+            if(activity.isQueuingEnabled()){
+
+                int retryDelay = activity.getRetryDelay()>0 ? activity.getRetryDelay():30;
+                int retryLimit = activity.getRetryLimit()>0 ? activity.getRetryLimit():5;
+
+                int currRetryCount = activity.getRetryCount(instance);
+                if(currRetryCount < retryLimit){
+                    Thread.sleep(retryDelay * 1000); /// fixme :  changed to use Timer that tries in different thread.
+
+                    activityQueue.queue(instance.getInstanceId(), activity.getTracingTag(), currRetryCount, null);
+                    activity.setRetryCount(instance, currRetryCount + 1);
+                }
+
+            }
+        }
+
+    }
+
     }
 
     @StreamListener(Streams.INPUT)
@@ -59,6 +123,8 @@ public class EventListener {
             e.printStackTrace();
         }
     }
+
+
 
     @StreamListener(Streams.INPUT)
     @ProcessTransactional

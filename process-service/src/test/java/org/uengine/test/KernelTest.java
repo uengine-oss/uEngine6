@@ -97,7 +97,7 @@ public class KernelTest {
             ResultPayload rp = new ResultPayload();
             String changedValue = "value is changed by receiving result";
             rp.setProcessVariableChanges(new KeyedParameter[]{
-                new KeyedParameter("parameter1", changedValue)
+                new KeyedParameter("var1", changedValue)
             });
 
             act2.fireReceived(instance, rp);
