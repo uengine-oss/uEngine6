@@ -3,83 +3,92 @@
  */
 package org.uengine.kernel;
 
-import org.apache.bsf.*;
+import org.apache.bsf.BSFEngine;
+import org.apache.bsf.BSFException;
+import org.apache.bsf.BSFManager;
 
 /**
  * @author Jinyoung Jang
  */
-public class DefaultActivityFilter implements ActivityFilter{
+public class DefaultActivityFilter implements ActivityFilter {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
 	ActivityFilter activityFilter;
-	
+
 	// public static void metaworksCallback_changeMetadata(Type type){
-	// 	FieldDescriptor fd = type.getFieldDescriptor("AfterExecuteScript");
-	// 	fd.setInputter(new DateInput());
+	// FieldDescriptor fd = type.getFieldDescriptor("AfterExecuteScript");
+	// fd.setInputter(new DateInput());
 	// }
-	
-	protected void runScript(String script, Activity activity, ProcessInstance instance) throws BSFException{
+
+	protected void runScript(String script, Activity activity, ProcessInstance instance) throws BSFException {
 		BSFManager manager = new BSFManager();
 		manager.setClassLoader(this.getClass().getClassLoader());
-	
+
 		manager.declareBean("instance", instance, ProcessInstance.class);
 		manager.declareBean("activity", activity, Activity.class);
-//		manager.declareBean("globalContext", GlobalContext.getInstance(), GlobalContext.class);
+
+		// manager.declareBean("globalContext", GlobalContext.getInstance(),
+		// GlobalContext.class);
 		manager.declareBean("util", new ScriptUtil(), ScriptUtil.class);
-		
+
 		BSFEngine engine = manager.loadScriptingEngine("javascript");
-			
-		Object result = engine.eval("my_class.my_generated_method",0,0,"function getVal(){\n"+ script + "}\ngetVal();");
-		
+
+		Object result = engine.eval("my_class.my_generated_method", 0, 0,
+				"function getVal(){\n" + script + "}\ngetVal();");
+
 	}
-	
+
 	public void onDeploy(ProcessDefinition definition) throws Exception {
 		// TODO Auto-generated method stub
 	}
-	
-	public void afterComplete(Activity activity, ProcessInstance instance) throws Exception{
-		if(isUseScript()){
+
+	public void afterComplete(Activity activity, ProcessInstance instance) throws Exception {
+
+		if (isUseScript()) {
 			runScript(getAfterCompleteScript(), activity, instance);
-		}else if(getFilterClass()!=null){
-			if(activityFilter==null)
-				try{
-					activityFilter = (ActivityFilter)Thread.currentThread().getContextClassLoader().loadClass(getFilterClass()).newInstance();
-				}catch(Exception e){
+		} else if (getFilterClass() != null) {
+			if (activityFilter == null)
+				try {
+					activityFilter = (ActivityFilter) Thread.currentThread().getContextClassLoader()
+							.loadClass(getFilterClass()).newInstance();
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			
+
 			activityFilter.afterComplete(activity, instance);
 		}
-		
+
 	}
 
 	public void afterExecute(Activity activity, ProcessInstance instance)
-		throws Exception {
-		if(isUseScript()){
+			throws Exception {
+		if (isUseScript()) {
 			runScript(getAfterExecuteScript(), activity, instance);
-		}else if(getFilterClass()!=null){
-			if(activityFilter==null)
-				try{
-					activityFilter = (ActivityFilter)Thread.currentThread().getContextClassLoader().loadClass(getFilterClass()).newInstance();
-				}catch(Exception e){
+		} else if (getFilterClass() != null) {
+			if (activityFilter == null)
+				try {
+					activityFilter = (ActivityFilter) Thread.currentThread().getContextClassLoader()
+							.loadClass(getFilterClass()).newInstance();
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		
+
 			activityFilter.afterExecute(activity, instance);
 		}
 	}
 
-	public void beforeExecute(Activity activity, ProcessInstance instance) throws Exception{
-		if(isUseScript()){
+	public void beforeExecute(Activity activity, ProcessInstance instance) throws Exception {
+		if (isUseScript()) {
 			runScript(getBeforeExecuteScript(), activity, instance);
-		}else if(getFilterClass()!=null){
-			if(activityFilter==null)
-				try{
-					activityFilter = (ActivityFilter)Thread.currentThread().getContextClassLoader().loadClass(getFilterClass()).newInstance();
-				}catch(Exception e){
+		} else if (getFilterClass() != null) {
+			if (activityFilter == null)
+				try {
+					activityFilter = (ActivityFilter) Thread.currentThread().getContextClassLoader()
+							.loadClass(getFilterClass()).newInstance();
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			
+
 			activityFilter.beforeExecute(activity, instance);
 		}
 	}
@@ -88,7 +97,7 @@ public class DefaultActivityFilter implements ActivityFilter{
 	String afterExecuteScript;
 	String afterCompleteScript;
 	String beforeExecuteScript;
-	boolean useScript=true;
+	boolean useScript = true;
 	String name;
 
 	public String getAfterExecuteScript() {
@@ -139,17 +148,19 @@ public class DefaultActivityFilter implements ActivityFilter{
 		afterCompleteScript = string;
 	}
 
-	public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue) throws Exception {
-		if(isUseScript()){
-//			runScript(getBeforeExecuteScript(), activity, instance);
-		}else if(getFilterClass()!=null){
-			if(activityFilter==null)
-				try{
-					activityFilter = (ActivityFilter)Thread.currentThread().getContextClassLoader().loadClass(getFilterClass()).newInstance();
-				}catch(Exception e){
+	public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue)
+			throws Exception {
+		if (isUseScript()) {
+			// runScript(getBeforeExecuteScript(), activity, instance);
+		} else if (getFilterClass() != null) {
+			if (activityFilter == null)
+				try {
+					activityFilter = (ActivityFilter) Thread.currentThread().getContextClassLoader()
+							.loadClass(getFilterClass()).newInstance();
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			
+
 			activityFilter.onPropertyChange(activity, instance, propertyName, changedValue);
 		}
 	}

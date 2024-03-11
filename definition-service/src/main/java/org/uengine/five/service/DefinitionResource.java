@@ -1,14 +1,15 @@
 package org.uengine.five.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.*;
+
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
+import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
 import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.util.UEngineUtil;
 
-import org.springframework.hateoas.server.core.Relation;
-import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.*;
-import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Created by uengine on 2017. 11. 11..
@@ -19,14 +20,14 @@ public class DefinitionResource extends RepresentationModel {
 
     String name;
 
-    public DefinitionResource(){}
+    public DefinitionResource() {
+    }
 
     public DefinitionResource(IResource resource1) throws Exception {
         setName(resource1.getName());
         setDirectory(resource1 instanceof IContainer);
 
-
-        String relativePath = resource1.getPath().substring(DefinitionServiceImpl.RESOURCE_ROOT.length()+1);
+        String relativePath = resource1.getPath().substring(DefinitionServiceImpl.RESOURCE_ROOT.length() + 1);
 
         setPath(relativePath);
 
@@ -34,65 +35,61 @@ public class DefinitionResource extends RepresentationModel {
                 linkTo(
                         methodOn(DefinitionServiceImpl.class)
                                 .getDefinition(
-                                        relativePath
-                                )
-                ).withSelfRel()
-        );
+                                        relativePath))
+                        .withSelfRel());
 
-
-        if(!isDirectory()) {
+        if (!isDirectory()) {
             add(
                     linkTo(
                             methodOn(DefinitionServiceImpl.class)
                                     .getRawDefinition(
-                                            UEngineUtil.getNamedExtFile(relativePath, "json")
-                                    )
-                    ).withRel("raw")
-            );
-//            add(
-//                    linkTo(
-//                            methodOn(DefinitionServiceImpl.class)
-//                                    .getXMLDefinition(
-//                                            UEngineUtil.getNamedExtFile(relativePath, "json"), false
-//                                    )
-//                    ).withRel("xml")
-//            );
+                                            UEngineUtil.getNamedExtFile(relativePath, "json")))
+                            .withRel("raw"));
+            // add(
+            // linkTo(
+            // methodOn(DefinitionServiceImpl.class)
+            // .getXMLDefinition(
+            // UEngineUtil.getNamedExtFile(relativePath, "json"), false
+            // )
+            // ).withRel("xml")
+            // );
             add(
                     ControllerLinkBuilder.linkTo(
                             methodOn(InstanceService.class)
-                                    .runDefinition(
-                                            relativePath, false
-                                    )
-                    ).withRel("instantiation")
-            );
+                                    .start(
+                                            null))
+                            .withRel("instantiation"));
 
         }
-
 
     }
 
     public String getName() {
-            return name;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     boolean directory;
-        public boolean isDirectory() {
-            return directory;
-        }
-        public void setDirectory(boolean directory) {
-            this.directory = directory;
-        }
+
+    public boolean isDirectory() {
+        return directory;
+    }
+
+    public void setDirectory(boolean directory) {
+        this.directory = directory;
+    }
 
     public String path;
-        public String getPath() {
-            return path;
-        }
-        public void setPath(String path) {
-            this.path = path;
-        }
 
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 
 }

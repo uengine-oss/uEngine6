@@ -1,22 +1,29 @@
 package org.uengine.five.overriding;
 
+import java.util.Date;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
-import org.uengine.kernel.*;
+import org.uengine.kernel.Activity;
+import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.ProcessDefinition;
+import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.RoleMapping;
+import org.uengine.kernel.TransactionListener;
+import org.uengine.kernel.UEngineException;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.webservices.worklist.WorkList;
-
-import javax.annotation.PostConstruct;
-import javax.transaction.Transactional;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * Created by uengine on 2017. 8. 9..
@@ -42,25 +49,31 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
     ProcessInstanceRepository processInstanceRepository;
 
     ProcessInstanceEntity processInstanceEntity;
+
     public ProcessInstanceEntity getProcessInstanceEntity() {
         return processInstanceEntity;
     }
+
     public void setProcessInstanceEntity(ProcessInstanceEntity processInstanceEntity) {
         this.processInstanceEntity = processInstanceEntity;
     }
 
     boolean newInstance;
+
     public boolean isNewInstance() {
         return newInstance;
     }
+
     public void setNewInstance(boolean newInstance) {
         this.newInstance = newInstance;
     }
 
     boolean prototype;
+
     public boolean isPrototype() {
         return prototype;
     }
+
     public void setPrototype(boolean prototype) {
         this.prototype = prototype;
     }
@@ -95,25 +108,32 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
             getProcessInstanceEntity().setStartedDate(new Date());
 
-            boolean isSubProcess = (options != null && options.containsKey("isSubProcess") && options.get("isSubProcess").equals("yes"));
+            boolean isSubProcess = (options != null && options.containsKey("isSubProcess")
+                    && options.get("isSubProcess").equals("yes"));
 
             if (isSubProcess) {
                 getProcessInstanceEntity().setSubProcess(true);
-                getProcessInstanceEntity().setMainInstId(new Long((String) options.get(DefaultProcessInstance.RETURNING_PROCESS)));
-                getProcessInstanceEntity().setMainActTrcTag((String) options.get(DefaultProcessInstance.RETURNING_TRACINGTAG));
-                getProcessInstanceEntity().setMainExecScope((String) options.get(DefaultProcessInstance.RETURNING_EXECSCOPE));
-                getProcessInstanceEntity().setDontReturn(((Boolean) options.get(DefaultProcessInstance.DONT_RETURN)).booleanValue());
+                getProcessInstanceEntity()
+                        .setMainInstId(new Long((String) options.get(DefaultProcessInstance.RETURNING_PROCESS)));
+                getProcessInstanceEntity()
+                        .setMainActTrcTag((String) options.get(DefaultProcessInstance.RETURNING_TRACINGTAG));
+                getProcessInstanceEntity()
+                        .setMainExecScope((String) options.get(DefaultProcessInstance.RETURNING_EXECSCOPE));
+                getProcessInstanceEntity()
+                        .setDontReturn(((Boolean) options.get(DefaultProcessInstance.DONT_RETURN)).booleanValue());
                 getProcessInstanceEntity().setEventHandler(options.containsKey("isEventHandler"));
 
-                //TODO: need main process definition object instance from argument not the link (id) or the cache will provide the cached one
-            }else{
+                // TODO: need main process definition object instance from argument not the link
+                // (id) or the cache will provide the cached one
+            } else {
                 mainProcessInstance = this;
                 rootProcessInstance = this;
             }
 
             if (options != null) {
                 if (options.containsKey(DefaultProcessInstance.ROOT_PROCESS)) {
-                    getProcessInstanceEntity().setRootInstId(new Long((String) options.get(DefaultProcessInstance.ROOT_PROCESS)));
+                    getProcessInstanceEntity()
+                            .setRootInstId(new Long((String) options.get(DefaultProcessInstance.ROOT_PROCESS)));
                 }
 
                 if (options.containsKey(DefaultProcessInstance.SIMULATIONPROCESS)) {
@@ -123,12 +143,13 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
         }
 
-        if(procDefinition!=null && procDefinition.isVolatile())
+        if (procDefinition != null && procDefinition.isVolatile())
             setPrototype(true);
     }
 
     // @Autowired
-    // ApplicationEventPublisher applicationEventPublisher; //TODO see the DefinitionService.beforeProcessInstanceCommit() and move to here someday
+    // ApplicationEventPublisher applicationEventPublisher; //TODO see the
+    // DefinitionService.beforeProcessInstanceCommit() and move to here someday
     @PostConstruct
     public void init() throws Exception {
 
@@ -141,14 +162,14 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                 getProcessInstanceEntity().setRootInstId(getProcessInstanceEntity().getInstId());
             }
         } else { // else, load the instance
-            processInstanceRepository.findById(Long.valueOf(getInstanceId())).ifPresent(entity ->{
+            processInstanceRepository.findById(Long.valueOf(getInstanceId())).ifPresent(entity -> {
                 setProcessInstanceEntity(entity);
 
             });
-            
-            if(getProcessInstanceEntity()==null)
+
+            if (getProcessInstanceEntity() == null)
                 throw new UEngineException("No such process instance where id = " + getInstanceId());
-                
+
             Map variables = loadVariables();
             setVariables(variables);
 
@@ -156,7 +177,8 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
         setInstanceId(String.valueOf(getProcessInstanceEntity().getInstId()));
 
-        // Add this instance as transaction listener and register this so that it can be cached.
+        // Add this instance as transaction listener and register this so that it can be
+        // cached.
         ProcessTransactionContext.getThreadLocalInstance().addTransactionListener(this);
         ProcessTransactionContext.getThreadLocalInstance().registerProcessInstance(this);
 
@@ -213,7 +235,7 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public ProcessInstance getMainProcessInstance() throws Exception {
-        if(mainProcessInstance!=null)
+        if (mainProcessInstance != null)
             return mainProcessInstance;
 
         if (getMainProcessInstanceId() == null)
@@ -228,7 +250,7 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public ProcessInstance getRootProcessInstance() throws Exception {
-        if(rootProcessInstance!=null)
+        if (rootProcessInstance != null)
             return rootProcessInstance;
 
         if (getRootProcessInstanceId() == null)
@@ -316,29 +338,31 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public String getName() {
-        if(getProcessInstanceEntity()!=null)
+        if (getProcessInstanceEntity() != null)
             return getProcessInstanceEntity().getName();
 
-        else return null;
+        else
+            return null;
     }
 
     @Override
     public void setName(String value) {
-        if(getProcessInstanceEntity()!=null)
+        if (getProcessInstanceEntity() != null)
             getProcessInstanceEntity().setName(value);
     }
 
     @Override
     public String getInfo() {
-        if(getProcessInstanceEntity()!=null)
+        if (getProcessInstanceEntity() != null)
             return getProcessInstanceEntity().getInfo();
 
-        else return null;
+        else
+            return null;
     }
 
     @Override
     public void setInfo(String value) {
-        if(getProcessInstanceEntity()!=null)
+        if (getProcessInstanceEntity() != null)
             getProcessInstanceEntity().setInfo(value);
     }
 

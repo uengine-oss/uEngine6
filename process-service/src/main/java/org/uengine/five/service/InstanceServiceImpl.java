@@ -1,29 +1,27 @@
 package org.uengine.five.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.*;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.node.ValueNode;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
+import org.uengine.five.command.ProcessExecutionCommand;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
@@ -32,24 +30,36 @@ import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.spring.SecurityAwareServletFilter;
-import org.uengine.kernel.*;
+import org.uengine.kernel.Activity;
+import org.uengine.kernel.ActivityInstanceContext;
+import org.uengine.kernel.CatchingMessageEvent;
+import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.GlobalContext;
+import org.uengine.kernel.ProcessDefinition;
+import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
 import org.uengine.util.UEngineUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.QueryParam;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 
 /**
  * Created by uengine on 2017. 8. 9..
  *
  * Implementation Principles:
- *  - REST Maturity Level : 2
- *  - Not using old uEngine ProcessManagerBean, this replaces the ProcessManagerBean
- *  - ResourceManager and CachedResourceManager will be used for definition caching (Not to use the old DefinitionFactory)
- *  - json must be Typed JSON to enable object polymorphism - need to change the jackson engine. TODO: accept? typed json is sometimes hard to read
+ * - REST Maturity Level : 2
+ * - Not using old uEngine ProcessManagerBean, this replaces the
+ * ProcessManagerBean
+ * - ResourceManager and CachedResourceManager will be used for definition
+ * caching (Not to use the old DefinitionFactory)
+ * - json must be Typed JSON to enable object polymorphism - need to change the
+ * jackson engine. TODO: accept? typed json is sometimes hard to read
  */
 @RestController
 public class InstanceServiceImpl implements InstanceService {
@@ -57,54 +67,78 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     DefinitionServiceUtil definitionService;
 
-
-
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", method = {RequestMethod.POST, RequestMethod.PUT})
-    @Transactional(rollbackFor={Exception.class})
+    @RequestMapping(value = "/instance", method = { RequestMethod.POST, RequestMethod.PUT })
+    @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource runDefinition(@RequestParam("defPath") String filePath, @QueryParam("simulation") boolean simulation) throws Exception {
+    public InstanceResource start(
+            @RequestBody ProcessExecutionCommand command)
+            throws Exception {
 
-             //FIXME:  remove me
-             String userId = SecurityAwareServletFilter.getUserId();
-             GlobalContext.setUserId(userId);
-             //   
-        
-        Object definition = definitionService.getDefinition(filePath, !simulation); //if simulation time, use the version under construction
+        // FIXME: remove me
+        String userId = SecurityAwareServletFilter.getUserId();
+        GlobalContext.setUserId(userId);
+        //
 
-        if(definition instanceof ProcessDefinition){
+        boolean simulation = command.isSimulation();
+        String filePath = command.getProcessDefinitionId();
+
+        Object definition = definitionService.getDefinition(filePath, !simulation); // if simulation time, use the
+                                                                                    // version under construction
+
+        if (definition instanceof ProcessDefinition) {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
             org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
                     org.uengine.kernel.ProcessInstance.class,
-                    //new Object[]{
+                    // new Object[]{
                     processDefinition,
-                    null,
+                    command.getInstanceName(),
                     null
-                    //}
+            // }
             );
+
+            if (command.getRoleMappings() != null)
+                Arrays.asList(command.getRoleMappings()).forEach(roleMapping -> {
+                    try {
+                        instance.putRoleMapping(roleMapping);
+                    } catch (Exception e) {
+                        // Handle exception or rethrow as a runtime exception
+                        throw new RuntimeException("Error occurred while mapping roles", e);
+                    }
+                });
+
+            if (command.getProcessVariableValues() != null)
+                Arrays.asList(command.getProcessVariableValues()).forEach(processVariableValue -> {
+                    try {
+                        instance.set("", processVariableValue);
+                    } catch (Exception e) {
+                        // Handle exception or rethrow as a runtime exception
+                        throw new RuntimeException("Error occurred while setting process variables", e);
+                    }
+                });
 
             instance.execute();
 
-            return new InstanceResource(instance); //TODO: returns HATEOAS _self link instead.
+            return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
         }
         return null;
 
     }
 
+    // @RequestMapping(value = "/instance/{instanceId}/start", method =
+    // RequestMethod.POST)
+    // @ProcessTransactional
+    // public InstanceResource start(@PathVariable("instanceId") String instanceId)
+    // throws Exception {
 
-    @RequestMapping(value = "/instance/{instanceId}/start", method = RequestMethod.POST)
-    @ProcessTransactional
-    public InstanceResource start(@PathVariable("instanceId") String instanceId) throws Exception {
+    // ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-        
-        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+    // if (!instance.isRunning(""))
+    // instance.execute();
 
-        if(!instance.isRunning(""))
-            instance.execute();
-
-        return new InstanceResource(instance);
-    }
+    // return new InstanceResource(instance);
+    // }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
     @ProcessTransactional
@@ -112,7 +146,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-        if(instance.isRunning(""))
+        if (instance.isRunning(""))
             instance.stop();
 
         return new InstanceResource(instance);
@@ -124,10 +158,10 @@ public class InstanceServiceImpl implements InstanceService {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-        if(instance.isRunning("")){
+        if (instance.isRunning("")) {
             List<ActivityInstanceContext> runningContexts = instance.getCurrentRunningActivitiesDeeply();
 
-            for(ActivityInstanceContext runningContext : runningContexts){
+            for (ActivityInstanceContext runningContext : runningContexts) {
 
                 runningContext.getActivity().suspend(runningContext.getInstance());
 
@@ -143,10 +177,10 @@ public class InstanceServiceImpl implements InstanceService {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-        if(instance.isRunning("")){
+        if (instance.isRunning("")) {
             List<ActivityInstanceContext> suspendedContexts = instance.getActivitiesDeeply(Activity.STATUS_SUSPENDED);
 
-            for(ActivityInstanceContext runningContext : suspendedContexts){
+            for (ActivityInstanceContext runningContext : suspendedContexts) {
 
                 runningContext.getActivity().resume(runningContext.getInstance());
 
@@ -156,22 +190,22 @@ public class InstanceServiceImpl implements InstanceService {
         return new InstanceResource(instance);
     }
 
-
     @RequestMapping(value = "/instance/{instanceId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
     public InstanceResource getInstance(@PathVariable("instanceId") String instanceId) throws Exception {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-        if(instance==null) throw new ResourceNotFoundException(); // make 404 error
-
+        if (instance == null)
+            throw new ResourceNotFoundException(); // make 404 error
 
         return new InstanceResource(instance);
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     @ProcessTransactional
-    public InstanceResource backToHere(@PathVariable("instanceId") String instanceId, @PathVariable("tracingTag") String tracingTag) throws Exception {
+    public InstanceResource backToHere(@PathVariable("instanceId") String instanceId,
+            @PathVariable("tracingTag") String tracingTag) throws Exception {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         ProcessDefinition definition = instance.getProcessDefinition();
@@ -179,49 +213,113 @@ public class InstanceServiceImpl implements InstanceService {
 
         Activity returningActivity = definition.getActivity(tracingTag);
 
-       // returningActivity.compensateToThis(instance);
+        // returningActivity.compensateToThis(instance);
         definition.gatherPropagatedActivitiesOf(instance, returningActivity, list);
         Activity proActiviy;
-        for(int i=list.size()-1; i>0; i--){
+        for (int i = list.size() - 1; i > 0; i--) {
             proActiviy = list.get(i);
-            //compensate
+            // compensate
             proActiviy.compensate(instance);
         }
 
         returningActivity.resume(instance);
-/*
-        ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
-        List list = new ArrayList();
-        definition.gatherPropagatedActivitiesOf(instance, definition.getWholeChildActivity(tracingTag), list);
-
-        list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
-*/
-
-
+        /*
+         * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
+         * List list = new ArrayList();
+         * definition.gatherPropagatedActivitiesOf(instance,
+         * definition.getWholeChildActivity(tracingTag), list);
+         * 
+         * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
+         */
 
         return new InstanceResource(instance);
     }
 
+    @RequestMapping(value = "/instance/{instanceId}/variables", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public Map getProcessVariables(@PathVariable("instanceId") String instanceId) throws Exception {
+
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+        // 여기서도 롤매핑이 들어가면 시리얼라이즈 에러가 나옴.
+        Map variables = ((DefaultProcessInstance) instance).getVariables();
+
+        return variables;
+    }
+
+    @RequestMapping(value = "/instance/{instId}/variable/{varName}", method = RequestMethod.GET)
+    @ProcessTransactional(readOnly = true)
+    public Serializable getVariable(@PathVariable("instId") String instId, @PathVariable("varName") String varName)
+            throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instId);
+        return instance.get("", varName);
+    }
+
+    @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
+    @ProcessTransactional
+    public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
+            @RequestParam("varValue") String varValue) throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        instance.set("", varName, (Serializable) varValue);
+    }
+
+    @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
+    public RoleMapping getRoleMapping(@PathVariable("instId") String instId, @PathVariable("roleName") String roleName)
+            throws Exception {
+
+        ProcessInstance instance = applicationContext.getBean(
+                ProcessInstance.class,
+                new Object[] {
+                        null,
+                        instId,
+                        null
+                });
+
+        return instance.getRoleMapping(roleName);
+    }
+
+    // Spring Data rest 에서는 자동객체를 JSON으로 바인딩 해주지만, 원래 스프링에서는 리스폰스에 대해 스프링 프레임웤이 해석할
+    // 수 있는 미디어타입을 xml 에 일일히 설정했었음.
+    // produces 의 의미는. 리스폰스 헤더에 콘텐트타입을 설정해줌. 그래야 브라우저가 json 객체로 받아들인다.
+    @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
+    public Object setRoleMapping(@PathVariable("instanceId") String instanceId,
+            @PathVariable("roleName") String roleName, @RequestBody RoleMapping roleMapping) throws Exception {
+
+        ProcessInstance instance = applicationContext.getBean(
+                ProcessInstance.class,
+                new Object[] {
+                        null,
+                        instanceId,
+                        null
+                });
+        // 예상에는, 롤매핑도 인스턴스처럼 DB 에 넣고, 튀어나오는 아이디를 roleMapping 객체에 넣은다음
+        // instance.putRoleMapping 을 해야할듯.?
+        instance.putRoleMapping(roleName, roleMapping);
+
+        roleMapping.setName(roleName);
+
+        return roleMapping;
+    }
 
     /**
      * use this rather ProcessManagerRemote.getProcessInstance() method instead
+     * 
      * @param instanceId
      * @return
      */
     public ProcessInstance getProcessInstanceLocal(String instanceId) {
 
-        ProcessInstance instance = ProcessTransactionContext.getThreadLocalInstance().getProcessInstanceInTransaction(instanceId);
+        ProcessInstance instance = ProcessTransactionContext.getThreadLocalInstance()
+                .getProcessInstanceInTransaction(instanceId);
         if (instance != null) {
             return instance;
         }
         instance = applicationContext.getBean(
                 ProcessInstance.class,
-                new Object[]{null, instanceId, null}
-        );
+                new Object[] { null, instanceId, null });
         return instance;
 
     }
-
 
     final static String SERVICES_ROOT = "services";
 
@@ -232,17 +330,20 @@ public class InstanceServiceImpl implements InstanceService {
     ProcessInstanceRepository processInstanceRepository;
 
     @ProcessTransactional
-    @RequestMapping(value = "/instance/{instanceId}/signal/{signal}", method = {RequestMethod.POST}, produces = "application/json;charset=UTF-8")
-    public Object signal(@PathVariable("instanceId") String instanceId, @PathVariable("signal") String signal) throws Exception {
+    @RequestMapping(value = "/instance/{instanceId}/signal/{signal}", method = {
+            RequestMethod.POST }, produces = "application/json;charset=UTF-8")
+    public Object signal(@PathVariable("instanceId") String instanceId, @PathVariable("signal") String signal)
+            throws Exception {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        Map<String, SignalEventInstance> signalEventInstanceMap = SignalIntermediateCatchEvent.getSignalEvents(instance);
+        Map<String, SignalEventInstance> signalEventInstanceMap = SignalIntermediateCatchEvent
+                .getSignalEvents(instance);
 
         SignalEventInstance signalEventInstance = signalEventInstanceMap.get(signal);
 
         Activity activity = instance.getProcessDefinition().getActivity(signalEventInstance.getActivityRef());
 
-        if(activity instanceof SignalIntermediateCatchEvent){
+        if (activity instanceof SignalIntermediateCatchEvent) {
             ((SignalIntermediateCatchEvent) activity).onMessage(instance, null);
         }
 
@@ -250,25 +351,27 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     @ProcessTransactional
-    @RequestMapping(value = SERVICES_ROOT+ "/**", method = {RequestMethod.GET, RequestMethod.POST}, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
+            RequestMethod.POST }, produces = "application/json;charset=UTF-8")
     public Object serviceMessage(HttpServletRequest request) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-        if(path == null || path.length()==0)
+        if (path == null || path.length() == 0)
             throw new ResourceNotFoundException();
 
-        ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository.findById(path.substring(SERVICES_ROOT.length()+2)).get();
+        ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository
+                .findById(path.substring(SERVICES_ROOT.length() + 2)).get();
 
-        if(serviceEndpointEntity==null)
+        if (serviceEndpointEntity == null)
             throw new ResourceNotFoundException();
 
-        //find the correlated instance:
+        // find the correlated instance:
         List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
         Object correlationData = null;
         // ObjectInstance objectInstance = new ObjectInstance();
 
-        if("POST".equals(request.getMethod())) {
+        if ("POST".equals(request.getMethod())) {
 
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             UEngineUtil.copyStream(request.getInputStream(), bao);
@@ -276,7 +379,6 @@ public class InstanceServiceImpl implements InstanceService {
             ObjectMapper objectMapper = new ObjectMapper();
 
             JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
-
 
             // convert jsonNode to object instance.
             Iterator<String> fieldNames = jsonNode.fieldNames();
@@ -293,42 +395,43 @@ public class InstanceServiceImpl implements InstanceService {
                 } else
                     converted = childNode;
 
-             //   objectInstance.setBeanProperty(fieldName, converted);
+                // objectInstance.setBeanProperty(fieldName, converted);
             }
 
             correlationData = jsonNode.get(serviceEndpointEntity.getCorrelationKey());
 
-            if(correlationData!=null)
-                correlatedProcessInstanceEntities = processInstanceRepository.findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
+            if (correlationData != null)
+                correlatedProcessInstanceEntities = processInstanceRepository
+                        .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
         }
 
         ProcessInstanceEntity processInstanceEntity;
-        if(correlatedProcessInstanceEntities==null || correlatedProcessInstanceEntities.size()==0)
+        if (correlatedProcessInstanceEntities == null || correlatedProcessInstanceEntities.size() == 0)
             processInstanceEntity = null;
-        else{
+        else {
             processInstanceEntity = correlatedProcessInstanceEntities.get(0);
-            if(correlatedProcessInstanceEntities.size() > 1)
+            if (correlatedProcessInstanceEntities.size() > 1)
                 System.err.println("More than one correlated process instance found!");
         }
 
         JPAProcessInstance instance = null;
 
         // case that correlation instance exists and is running:
-        if(processInstanceEntity!=null){
+        if (processInstanceEntity != null) {
             instance = (JPAProcessInstance) getProcessInstanceLocal(String.valueOf(processInstanceEntity.getInstId()));
 
-        }else { // if no instances running, create new instance:
+        } else { // if no instances running, create new instance:
             Object definition = definitionService.getDefinition(serviceEndpointEntity.getDefId(), true);
 
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
             instance = (JPAProcessInstance) applicationContext.getBean(
                     ProcessInstance.class,
-                    //new Object[]{
+                    // new Object[]{
                     processDefinition,
                     null,
                     null
-                    //}
+            // }
             );
 
             instance.execute();
@@ -339,7 +442,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         boolean neverTreated = true;
 
-        if(runningActivities!=null) {
+        if (runningActivities != null) {
             for (ActivityInstanceContext activityInstanceContext : runningActivities) {
                 Activity activity = activityInstanceContext.getActivity();
 
@@ -347,70 +450,74 @@ public class InstanceServiceImpl implements InstanceService {
                     CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
 
                     boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
-                    if (treated) neverTreated = false;
+                    if (treated)
+                        neverTreated = false;
                 }
             }
         }
 
-        if(neverTreated){
+        if (neverTreated) {
             instance.stop();
 
             return "문제가 발생하여 처음으로 돌아갑니다.";
         }
 
-        //set correlation key so that this instance could be re-visited by the recurring requester.
-        if(instance.isNewInstance() && correlationData!=null)
+        // set correlation key so that this instance could be re-visited by the
+        // recurring requester.
+        if (instance.isNewInstance() && correlationData != null)
             instance.getProcessInstanceEntity().setCorrKey(correlationData.toString());
 
-
-//        List<String> history = instance.getActivityCompletionHistory();
-//        if(history!=null){
-//            for(String tracingTag : history){
-//
-//                Activity activityDone = instance.getProcessDefinition().getActivity(tracingTag);
-//
-//                if(activityDone instanceof SendTask){
-//                    SendTask sendTask = (SendTask) activityDone;
-//
-//                    if(sendTask.getDataInput() != null && sendTask.getDataInput().getName() != null)
-//                        return sendTask.getDataInput().get(instance, "");
-//                    else {
-//                        return sendTask.getInputPayloadTemplate();
-//                    }
-//                }
-//
-//            }
-//
-//        }
+        // List<String> history = instance.getActivityCompletionHistory();
+        // if(history!=null){
+        // for(String tracingTag : history){
+        //
+        // Activity activityDone =
+        // instance.getProcessDefinition().getActivity(tracingTag);
+        //
+        // if(activityDone instanceof SendTask){
+        // SendTask sendTask = (SendTask) activityDone;
+        //
+        // if(sendTask.getDataInput() != null && sendTask.getDataInput().getName() !=
+        // null)
+        // return sendTask.getDataInput().get(instance, "");
+        // else {
+        // return sendTask.getInputPayloadTemplate();
+        // }
+        // }
+        //
+        // }
+        //
+        // }
         List<String> messageQueue = SendTask.getMessageQueue(instance);
 
-        if(messageQueue!=null && messageQueue.size() > 0){
+        if (messageQueue != null && messageQueue.size() > 0) {
 
-//            StringBuffer fullMessage = new StringBuffer();
-//
-//            for(String message : messageQueue){
-//                fullMessage.append(message);
-//            }
+            // StringBuffer fullMessage = new StringBuffer();
+            //
+            // for(String message : messageQueue){
+            // fullMessage.append(message);
+            // }
 
-            return messageQueue.get(messageQueue.size()-1).toString().replace("\n", "").replace("\r", "");
+            return messageQueue.get(messageQueue.size() - 1).toString().replace("\n", "").replace("\r", "");
 
         }
 
         return null;
     }
 
-//    public ProcessInstance createProcessInstanceLocal(ProcessDefinition processDefinition){
-//
-//        org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
-//                org.uengine.kernel.ProcessInstance.class,
-//                //new Object[]{
-//                processDefinition,
-//                null,
-//                null
-//                //}
-//        );
-//
-//    };
+    // public ProcessInstance createProcessInstanceLocal(ProcessDefinition
+    // processDefinition){
+    //
+    // org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
+    // org.uengine.kernel.ProcessInstance.class,
+    // //new Object[]{
+    // processDefinition,
+    // null,
+    // null
+    // //}
+    // );
+    //
+    // };
 
     @Autowired
     ApplicationContext applicationContext;
