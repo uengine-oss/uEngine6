@@ -1,22 +1,28 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
   <uengine:data>
-    <uengine:variable name="test" type="string" />
+    <uengine:variable name="symptom" type="string" />
+    <uengine:variable name="troubleType" type="string" /> <!-- troubleType 변수 추가 -->
   </uengine:data>
   <bpmn:process id="simpleProcess" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:task id="Task_a" name="Task A">
+    <bpmn:task id="Task_a" name="Empty">
       <bpmn:incoming>Flow_1</bpmn:incoming>
       <bpmn:outgoing>Flow_2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_a"/>
-    <bpmn:userTask id="Task_b" name="Task B">
+    <bpmn:userTask id="Task_b" name="Report Trouble">
       <uengine:properties>
         <uengine:json>
-          {"role": {"name": "initiator"}, "parameters": [{"argument":{"text":"test"}, "variable":{"name": "string"}, "direction": "out"}]}
-        </uengine:json>
-      </uengine:properties>
+          {
+            "role": {"name": "initiator"}, 
+            "parameters": [
+              {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction": "OUT"},
+              {"argument":{"text":"troubleType"}, "variable":{"name": "troubleType"}, "direction": "OUT"} <!-- troubleType 입력 추가 -->
+            ]
+          }
+        </uengine:json>      </uengine:properties>
       <bpmn:incoming>Flow_2</bpmn:incoming>
       <bpmn:outgoing>Flow_3</bpmn:outgoing>
     </bpmn:userTask>
@@ -25,10 +31,38 @@
       <bpmn:incoming>Flow_3</bpmn:incoming>
       <bpmn:outgoing>Flow_4</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_b" targetRef="Task_c"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_b" targetRef="Task_c">
+      <uengine:properties>
+        <uengine:json>
+          {
+            "condition": {
+              "key": "troubleType", 
+              "value": "sw"
+            }
+          }
+        </uengine:json>
+      </uengine:properties>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="Task_d" name="Task D">
+      <bpmn:incoming>Flow_2b</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_2b" sourceRef="Task_b" targetRef="Task_d">
+      <uengine:properties>
+        <uengine:json>
+          {
+            "condition": {
+              "key": "troubleType", 
+              "value": "hw"
+            }
+          }
+        </uengine:json>
+      </uengine:properties>
+    </bpmn:sequenceFlow>
     <bpmn:endEvent id="EndEvent_1">
       <bpmn:incoming>Flow_4</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_c" targetRef="EndEvent_1"/>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_d" targetRef="EndEvent_1"/>
   </bpmn:process>
 </bpmn:definitions>

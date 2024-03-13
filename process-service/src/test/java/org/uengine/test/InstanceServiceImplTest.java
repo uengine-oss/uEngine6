@@ -80,11 +80,17 @@ public class InstanceServiceImplTest {
         WorkItemResource workItemResource = new WorkItemResource();
         Map<String, Object> parameterValues = new HashMap<>();
         parameterValues.put("symptom", symptom);
+        parameterValues.put("troubleType", "sw");
+
         workItemResource.setParameterValues(parameterValues);
         instanceService.putWorkItem(taskIds[0], workItemResource);
 
         assertEquals(symptom, instance.get("", "symptom"));
 
         assertEquals("Process instance should be completed", Activity.STATUS_COMPLETED, instance.getStatus());
+
+        assertEquals("Task_c should be in COMPLETED status", Activity.STATUS_COMPLETED, instance.getStatus("Task_c"));
+        assertNotEquals("Task_d should not be in COMPLETED status", Activity.STATUS_COMPLETED,
+                instance.getStatus("Task_d"));
     }
 }

@@ -172,6 +172,32 @@ public class BpmnXMLParser {
                 sequenceFlow.setSourceRef(sourceRef);
                 sequenceFlow.setTargetRef(targetRef);
 
+                // JSON parsing and property setting logic for sequenceFlow
+                NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
+                for (int k = 0; k < propertiesNodes.getLength(); k++) {
+                    Node propertiesNode = propertiesNodes.item(k);
+                    if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                        NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                        for (int l = 0; l < jsonNodes.getLength(); l++) {
+                            Node jsonNode = jsonNodes.item(l);
+                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                    || jsonNode.getNodeType() == Node.TEXT_NODE
+                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                String jsonText = jsonNode.getTextContent();
+                                try {
+                                    // Assuming the JSON structure matches the SequenceFlow class structure
+                                    SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText,
+                                            SequenceFlow.class);
+                                    // Use the JSON object to set properties on the SequenceFlow object
+                                    BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+
                 processDefinition.addSequenceFlow(sequenceFlow);
             }
         }
