@@ -1,50 +1,39 @@
 package org.uengine.five;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.KafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import java.util.Map;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.uengine.five.entity.ProcessInstanceEntity;
-import org.uengine.five.overriding.*;
-import org.uengine.five.repository.ProcessInstanceRepository;
+import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
+import org.uengine.five.overriding.JPAProcessInstance;
+import org.uengine.five.overriding.JPAWorkList;
 import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.kernel.bpmn.TimerEventJob;
 import org.uengine.modeling.resource.CachedResourceManager;
 import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
-import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.webservices.worklist.WorkList;
-
-import javax.servlet.Filter;
-import java.util.HashMap;
-import java.util.Map;
 
 @EnableWebMvc
 @Configuration
 public class ProcessServiceWebConfig {
 
-//    @Override
-//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-//        registry.setOrder(10);
-//        registry.addResourceHandler("/**").addResourceLocations("classpath:/dev/dist/");
-//        super.addResourceHandlers(registry);
-//    }
-//
-//    @Override
-//    public void addViewControllers(ViewControllerRegistry registry) {
-//        registry.addViewController("/").setViewName("forward:/index.html");
-//        super.addViewControllers(registry);
-//    }
+    // @Override
+    // public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    // registry.setOrder(10);
+    // registry.addResourceHandler("/**").addResourceLocations("classpath:/dev/dist/");
+    // super.addResourceHandlers(registry);
+    // }
+    //
+    // @Override
+    // public void addViewControllers(ViewControllerRegistry registry) {
+    // registry.addViewController("/").setViewName("forward:/index.html");
+    // super.addViewControllers(registry);
+    // }
 
     @Bean
     public ResourceManager resourceManager() {
@@ -53,58 +42,60 @@ public class ProcessServiceWebConfig {
         return resourceManager;
     }
 
-//    @Bean
-//    public DataSource dataSource() {
-//        final Properties pool = new Properties();
-//        pool.put("driverClassName", "com.mysql.jdbc.Driver");
-//        pool.put("url", "jdbc:mysql://localhost:3306/uengine?useUnicode=true&characterEncoding=UTF8&useOldAliasMetadataBehavior=true");
-//        pool.put("username", "root");
-//        pool.put("password", "");
-//        pool.put("minIdle", 1);
-//        try {
-//            return new org.apache.tomcat.jdbc.pool.DataSourceFactory().createDataSource(pool);
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    // @Bean
+    // public DataSource dataSource() {
+    // final Properties pool = new Properties();
+    // pool.put("driverClassName", "com.mysql.jdbc.Driver");
+    // pool.put("url",
+    // "jdbc:mysql://localhost:3306/uengine?useUnicode=true&characterEncoding=UTF8&useOldAliasMetadataBehavior=true");
+    // pool.put("username", "root");
+    // pool.put("password", "");
+    // pool.put("minIdle", 1);
+    // try {
+    // return new
+    // org.apache.tomcat.jdbc.pool.DataSourceFactory().createDataSource(pool);
+    // } catch (Exception e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
 
- //   @Bean
+    // @Bean
     /**
      *
      * <bean class="CouchbaseStorage">
-     *    <property name="basePath" value="/"/>
-     <property name="bucketName" value="default"/>
-     <property name="serverIp" value="localhost"/>
-     </bean>
+     * <property name="basePath" value="/"/>
+     * <property name="bucketName" value="default"/>
+     * <property name="serverIp" value="localhost"/>
+     * </bean>
      */
     public Storage storage() {
         LocalFileStorage storage = new LocalFileStorage();
-//        storage.setBasePath("/oce/repository");
-        //String UserName = System.getenv("USER");
-        //storage.setBasePath("/Users/" + UserName);
+        // storage.setBasePath("/oce/repository");
+        // String UserName = System.getenv("USER");
+        // storage.setBasePath("/Users/" + UserName);
 
-        storage.setBasePath(".");
+        storage.setBasePath("/Users/uengine/Documents/uEngine5-bpm/definitions");
 
         return storage;
     }
 
-//    @Bean
-//    public TenantAwareFilter tenantAwareFilter(){
-//        return new TenantAwareFilter();
-//    }
+    // @Bean
+    // public TenantAwareFilter tenantAwareFilter(){
+    // return new TenantAwareFilter();
+    // }
 
     // @Bean
     // public MetadataService metadataService() {
-    //     DefaultMetadataService metadataService = new DefaultMetadataService();
-    //     metadataService.setResourceManager(resourceManager());
+    // DefaultMetadataService metadataService = new DefaultMetadataService();
+    // metadataService.setResourceManager(resourceManager());
 
-    //     return metadataService;
+    // return metadataService;
     // }
-
 
     @Bean
     @Scope("prototype")
-    public ProcessInstance processInstance(ProcessDefinition procDefinition, String instanceId, Map options) throws Exception {
+    public ProcessInstance processInstance(ProcessDefinition procDefinition, String instanceId, Map options)
+            throws Exception {
         return new JPAProcessInstance(procDefinition, instanceId, options);
     }
 
@@ -120,29 +111,26 @@ public class ProcessServiceWebConfig {
 
     // @Bean
     // public Filter webFilter() {
-    //     return new TenantAwareFilter();
+    // return new TenantAwareFilter();
     // }
 
     // @Bean
     // public ProcessDefinitionFactory processDefinitionFactory() {
-    //     return new ProcessDefinitionFactory();
+    // return new ProcessDefinitionFactory();
     // }
 
     // @Bean
     // public ProcessManagerRemote processManagerRemote() {
-    //     return new ProcessManagerBean();
+    // return new ProcessManagerBean();
     // }
 
     // @Bean
     // public TimerEventJob timerEventJob() {
-    //     return new TimerEventJob();
+    // return new TimerEventJob();
     // }
-
 
     // @Bean
     // EvaluationContextExtension securityExtension() {
-    //     return new TenantSecurityEvaluationContextExtension();
+    // return new TenantSecurityEvaluationContextExtension();
     // }
 }
-
-

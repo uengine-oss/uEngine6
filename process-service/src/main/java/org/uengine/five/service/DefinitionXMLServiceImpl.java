@@ -19,7 +19,7 @@ public class DefinitionXMLServiceImpl implements DefinitionXMLService {
 
     @Override
     public String getXMLDefinition(String definitionPath, boolean includeDependencies) {
-        final String RESOURCE_ROOT = "definitions";
+        final String RESOURCE_ROOT = "";
 
         try {
             if (definitionPath.indexOf(".") == -1) {

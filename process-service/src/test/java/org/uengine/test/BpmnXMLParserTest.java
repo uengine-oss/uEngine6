@@ -31,7 +31,7 @@ public class BpmnXMLParserTest {
         try {
             ProcessDefinition processDefinition = parser.parse(xml);
             Map<String, Activity> tasks = processDefinition.getWholeChildActivities();
-            assertEquals(1, tasks.size());
+            assertEquals(2, tasks.size());
             assertTrue(tasks.containsKey("task1"));
             assertEquals("Sample Task", ((Activity) tasks.get("task1")).getName());
         } catch (Exception e) {

@@ -3,7 +3,7 @@ package org.uengine.five.service;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,24 +21,33 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
-import org.uengine.five.command.ProcessExecutionCommand;
+import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.dto.InstanceResource;
+import org.uengine.five.dto.ProcessExecutionCommand;
+import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
+import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.framework.ProcessTransactional;
 import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
+import org.uengine.five.repository.WorklistRepository;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.GlobalContext;
+import org.uengine.kernel.HumanActivity;
+import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
+import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
@@ -67,8 +77,15 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     DefinitionServiceUtil definitionService;
 
+    @Autowired
+    ApplicationContext applicationContext;
+
+    @Autowired
+    WorklistRepository worklistRepository;
+
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", method = { RequestMethod.POST, RequestMethod.PUT })
+    @RequestMapping(value = "/instance", method = { RequestMethod.POST,
+            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource start(
@@ -83,8 +100,13 @@ public class InstanceServiceImpl implements InstanceService {
         boolean simulation = command.isSimulation();
         String filePath = command.getProcessDefinitionId();
 
-        Object definition = definitionService.getDefinition(filePath, !simulation); // if simulation time, use the
-                                                                                    // version under construction
+        Object definition;
+        try {
+            definition = definitionService.getDefinition(filePath, !simulation); // if simulation time, use the version
+                                                                                 // under construction
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Definition not found", e);
+        }
 
         if (definition instanceof ProcessDefinition) {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
@@ -98,27 +120,34 @@ public class InstanceServiceImpl implements InstanceService {
             // }
             );
 
-            if (command.getRoleMappings() != null)
-                Arrays.asList(command.getRoleMappings()).forEach(roleMapping -> {
-                    try {
-                        instance.putRoleMapping(roleMapping);
-                    } catch (Exception e) {
-                        // Handle exception or rethrow as a runtime exception
-                        throw new RuntimeException("Error occurred while mapping roles", e);
-                    }
-                });
+            // if (command.getRoleMappings() != null)
+            // Arrays.asList(command.getRoleMappings()).forEach(roleMapping -> {
+            // try {
+            // instance.putRoleMapping(roleMapping);
+            // } catch (Exception e) {
+            // // Handle exception or rethrow as a runtime exception
+            // throw new RuntimeException("Error occurred while mapping roles", e);
+            // }
+            // });
 
-            if (command.getProcessVariableValues() != null)
-                Arrays.asList(command.getProcessVariableValues()).forEach(processVariableValue -> {
-                    try {
-                        instance.set("", processVariableValue);
-                    } catch (Exception e) {
-                        // Handle exception or rethrow as a runtime exception
-                        throw new RuntimeException("Error occurred while setting process variables", e);
-                    }
-                });
+            // if (command.getProcessVariableValues() != null)
+            // Arrays.asList(command.getProcessVariableValues()).forEach(processVariableValue
+            // -> {
+            // try {
+            // instance.set("", processVariableValue);
+            // } catch (Exception e) {
+            // // Handle exception or rethrow as a runtime exception
+            // throw new RuntimeException("Error occurred while setting process variables",
+            // e);
+            // }
+            // });
 
-            instance.execute();
+            try {
+                instance.execute();
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance",
+                        e);
+            }
 
             return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
         }
@@ -505,21 +534,113 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
-    // public ProcessInstance createProcessInstanceLocal(ProcessDefinition
-    // processDefinition){
-    //
-    // org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
-    // org.uengine.kernel.ProcessInstance.class,
-    // //new Object[]{
-    // processDefinition,
-    // null,
-    // null
-    // //}
-    // );
-    //
-    // };
+    @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception {
 
-    @Autowired
-    ApplicationContext applicationContext;
+        WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
+        if (worklistEntity == null) {
+            throw new Exception("No such work item where taskId = " + taskId);
+        }
+
+        String defId = worklistEntity.getDefId();
+        ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defId);
+        HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
+
+        WorkItemResource workItem = new WorkItemResource();
+        workItem.setActivity(activity);
+        workItem.setWorklist(worklistEntity);
+
+        String instanceId = worklistEntity.getInstId().toString();
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+        // get the parameter values and set them to the "workItem.parameterValues" so
+        // that WorkItemHandler.vue can insert the default values
+        Map parameterValues = new HashMap<String, Object>();
+        if (activity.getParameters() != null) {
+            for (ParameterContext parameterContext : activity.getParameters()) {
+                if (parameterContext.getVariable() != null && parameterContext.getDirection().indexOf("IN") == 0) {
+                    parameterValues.put(parameterContext.getArgument().getText(),
+                            parameterContext.getVariable().get(instance, "", ""));
+                }
+            }
+        }
+
+        if (parameterValues.size() > 0) {
+            workItem.setParameterValues(parameterValues);
+        }
+
+        workItem.getWorklist().setProcessInstance(null); // disconnect recursive json path
+
+        return workItem;
+    }
+
+    @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
+    @org.springframework.transaction.annotation.Transactional
+    @ProcessTransactional // important!
+    public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+            throws Exception {
+
+        WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
+
+        String instanceId = worklistEntity.getInstId().toString();
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+        HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
+                .getActivity(worklistEntity.getTrcTag()));
+
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
+                    + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
+        }
+
+        // map the argument list to variables change list
+        Map variableChanges = new HashMap<String, Object>();
+
+        if (workItem.getParameterValues() != null
+                && humanActivity.getParameters() != null) {
+            for (ParameterContext parameterContext : humanActivity.getParameters()) {
+                if (parameterContext.getDirection().indexOf("OUT") >= 0
+                        && workItem.getParameterValues().containsKey(parameterContext.getArgument().getText())) {
+
+                    Serializable data = (Serializable) workItem.getParameterValues()
+                            .get(parameterContext.getArgument().getText());
+                    // if("REST".equals(parameterContext.getVariable().getPersistOption())){
+                    // RestResourceProcessVariableValue restResourceProcessVariableValue = new
+                    // RestResourceProcessVariableValue();
+                    // data = restResourceProcessVariableValue.lightweight(data,
+                    // parameterContext.getVariable(), instance);
+                    // }
+
+                    if (data instanceof Map && ((Map) data).containsKey("_type")) {
+                        String typeName = null;
+                        try {
+                            typeName = (String) ((Map) data).get("_type");
+                            Class classType = Thread.currentThread().getContextClassLoader().loadClass(typeName);
+                            data = (Serializable) ProcessServiceApplication.objectMapper.convertValue(data, classType);
+                        } catch (Exception e) {
+                            throw new Exception("Error while convert map to type: " + typeName, e);
+                        }
+                    }
+
+                    variableChanges.put(parameterContext.getVariable().getName(),
+                            data);
+                }
+            }
+        }
+
+        if (workItem.getWorklist() != null && "SAVED".equals(workItem.getWorklist().getStatus())) {
+            humanActivity.saveWorkItem(instance, variableChanges);
+        } else {
+            try {
+                humanActivity.fireReceived(instance, variableChanges);
+            } catch (Exception e) {
+                humanActivity.fireFault(instance, e);
+
+                throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
+                        humanActivity);
+            }
+        }
+
+    }
 
 }

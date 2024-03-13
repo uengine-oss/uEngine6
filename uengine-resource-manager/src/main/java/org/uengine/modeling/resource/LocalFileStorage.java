@@ -1,30 +1,38 @@
 package org.uengine.modeling.resource;
 
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import static java.nio.file.StandardCopyOption.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.springframework.stereotype.Component;
+
 /**
  * Created by jangjinyoung on 15. 7. 12..
  */
 @Component
-public class LocalFileStorage extends AbstractStorage{
+public class LocalFileStorage extends AbstractStorage {
 
     @Override
     public void delete(IResource fileResource) throws IOException {
         File file = getFile(fileResource);
 
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
             FileUtils.deleteDirectory(file);
-        }else{
+        } else {
             file.delete();
 
         }
@@ -40,12 +48,12 @@ public class LocalFileStorage extends AbstractStorage{
         File destinationFile = new File(getTenantBasePath() + desPath);
         File sourceFile = getFile(src);
 
-        if(sourceFile.isDirectory()){
+        if (sourceFile.isDirectory()) {
             FileUtils.copyDirectory(getFile(src), destinationFile);
-        }else{
+        } else {
             destinationFile.getParentFile().mkdirs();
 
-            if(isDoNotOverwrite())
+            if (isDoNotOverwrite())
                 Files.copy(getFile(src).toPath(), destinationFile.toPath());
             else
                 Files.copy(getFile(src).toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -62,34 +70,36 @@ public class LocalFileStorage extends AbstractStorage{
         String tenantBasePath = getTenantBasePath();
 
         File tenantBase = new File(tenantBasePath);
-        if(!tenantBase.exists()){
+        if (!tenantBase.exists()) {
             tenantBase.mkdirs();
         }
 
         String abstractTenantBasePath = new File(tenantBasePath).getAbsolutePath();
 
-        if(directory!=null && directory.exists())
-        for(File file : directory.listFiles()){
+        if (directory != null && directory.exists())
+            for (File file : directory.listFiles()) {
 
-            if(file.getName().startsWith(".")) continue;
+                if (file.getName().startsWith("."))
+                    continue;
 
-            String relativePath = file.getAbsolutePath().replace("\\", "/");
+                String relativePath = file.getAbsolutePath().replace("\\", "/");
 
-            relativePath = relativePath.substring(abstractTenantBasePath.length() + 1);
+                relativePath = relativePath.substring(abstractTenantBasePath.length() + 1);
 
-            if(file.isDirectory()){
-                ContainerResource subContainerResource = (ContainerResource) containerResource.getClass().newInstance();
+                if (file.isDirectory()) {
+                    ContainerResource subContainerResource = (ContainerResource) containerResource.getClass()
+                            .newInstance();
 
-                subContainerResource.setPath(relativePath);
+                    subContainerResource.setPath(relativePath);
 
-//                if(false)
-//                    subContainerResource.setChildren(listFiles(subContainerResource));
+                    // if(false)
+                    // subContainerResource.setChildren(listFiles(subContainerResource));
 
-                resourceList.add(subContainerResource);
-            }else{
-                resourceList.add(DefaultResource.createResource(relativePath));
+                    resourceList.add(subContainerResource);
+                } else {
+                    resourceList.add(DefaultResource.createResource(relativePath));
+                }
             }
-        }
 
         return resourceList;
     }
@@ -108,7 +118,20 @@ public class LocalFileStorage extends AbstractStorage{
 
     @Override
     public Object getObject(IResource resource) throws Exception {
-        return Serializer.deserialize(getInputStream(resource));
+
+        InputStream inputStream = getInputStream(resource);
+        StringBuilder contentBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                contentBuilder.append(line).append("\n");
+            }
+        }
+        String content = contentBuilder.toString();
+
+        return content;
+
+        // return Serializer.deserialize(getInputStream(resource));
     }
 
     @Override
@@ -116,11 +139,21 @@ public class LocalFileStorage extends AbstractStorage{
 
         File directory = getFile(resource).getParentFile();
 
-        if(!directory.exists())
+        if (!directory.exists())
             directory.mkdirs();
 
+        if (object instanceof String) {
+            try (OutputStream out = getOutputStream(resource)) {
+                out.write(((String) object).getBytes(StandardCharsets.UTF_8));
+                out.flush();
+                out.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            Serializer.serialize(object, getOutputStream(resource));
 
-        Serializer.serialize(object, getOutputStream(resource));
+        }
 
     }
 
@@ -134,7 +167,7 @@ public class LocalFileStorage extends AbstractStorage{
         File file = getFile(resource);
         File directory = file.getParentFile();
 
-        if(!directory.exists())
+        if (!directory.exists())
             directory.mkdirs();
 
         return new FileOutputStream(file);
@@ -151,7 +184,6 @@ public class LocalFileStorage extends AbstractStorage{
         return new File(tenantBasePath
                 + fileResource.getPath());
     }
-
 
     @Override
     public void move(IResource src, IContainer container) throws IOException {
