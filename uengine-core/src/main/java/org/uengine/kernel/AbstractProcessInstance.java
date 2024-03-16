@@ -639,14 +639,19 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 		if (def != null && def.isVolatile()) {
 			// ProcessInstance instance = new DefaultProcessInstance();
 
-			return new DefaultProcessInstance(def, name, options);
+			return new DefaultProcessInstance(def, null, options);
 		}
 
+		if (options == null) {
+			options = new HashMap();
+		}
+		options.put(INIT_OPTION_INSTANCE_NAME, name);
+
 		return GlobalContext.getComponent(
-				org.uengine.kernel.DefaultProcessInstance.class,
+				org.uengine.kernel.ProcessInstance.class,
 				new Object[] {
 						def,
-						name,
+						null,
 						options
 				});
 
@@ -824,6 +829,7 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 	}
 
 	final static String PROP_KEY_EVENT_LISTENERS = "EVENT_LISTENERS";
+	public static final Object INIT_OPTION_INSTANCE_NAME = "INSTANCE_NAME";
 	transient List<ActivityEventInterceptor> eventInterceptors;
 
 	public void addActivityEventInterceptor(ActivityEventInterceptor aei) {

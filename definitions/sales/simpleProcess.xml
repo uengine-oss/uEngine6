@@ -1,9 +1,9 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-  <uengine:data>
-    <uengine:variable name="symptom" type="string" />
-    <uengine:variable name="troubleType" type="string" /> <!-- troubleType 변수 추가 -->
-  </uengine:data>
-  <bpmn:process id="simpleProcess" isExecutable="true">
+   <bpmn:process id="simpleProcess" isExecutable="true">
+    <uengine:data>
+      <uengine:variable name="symptom" type="java.lang.String" />
+      <uengine:variable name="troubleType" type="java.lang.String" /> <!-- troubleType 변수 추가 -->
+    </uengine:data>
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
@@ -28,15 +28,16 @@
       <bpmn:outgoing>Flow_3</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_a" targetRef="Task_b"/>
-    <bpmn:task id="Task_c" name="Task C">
+    <bpmn:receiveTask id="Task_c" name="Task C">
       <bpmn:incoming>Flow_3</bpmn:incoming>
       <bpmn:outgoing>Flow_4</bpmn:outgoing>
-    </bpmn:task>
+    </bpmn:receiveTask>
     <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_b" targetRef="Task_c">
       <uengine:properties>
         <uengine:json>
           {
             "condition": {
+              "_type": "org.uengine.kernel.Evaluate",
               "key": "troubleType", 
               "value": "sw"
             }
@@ -44,15 +45,28 @@
         </uengine:json>
       </uengine:properties>
     </bpmn:sequenceFlow>
-    <bpmn:task id="Task_d" name="Task D">
+    <bpmn:callActivity id="Task_d" name="Task D">
       <bpmn:incoming>Flow_2b</bpmn:incoming>
       <bpmn:outgoing>Flow_5</bpmn:outgoing>
-    </bpmn:task>
+      <uengine:properties>
+        <uengine:json>
+          {
+              "definitionId": "sales/simpleProcess.xml",
+              "roleBindings": [
+                {"argument": "initiator", "role": {"name": "initiator"}, "direction": "OUT"}
+              ]
+
+        
+          }
+        </uengine:json>
+      </uengine:properties>
+    </bpmn:callActivity>
     <bpmn:sequenceFlow id="Flow_2b" sourceRef="Task_b" targetRef="Task_d">
       <uengine:properties>
         <uengine:json>
           {
             "condition": {
+              "_type": "org.uengine.kernel.Evaluate",
               "key": "troubleType", 
               "value": "hw"
             }

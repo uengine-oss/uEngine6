@@ -1,29 +1,24 @@
 package org.uengine.five;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.uengine.five.overriding.ActivityQueue;
+import org.uengine.five.overriding.InstanceNameFilter;
+import org.uengine.five.overriding.ServiceRegisterDeployFilter;
+import org.uengine.five.overriding.SpringComponentFactory;
+import org.uengine.kernel.GlobalContext;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
-import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
-import org.springframework.cloud.client.SpringCloudApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.transaction.jta.JtaTransactionManager;
-import org.springframework.web.bind.annotation.RestController;
-import org.uengine.five.overriding.ActivityQueue;
-import org.uengine.five.overriding.InstanceNameFilter;
-import org.uengine.five.overriding.ServiceRegisterDeployFilter;
-
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
-//@EnableBinding(KafkaProcessor.class)
+// @EnableBinding(KafkaProcessor.class)
 @EnableFeignClients
 public class ProcessServiceApplication {
 
@@ -35,25 +30,25 @@ public class ProcessServiceApplication {
         return applicationContext;
     }
 
-
     public static void main(String[] args) {
         applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
+        GlobalContext.setComponentFactory(new SpringComponentFactory());
     }
 
-
     @Bean
-    public ServiceRegisterDeployFilter serviceRegisterDeployFilter(){
+    public ServiceRegisterDeployFilter serviceRegisterDeployFilter() {
         return new ServiceRegisterDeployFilter();
     }
 
     @Bean
-    public InstanceNameFilter instanceNameFilter(){
+    public InstanceNameFilter instanceNameFilter() {
         return new InstanceNameFilter();
     }
 
-
     @Bean
-    public ActivityQueue activityQueue(){return new ActivityQueue();}
+    public ActivityQueue activityQueue() {
+        return new ActivityQueue();
+    }
 
     public static ObjectMapper createTypedJsonObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -66,7 +61,8 @@ public class ProcessServiceApplication {
                 .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
 
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // ignore null
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int or boolean
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int
+                                                                                 // or boolean
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_CONCRETE_AND_ARRAYS, "_type");
@@ -74,6 +70,5 @@ public class ProcessServiceApplication {
 
         return objectMapper;
     }
-
 
 }

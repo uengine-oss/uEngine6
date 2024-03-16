@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
 import org.uengine.five.dto.InstanceResource;
+import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.entity.ProcessInstanceEntity;
@@ -37,6 +38,7 @@ import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.repository.WorklistRepository;
 import org.uengine.five.spring.SecurityAwareServletFilter;
+import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.CatchingMessageEvent;
@@ -111,36 +113,15 @@ public class InstanceServiceImpl implements InstanceService {
         if (definition instanceof ProcessDefinition) {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
-            org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
-                    org.uengine.kernel.ProcessInstance.class,
-                    // new Object[]{
-                    processDefinition,
-                    command.getInstanceName(),
-                    null
-            // }
-            );
+            org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
+                    command.getInstanceName(), null);
 
-            // if (command.getRoleMappings() != null)
-            // Arrays.asList(command.getRoleMappings()).forEach(roleMapping -> {
-            // try {
-            // instance.putRoleMapping(roleMapping);
-            // } catch (Exception e) {
-            // // Handle exception or rethrow as a runtime exception
-            // throw new RuntimeException("Error occurred while mapping roles", e);
-            // }
-            // });
-
-            // if (command.getProcessVariableValues() != null)
-            // Arrays.asList(command.getProcessVariableValues()).forEach(processVariableValue
-            // -> {
-            // try {
-            // instance.set("", processVariableValue);
-            // } catch (Exception e) {
-            // // Handle exception or rethrow as a runtime exception
-            // throw new RuntimeException("Error occurred while setting process variables",
-            // e);
-            // }
-            // });
+            RoleMapping[] roleMappings = command.getRoleMappings();
+            if (roleMappings != null) {
+                for (RoleMapping roleMapping : roleMappings) {
+                    instance.putRoleMapping(roleMapping.getName(), roleMapping);
+                }
+            }
 
             try {
                 instance.execute();
@@ -154,20 +135,6 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
 
     }
-
-    // @RequestMapping(value = "/instance/{instanceId}/start", method =
-    // RequestMethod.POST)
-    // @ProcessTransactional
-    // public InstanceResource start(@PathVariable("instanceId") String instanceId)
-    // throws Exception {
-
-    // ProcessInstance instance = getProcessInstanceLocal(instanceId);
-
-    // if (!instance.isRunning(""))
-    // instance.execute();
-
-    // return new InstanceResource(instance);
-    // }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
     @ProcessTransactional
@@ -244,8 +211,9 @@ public class InstanceServiceImpl implements InstanceService {
 
         // returningActivity.compensateToThis(instance);
         definition.gatherPropagatedActivitiesOf(instance, returningActivity, list);
+
         Activity proActiviy;
-        for (int i = list.size() - 1; i > 0; i--) {
+        for (int i = list.size() - 1; i >= 0; i--) {
             proActiviy = list.get(i);
             // compensate
             proActiviy.compensate(instance);
@@ -641,6 +609,16 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
 
+    }
+
+    @Override
+    public void postMessage(String instanceId, Message message) throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance != null) {
+            instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
+        } else {
+            throw new ResourceNotFoundException("Instance not found for ID: " + instanceId);
+        }
     }
 
 }

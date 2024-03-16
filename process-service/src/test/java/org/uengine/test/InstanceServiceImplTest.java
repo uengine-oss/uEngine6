@@ -5,7 +5,9 @@ import static org.junit.Assert.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Vector;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +15,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.uengine.five.ProcessServiceApplication;
 import org.uengine.five.dto.InstanceResource;
+import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.entity.WorklistEntity;
+import org.uengine.five.overriding.SpringComponentFactory;
 import org.uengine.five.repository.WorklistRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
+import org.uengine.kernel.bpmn.CallActivity;
 
 @SpringBootTest(classes = ProcessServiceApplication.class)
 public class InstanceServiceImplTest {
@@ -39,6 +45,12 @@ public class InstanceServiceImplTest {
 
     @Autowired
     private WorklistRepository worklistRepository;
+
+    @BeforeEach
+    public void setup() {
+        ProcessServiceApplication.applicationContext = applicationContext;
+        GlobalContext.setComponentFactory(new SpringComponentFactory());
+    }
 
     @Test
     public void testRunDefinition() throws Exception {
@@ -87,10 +99,44 @@ public class InstanceServiceImplTest {
 
         assertEquals(symptom, instance.get("", "symptom"));
 
-        assertEquals("Process instance should be completed", Activity.STATUS_COMPLETED, instance.getStatus());
+        assertEquals("Task_c should be in RUNNING status", Activity.STATUS_RUNNING, instance.getStatus("Task_c"));
+
+        instanceService.postMessage(instanceId, new Message("Receive", null));
 
         assertEquals("Task_c should be in COMPLETED status", Activity.STATUS_COMPLETED, instance.getStatus("Task_c"));
         assertNotEquals("Task_d should not be in COMPLETED status", Activity.STATUS_COMPLETED,
                 instance.getStatus("Task_d"));
+
+        instanceService.backToHere(instanceId, "Task_b");
+
+        assertEquals("Task_c should be in Ready status",
+                Activity.STATUS_READY,
+                instance.getStatus("Task_c"));
+
+        parameterValues.put("troubleType", "hw");
+
+        taskIds = taskB.getTaskIds(instance);
+
+        workItemResource.setParameterValues(parameterValues);
+        instanceService.putWorkItem(taskIds[0], workItemResource);
+
+        assertEquals("Task_d should be in Running status", Activity.STATUS_RUNNING,
+                instance.getStatus("Task_d"));
+
+        CallActivity callActivity = (CallActivity) instance.getProcessDefinition().getActivity("Task_d");
+        Vector ids = callActivity.getSubprocessIds(instance);
+
+        ProcessInstance subProcessInstance = instanceService.getProcessInstanceLocal(ids.get(0).toString());
+        // taskIds =
+        // ((HumanActivity)subProcessInstance.getProcessDefinition().getActivity("Task_b")).getTaskIds(subProcessInstance);
+
+        assertEquals(subProcessInstance.getRoleMapping("initiator").getEndpoint(),
+                instance.getRoleMapping("initiator").getEndpoint());
+
+        System.out.println(ids);
+
+        // assertEquals("Process instance should be completed",
+        // Activity.STATUS_COMPLETED, instance.getStatus());
+
     }
 }

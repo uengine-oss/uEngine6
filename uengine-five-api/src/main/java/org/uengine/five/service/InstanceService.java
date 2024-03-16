@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.kernel.RoleMapping;
@@ -50,6 +51,10 @@ public interface InstanceService {
         @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST)
         public RepresentationModel backToHere(@PathVariable("instanceId") String instanceId,
                         @PathVariable("tracingTag") String tracingTag) throws Exception;
+
+        @RequestMapping(value = "/instance/{instanceId}/messages", method = RequestMethod.POST)
+        public void postMessage(@PathVariable("instanceId") String instanceId,
+                        @RequestBody Message message) throws Exception;
 
         // @RequestMapping(value = "/instance/definition/", method = RequestMethod.POST)
         // public void onDeploy() throws Exception;

@@ -21,27 +21,24 @@ import org.uengine.kernel.ResultPayload;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.StartEvent;
 
-
 @SpringBootTest(classes = ProcessServiceApplication.class)
 public class KernelTest {
 
     @Autowired
     ApplicationContext applicationContext;
 
-
     @Test
     void contextLoads() {
         System.out.println("sdastsa");
     }
 
-	@Test
-	public void runBasicProcess() {
+    @Test
+    public void runBasicProcess() {
 
         ProcessDefinition processDefinition = new ProcessDefinition();
 
         ProcessVariable variable1 = new ProcessVariable();
         variable1.setName("var1");
-
 
         StartEvent act1 = new StartEvent();
         act1.setName("start");
@@ -51,14 +48,14 @@ public class KernelTest {
         RPAActivity act2 = new RPAActivity();
         act2.setName("act2");
         act2.setArgument(ProcessVariable.forName("var1"));
-        
+
         ParameterContext parameterContext = new ParameterContext();
         parameterContext.setArgument(new TextContext());
         parameterContext.getArgument().setText("parameter1");
         parameterContext.setVariable(ProcessVariable.forName("var1"));
 
-        act2.setParameters(new ParameterContext[]{
-            parameterContext
+        act2.setParameters(new ParameterContext[] {
+                parameterContext
         });
 
         processDefinition.addChildActivity(act2);
@@ -69,20 +66,17 @@ public class KernelTest {
 
         processDefinition.addSequenceFlow(sequence);
 
-        processDefinition.setProcessVariables(new ProcessVariable[]{variable1});
-        
+        processDefinition.setProcessVariables(new ProcessVariable[] { variable1 });
 
         processDefinition.afterDeserialization();
-        
-
 
         org.uengine.kernel.ProcessInstance instance = applicationContext.getBean(
-            org.uengine.kernel.ProcessInstance.class,
-            //new Object[]{
-            processDefinition,
-            null,
-            null
-            //}
+                org.uengine.kernel.ProcessInstance.class,
+                // new Object[]{
+                processDefinition,
+                null,
+                null
+        // }
         );
 
         try {
@@ -92,12 +86,11 @@ public class KernelTest {
             Object value2 = instance.get("var1");
             assertEquals(value2, testValue + "_");
 
-
             //// 단계 완료시키기 (python 에서 이벤트가 왔을때 bpm 단계 완료 처리하고 다음단계 액티비티로 넘기는)
             ResultPayload rp = new ResultPayload();
             String changedValue = "value is changed by receiving result";
-            rp.setProcessVariableChanges(new KeyedParameter[]{
-                new KeyedParameter("var1", changedValue)
+            rp.setProcessVariableChanges(new KeyedParameter[] {
+                    new KeyedParameter("var1", changedValue)
             });
 
             act2.fireReceived(instance, rp);
@@ -113,15 +106,15 @@ public class KernelTest {
             // EventHandler[] handlers = instance.getEventHandlersInAction();
 
             // for(EventHandler handler : handlers){
-            //     System.out.println(handler);
+            // System.out.println(handler);
             // }
-            
+
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
             assertTrue(false);
         }
 
-	}
+    }
 
 }

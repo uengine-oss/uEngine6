@@ -420,7 +420,8 @@ public class FlowActivity extends ComplexActivity {
 			@Override
 			public void logic(Activity elem) {
 				try {
-					if (!Activity.STATUS_READY.equals(elem.getStatus(instance))) {
+					if (!Activity.STATUS_READY.equals(elem.getStatus(instance))
+							&& !propagatedActivities.contains(elem)) {
 						propagatedActivities.add(elem);
 					}
 				} catch (Exception e) {

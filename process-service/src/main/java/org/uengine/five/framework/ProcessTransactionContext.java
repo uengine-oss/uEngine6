@@ -1,16 +1,18 @@
 package org.uengine.five.framework;
 
-import org.uengine.kernel.*;
-import org.uengine.processmanager.TransactionContext;
-import org.uengine.util.ForLoop;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+
+import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.service.DefinitionServiceUtil;
+import org.uengine.kernel.ActivityInstanceContext;
+import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.ProcessDefinition;
+import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.TransactionListener;
+import org.uengine.util.ForLoop;
 
 /**
  * Created by uengine on 2017. 11. 10..
@@ -39,42 +41,48 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
     }
 
     List<TransactionListener> transactionListeners = new ArrayList<TransactionListener>();
+
     public void addTransactionListener(TransactionListener tl) {
         transactionListeners.add(tl);
     }
+
     public List<TransactionListener> getTransactionListeners() {
         return transactionListeners;
     }
 
     transient List<ActivityInstanceContext> executedActivities = new ArrayList<ActivityInstanceContext>();
+
     public void addExecutedActivityInstanceContext(ActivityInstanceContext aic) {
         if (!executedActivities.contains(aic)) {
             executedActivities.add(aic);
         }
     }
+
     public List<ActivityInstanceContext> getExecutedActivityInstanceContextsInTransaction() {
         return executedActivities;
     }
 
-    transient Map<String, ProcessInstance> processInstances = new Hashtable<String, ProcessInstance>();
+    transient Map<String, ProcessInstance> cachedProcessInstances = new Hashtable<String, ProcessInstance>();
+
     public void registerProcessInstance(ProcessInstance pi) {
-        processInstances.put(pi.getInstanceId(), pi);
+        cachedProcessInstances.put(pi.getInstanceId(), pi);
     }
+
     public ProcessInstance getProcessInstanceInTransaction(String instanceId) {
-        return processInstances.get(instanceId);
+        return cachedProcessInstances.get(instanceId);
     }
 
     public Map<String, ProcessInstance> getProcessInstancesInTransaction() {
-        return processInstances;
+        return cachedProcessInstances;
     }
 
-   
     @Override
     public void registerProcessInstance(DefaultProcessInstance defaultProcessInstance) {
-
+        this.cachedProcessInstances.put(defaultProcessInstance.getInstanceId(), defaultProcessInstance);
     }
 
     transient Map<String, Object> sharedContexts = new Hashtable<String, Object>();
+
     public void setSharedContext(String contextKey, Object value) {
         if (value == null) {
             sharedContexts.remove(contextKey);
@@ -82,13 +90,13 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
             sharedContexts.put(contextKey, value);
         }
     }
+
     public Object getSharedContext(String contextKey) {
         if (!sharedContexts.containsKey(contextKey)) {
             return null;
         }
         return sharedContexts.get(contextKey);
     }
-
 
     protected void beforeCommit() throws Exception {
         ForLoop beforeCommitLoop = new ForLoop() {
@@ -103,12 +111,13 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
             }
         };
 
-        beforeCommitLoop.run((ArrayList)transactionListeners);
+        beforeCommitLoop.run((ArrayList) transactionListeners);
     }
 
     public void commit() throws Exception {
         if (!isCommitable()) {
-            throw new Exception("This transaction is uncommitable. If you want to commit this, mark with @ProcessTransactional at the beginning of the service method.");
+            throw new Exception(
+                    "This transaction is uncommitable. If you want to commit this, mark with @ProcessTransactional at the beginning of the service method.");
         }
         beforeCommit();
         remove();
@@ -117,7 +126,7 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
 
     private void afterCommit() throws Exception {
 
-        for(TransactionListener tl : getTransactionListeners()){
+        for (TransactionListener tl : getTransactionListeners()) {
             tl.afterCommit(this);
         }
 
@@ -149,7 +158,6 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
         return commitable;
     }
 
-
     @Override
     public void addDebugInfo(Object message) {
 
@@ -162,17 +170,17 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
 
     // @Override
     // public ServletRequest getServletRequest() {
-    //     return null;
+    // return null;
     // }
 
     // @Override
     // public ServletResponse getServletResponse() {
-    //     return null;
+    // return null;
     // }
 
     // @Override
     // public ProcessManagerBean getProcessManager() {
-    //     return null;
+    // return null;
     // }
 
     @Override
@@ -182,6 +190,17 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
 
     @Override
     public ProcessDefinition getProcessDefinition(String pdvid) throws Exception {
-        return null;
+        DefinitionServiceUtil definitionService = ProcessServiceApplication.getApplicationContext()
+                .getBean(DefinitionServiceUtil.class);
+
+        Object definition = definitionService.getDefinition(pdvid);
+        if (definition instanceof ProcessDefinition) {
+            ProcessDefinition processDefinition = (ProcessDefinition) definition;
+
+            return processDefinition;
+        } else {
+            throw new RuntimeException("It is not a ProcessDefinition type with defId: " + pdvid);
+        }
+        // return null;
     }
 }

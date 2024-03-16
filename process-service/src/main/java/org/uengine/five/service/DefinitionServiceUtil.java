@@ -23,7 +23,7 @@ public class DefinitionServiceUtil {
     public Object getDefinition(String defPath, boolean production) throws Exception {
 
         if (defPath.indexOf(".") == -1) {
-            defPath = defPath + ".bpmn";
+            defPath = defPath + ".xml";
         }
         Object returned = definitionService.getXMLDefinition(defPath, production);
         String xml = (String) returned;

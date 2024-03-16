@@ -12,6 +12,7 @@ import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
+import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.ProcessDefinition;
@@ -91,7 +92,14 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
             setNewInstance(true);
             setProcessInstanceEntity(new ProcessInstanceEntity());
-            getProcessInstanceEntity().setName(instanceId);
+
+            if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
+                getProcessInstanceEntity()
+                        .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
+
+            }
+
+            getProcessInstanceEntity().setName(getProcessDefinition().getName() + instanceId);
             getProcessInstanceEntity().setDefId(procDefinition.getId());
 
             getProcessInstanceEntity().setStatus(Activity.STATUS_READY);
@@ -100,8 +108,6 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             // if(procDef.getModifiedDate()!=null)
             // processInstanceDAO.setDefModDate(procDef.getModifiedDate().getTime());
 
-            // if(!UEngineUtil.isNotEmpty(name))
-            // name = procDef.getName() + instanceId;
             //
             // processInstanceDAO.setName(name);
             // setName(name);
@@ -203,6 +209,22 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public ProcessInstance getInstance(String instanceId, Map options) throws Exception {
+
+        ProcessTransactionContext ptc = ProcessTransactionContext.getThreadLocalInstance();
+        ProcessInstance instance = ptc.getProcessInstanceInTransaction(instanceId);
+
+        String executionScope = null;
+        if (instanceId.indexOf("@") > 0) {
+            String[] instanceIdAndExecutionScope = instanceId.split("@");
+            instanceId = instanceIdAndExecutionScope[0];
+
+            executionScope = instanceIdAndExecutionScope[1];
+        }
+
+        if (executionScope != null) {
+            instance.setExecutionScope(executionScope);
+        }
+
         return instanceService.getProcessInstanceLocal(instanceId);
     }
 
