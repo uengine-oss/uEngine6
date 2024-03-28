@@ -47,33 +47,34 @@ public class BpmnXMLParser {
         return objectMapper;
     }
 
-    protected void parseProcessVariables(Node dataNode, ScopeActivity processDefinition) {
-        if (dataNode.getNodeType() == Node.ELEMENT_NODE) {
-            NodeList variableNodes = dataNode.getChildNodes();
-            for (int j = 0; j < variableNodes.getLength(); j++) {
-                Node variableNode = variableNodes.item(j);
-                if (variableNode.getNodeType() == Node.ELEMENT_NODE
-                        && variableNode.getNodeName().equals("uengine:variable")) {
-                    Element variableElement = (Element) variableNode;
-                    String name = variableElement.getAttribute("name");
-                    String type = variableElement.getAttribute("type");
+    // protected void parseProcessVariables(Node dataNode, ScopeActivity
+    // processDefinition) {
+    // if (dataNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList variableNodes = dataNode.getChildNodes();
+    // for (int j = 0; j < variableNodes.getLength(); j++) {
+    // Node variableNode = variableNodes.item(j);
+    // if (variableNode.getNodeType() == Node.ELEMENT_NODE
+    // && variableNode.getNodeName().equals("uengine:variable")) {
+    // Element variableElement = (Element) variableNode;
+    // String name = variableElement.getAttribute("name");
+    // String type = variableElement.getAttribute("type");
 
-                    // Create a new ProcessVariable instance
-                    ProcessVariable variable = new ProcessVariable();
-                    variable.setName(name);
-                    try {
-                        // Assuming the type attribute is a fully qualified class name
-                        variable.setType(Class.forName(type));
-                    } catch (ClassNotFoundException e) {
-                        throw new RuntimeException("Class not found for type: " + type);
-                    }
+    // // Create a new ProcessVariable instance
+    // ProcessVariable variable = new ProcessVariable();
+    // variable.setName(name);
+    // try {
+    // // Assuming the type attribute is a fully qualified class name
+    // variable.setType(Class.forName(type));
+    // } catch (ClassNotFoundException e) {
+    // throw new RuntimeException("Class not found for type: " + type);
+    // }
 
-                    // Add the variable to the process definition
-                    processDefinition.addProcessVariable(variable);
-                }
-            }
-        }
-    }
+    // // Add the variable to the process definition
+    // processDefinition.addProcessVariable(variable);
+    // }
+    // }
+    // }
+    // }
 
     void parseActivities(Node processNode, ScopeActivity processDefinition) throws Exception {
 
@@ -177,8 +178,10 @@ public class BpmnXMLParser {
                             List<String> eventTypes = Arrays.asList("timer", "signal");
 
                             fullClassName = eventTypes.stream()
-                                    .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition").getLength() > 0 
-                                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition").getLength() > 0)
+                                    .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
+                                            .getLength() > 0
+                                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                                    .getLength() > 0)
                                     .findFirst()
                                     .map(eventType -> "org.uengine.kernel.bpmn."
                                             + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
