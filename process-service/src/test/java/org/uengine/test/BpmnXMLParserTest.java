@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.Evaluate;
+import org.uengine.kernel.FormActivity;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
@@ -268,6 +269,34 @@ public class BpmnXMLParserTest {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Parsing failed with exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testParseFormActivityWithMappingContext() {
+        BpmnXMLParser parser = new BpmnXMLParser();
+        String xml = "<bpmn:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" id=\"sample-definitions\">\n"
+                + "  <bpmn:process id=\"process1\" name=\"Sample Process\">\n"
+                + "    <bpmn:userTask id=\"formActivity1\" name=\"Form Activity\">\n"
+                + "      <bpmn:extensionElements>\n"
+                + "        <uengine:mappingContext>\n"
+                + "          <uengine:mapping source=\"sourceVariable\" target=\"targetField\"/>\n"
+                + "        </uengine:mappingContext>\n"
+                + "      </bpmn:extensionElements>\n"
+                + "    </bpmn:userTask>\n"
+                + "  </bpmn:process>\n"
+                + "</bpmn:definitions>";
+
+        try {
+            ProcessDefinition processDefinition = parser.parse(xml);
+            Map<String, Activity> activities = processDefinition.getWholeChildActivities();
+            assertTrue("The process should contain a FormActivity with id 'formActivity1'.",
+                    activities.containsKey("formActivity1") && activities.get("formActivity1") instanceof FormActivity);
+            FormActivity formActivity = (FormActivity) activities.get("formActivity1");
+            assertNotNull("FormActivity's MappingContext should not be null", formActivity.getMappingContext());
+           // Further assertions can be made here to verify the details of the MappingContext
+        } catch (Exception e) {
+            fail("Parsing FormActivity with MappingContext failed with exception: " + e.getMessage());
         }
     }
 

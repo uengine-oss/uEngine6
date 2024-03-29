@@ -209,9 +209,14 @@ public class BpmnXMLParser {
                                                 || jsonNode.getNodeType() == Node.TEXT_NODE
                                                 || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                                             String jsonText = jsonNode.getTextContent();
-                                            Object jsonObject = objectMapper.readValue(jsonText, task.getClass());
+                                            Class castingClass = clazz;
+                                            if(jsonText.contains("_type")){
+                                                castingClass = Activity.class;
+                                            }
+                                            Object jsonObject = objectMapper.readValue(jsonText, castingClass);
                                             // Use the JSON object to set properties on the Activity object
-                                            BeanUtils.copyProperties(task, jsonObject);
+                                            // BeanUtils.copyProperties(task, jsonObject);
+                                            task = (Activity) jsonObject;
                                         }
                                     }
                                 }

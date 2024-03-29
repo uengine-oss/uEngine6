@@ -13,17 +13,18 @@
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_a"/>
     <bpmn:userTask id="Task_b" name="Report Trouble">
-
       <bpmn:extensionElements>
         <uengine:properties>
           <uengine:json>
             {
-            "role": {"name": "initiator"}, 
-            "parameters": [
-              {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction": "OUT"},
-              {"argument":{"text":"troubleType"}, "variable":{"name": "troubleType"}, "direction": "OUT"} <!-- troubleType 입력 추가 -->
-            ]
-          }
+                "_type": "org.uengine.kernel.FormActivity",
+                "role": {"name": "initiator"}, 
+                "parameters": [
+                {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction": "OUT"},
+                {"argument":{"text":"troubleType"}, "variable":{"name": "troubleType"}, "direction": "OUT"} <!-- troubleType 입력 추가 -->
+                ],
+                "mappingContexts": []
+            }
           </uengine:json>      
         </uengine:properties>
       </bpmn:extensionElements>
@@ -63,8 +64,6 @@
               "roleBindings": [
                 {"argument": "initiator", "role": {"name": "initiator"}, "direction": "OUT"}
               ]
-
-        
           }
           </uengine:json>
         </uengine:properties>
