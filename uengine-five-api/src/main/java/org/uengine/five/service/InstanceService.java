@@ -30,7 +30,7 @@ import org.uengine.kernel.RoleMapping;
 @FeignClient(name = "bpm", url = "http://process-service:9094")
 public interface InstanceService {
 
-        @RequestMapping(value = "/instance", method = { RequestMethod.POST,
+        @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = { RequestMethod.POST,
                         RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
         public RepresentationModel start(@RequestBody ProcessExecutionCommand command) throws Exception;
 

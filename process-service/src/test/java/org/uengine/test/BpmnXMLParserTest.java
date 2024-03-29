@@ -202,11 +202,12 @@ public class BpmnXMLParserTest {
     public void testParseProcessVariables() throws Exception {
         String xml = "<definitions>" +
                 "  <bpmn:process id=\"process1\" name=\"Sample Process\">\n" +
-
-                "<uengine:data>" +
-                "<uengine:variable name=\"variable1\" type=\"java.lang.String\"/>" +
-                "<uengine:variable name=\"variable2\" type=\"java.lang.Integer\"/>" +
-                "</uengine:data>" +
+                "<bpmn:extensionElements>\n" +
+                "<uengine:properties>\n" +
+                "<uengine:variable name=\"variable1\" type=\"java.lang.String\"/>\n" +
+                "<uengine:variable name=\"variable2\" type=\"java.lang.Integer\"/>\n" +
+                "</uengine:properties>\n" +
+                "</bpmn:extensionElements>\n" +
                 "  </bpmn:process>\n" +
                 "</definitions>";
 
@@ -294,7 +295,8 @@ public class BpmnXMLParserTest {
                     activities.containsKey("formActivity1") && activities.get("formActivity1") instanceof FormActivity);
             FormActivity formActivity = (FormActivity) activities.get("formActivity1");
             assertNotNull("FormActivity's MappingContext should not be null", formActivity.getMappingContext());
-           // Further assertions can be made here to verify the details of the MappingContext
+            // Further assertions can be made here to verify the details of the
+            // MappingContext
         } catch (Exception e) {
             fail("Parsing FormActivity with MappingContext failed with exception: " + e.getMessage());
         }

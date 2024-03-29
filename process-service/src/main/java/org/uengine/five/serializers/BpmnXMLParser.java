@@ -85,118 +85,49 @@ public class BpmnXMLParser {
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
                     String nodeName = element.getNodeName();
+                    if (nodeName.equals("bpmn:extensionElements")) {
+                        // TODO: Process Variable Parse
+                        NodeList extensionNodes = element.getChildNodes();
+                        for (int k = 0; k < extensionNodes.getLength(); k++) {
+                            Node extensionNode = extensionNodes.item(k);
+                            if (extensionNode.getNodeName().equals("uengine:properties")) {
+                                NodeList variableNodes = extensionNode.getChildNodes();
+                                for (int i = 0; i < variableNodes.getLength(); i++) {
+                                    Node variableNode = variableNodes.item(i);
+                                    if (variableNode.getNodeName().equals("uengine:variable")) {
+                                        Element variableElement = (Element) variableNode;
+                                        String varName = variableElement.getAttribute("name");
+                                        String type = variableElement.getAttribute("type");
 
-                    String id = element.getAttribute("id");
-                    String name = element.getAttribute("name");
-                    nodeName = element.getNodeName();
-                    if (nodeName.contains(":")) {
-                        nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
-                    }
-
-                    if (nodeName.equals("data")) {
-
-                        NodeList variableNodes = element.getChildNodes();
-                        for (int k = 0; k < variableNodes.getLength(); k++) {
-                            Node variableNode = variableNodes.item(k);
-                            if (variableNode.getNodeType() == Node.ELEMENT_NODE
-                                    && variableNode.getNodeName().equals("uengine:variable")) {
-                                Element variableElement = (Element) variableNode;
-                                String varName = variableElement.getAttribute("name");
-                                String type = variableElement.getAttribute("type");
-
-                                // Create a new ProcessVariable instance
-                                ProcessVariable variable = new ProcessVariable();
-                                variable.setName(varName);
-                                try {
-                                    // Assuming the type attribute is a fully qualified class name
-                                    variable.setType(Class.forName(type));
-                                } catch (ClassNotFoundException e) {
-                                    throw new RuntimeException("Class not found for type: " + type);
-                                }
-
-                                // Add the variable to the process definition
-                                processDefinition.addProcessVariable(variable);
-                            }
-                        }
-
-                    } else
-
-                    if (nodeName.equals("sequenceFlow")) {
-                        String sourceRef = element.getAttribute("sourceRef");
-                        String targetRef = element.getAttribute("targetRef");
-                        SequenceFlow sequenceFlow = new SequenceFlow();
-
-                        // JSON parsing and property setting logic for sequenceFlow
-                        NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
-                        for (int k = 0; k < propertiesNodes.getLength(); k++) {
-                            Node propertiesNode = propertiesNodes.item(k);
-                            if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
-                                for (int l = 0; l < jsonNodes.getLength(); l++) {
-                                    Node jsonNode = jsonNodes.item(l);
-                                    if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                            || jsonNode.getNodeType() == Node.TEXT_NODE
-                                            || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                        String jsonText = jsonNode.getTextContent();
+                                        // Create a new ProcessVariable instance
+                                        ProcessVariable variable = new ProcessVariable();
+                                        variable.setName(varName);
                                         try {
-                                            // Assuming the JSON structure matches the SequenceFlow class structure
-                                            SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText,
-                                                    SequenceFlow.class);
-                                            // Use the JSON object to set properties on the SequenceFlow object
-                                            BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
-                                        } catch (Exception e) {
-                                            throw new RuntimeException("Error parsing sequenceFlow JSON", e);
+                                            // Assuming the type attribute is a fully qualified class name
+                                            variable.setType(Class.forName(type));
+                                        } catch (ClassNotFoundException e) {
+                                            throw new RuntimeException("Class not found for type: " + type);
                                         }
+
+                                        // Add the variable to the process definition
+                                        processDefinition.addProcessVariable(variable);
                                     }
                                 }
                             }
                         }
-
-                        sequenceFlow.setTracingTag(id);
-                        sequenceFlow.setSourceRef(sourceRef);
-                        sequenceFlow.setTargetRef(targetRef);
-
-                        processDefinition.addSequenceFlow(sequenceFlow);
                     } else {
-                        if (nodeName.equals("incoming") || nodeName.equals("outgoing")) {
-                            // Skip processing for incoming or outgoing nodes
-                            continue;
+                        String id = element.getAttribute("id");
+                        String name = element.getAttribute("name");
+                        nodeName = element.getNodeName();
+                        if (nodeName.contains(":")) {
+                            nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
                         }
+                        if (nodeName.equals("sequenceFlow")) {
+                            String sourceRef = element.getAttribute("sourceRef");
+                            String targetRef = element.getAttribute("targetRef");
+                            SequenceFlow sequenceFlow = new SequenceFlow();
 
-                        String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
-
-                        String fullClassName = null;
-
-                        if (className.equals("Task")) {
-                            fullClassName = "org.uengine.kernel.DefaultActivity";
-                        } else if (className.equals("UserTask")) {
-                            fullClassName = "org.uengine.kernel.HumanActivity";
-                        } else if (className.equals("ScriptTask")) {
-                            fullClassName = "org.uengine.kernel.ScriptActivity";
-                        } else if (className.equals("BoundaryEvent")) {
-
-                            List<String> eventTypes = Arrays.asList("timer", "signal");
-
-                            fullClassName = eventTypes.stream()
-                                    .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
-                                            .getLength() > 0
-                                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
-                                                    .getLength() > 0)
-                                    .findFirst()
-                                    .map(eventType -> "org.uengine.kernel.bpmn."
-                                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
-                                            + "Event")
-                                    .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
-
-                        } else
-                            fullClassName = "org.uengine.kernel.bpmn." + className;
-
-                        try {
-                            Class<?> clazz = Class.forName(fullClassName);
-                            Object instance = clazz.getDeclaredConstructor().newInstance();
-
-                            Activity task = (Activity) instance;
-                            // JSON parsing and property setting logic
+                            // JSON parsing and property setting logic for sequenceFlow
                             NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
                             for (int k = 0; k < propertiesNodes.getLength(); k++) {
                                 Node propertiesNode = propertiesNodes.item(k);
@@ -209,36 +140,107 @@ public class BpmnXMLParser {
                                                 || jsonNode.getNodeType() == Node.TEXT_NODE
                                                 || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                                             String jsonText = jsonNode.getTextContent();
-                                            Class castingClass = clazz;
-                                            if(jsonText.contains("_type")){
-                                                castingClass = Activity.class;
+                                            try {
+                                                // Assuming the JSON structure matches the SequenceFlow class structure
+                                                SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText,
+                                                        SequenceFlow.class);
+                                                // Use the JSON object to set properties on the SequenceFlow object
+                                                BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException("Error parsing sequenceFlow JSON", e);
                                             }
-                                            Object jsonObject = objectMapper.readValue(jsonText, castingClass);
-                                            // Use the JSON object to set properties on the Activity object
-                                            // BeanUtils.copyProperties(task, jsonObject);
-                                            task = (Activity) jsonObject;
                                         }
                                     }
                                 }
                             }
 
-                            task.setTracingTag(id);
-                            task.setName(name);
+                            sequenceFlow.setTracingTag(id);
+                            sequenceFlow.setSourceRef(sourceRef);
+                            sequenceFlow.setTargetRef(targetRef);
 
-                            if ("SubProcess".equals(className)) {
-
-                                parseActivities(node, (SubProcess) task);
+                            processDefinition.addSequenceFlow(sequenceFlow);
+                        } else {
+                            if (nodeName.equals("incoming") || nodeName.equals("outgoing")) {
+                                // Skip processing for incoming or outgoing nodes
+                                continue;
                             }
 
-                            processDefinition.addChildActivity(task);
+                            String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
 
-                        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException
-                                | NoSuchMethodException | InvocationTargetException e) {
-                            throw new RuntimeException("Error parsing task JSON:" + e.getMessage(), e);
+                            String fullClassName = null;
+
+                            if (className.equals("Task")) {
+                                fullClassName = "org.uengine.kernel.DefaultActivity";
+                            } else if (className.equals("UserTask")) {
+                                fullClassName = "org.uengine.kernel.HumanActivity";
+                            } else if (className.equals("ScriptTask")) {
+                                fullClassName = "org.uengine.kernel.ScriptActivity";
+                            } else if (className.equals("BoundaryEvent")) {
+
+                                List<String> eventTypes = Arrays.asList("timer", "signal");
+
+                                fullClassName = eventTypes.stream()
+                                        .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
+                                                .getLength() > 0
+                                                || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                                        .getLength() > 0)
+                                        .findFirst()
+                                        .map(eventType -> "org.uengine.kernel.bpmn."
+                                                + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+                                                + "Event")
+                                        .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+
+                            } else
+                                fullClassName = "org.uengine.kernel.bpmn." + className;
+
+                            try {
+                                Class<?> clazz = Class.forName(fullClassName);
+                                Object instance = clazz.getDeclaredConstructor().newInstance();
+
+                                Activity task = (Activity) instance;
+                                // JSON parsing and property setting logic
+                                NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
+                                for (int k = 0; k < propertiesNodes.getLength(); k++) {
+                                    Node propertiesNode = propertiesNodes.item(k);
+                                    if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                                        NodeList jsonNodes = ((Element) propertiesNode)
+                                                .getElementsByTagName("uengine:json");
+                                        for (int l = 0; l < jsonNodes.getLength(); l++) {
+                                            Node jsonNode = jsonNodes.item(l);
+                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                                    || jsonNode.getNodeType() == Node.TEXT_NODE
+                                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                                String jsonText = jsonNode.getTextContent();
+                                                Class castingClass = clazz;
+                                                if (jsonText.contains("_type")) {
+                                                    castingClass = Activity.class;
+                                                }
+                                                Object jsonObject = objectMapper.readValue(jsonText, castingClass);
+                                                // Use the JSON object to set properties on the Activity object
+                                                // BeanUtils.copyProperties(task, jsonObject);
+                                                task = (Activity) jsonObject;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                task.setTracingTag(id);
+                                task.setName(name);
+
+                                if ("SubProcess".equals(className)) {
+
+                                    parseActivities(node, (SubProcess) task);
+                                }
+
+                                processDefinition.addChildActivity(task);
+
+                            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException
+                                    | NoSuchMethodException | InvocationTargetException e) {
+                                throw new RuntimeException("Error parsing task JSON:" + e.getMessage(), e);
+                            }
+
                         }
-
                     }
-
                 }
             }
         }

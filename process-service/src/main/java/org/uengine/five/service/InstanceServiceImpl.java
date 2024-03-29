@@ -86,7 +86,7 @@ public class InstanceServiceImpl implements InstanceService {
     WorklistRepository worklistRepository;
 
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", method = { RequestMethod.POST,
+    @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
@@ -106,6 +106,9 @@ public class InstanceServiceImpl implements InstanceService {
         try {
             definition = definitionService.getDefinition(filePath, !simulation); // if simulation time, use the version
                                                                                  // under construction
+        } catch (ClassNotFoundException cnfe) {
+            // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Definition not found", e);
         }
