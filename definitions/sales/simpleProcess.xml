@@ -1,9 +1,11 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
    <bpmn:process id="simpleProcess" isExecutable="true">
-    <uengine:data>
-      <uengine:variable name="symptom" type="java.lang.String" />
-      <uengine:variable name="troubleType" type="java.lang.String" /> <!-- troubleType 변수 추가 -->
-    </uengine:data>
+    <bpmn:extensionElements>
+        <uengine:properties>
+            <uengine:variable name="symptom" type="java.lang.String" />
+            <uengine:variable name="troubleType" type="java.lang.String" /> <!-- troubleType 변수 추가 -->
+        </uengine:properties>
+    </bpmn:extensionElements>
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1</bpmn:outgoing>
     </bpmn:startEvent>
@@ -17,8 +19,7 @@
         <uengine:properties>
           <uengine:json>
             {
-                "_type": "org.uengine.kernel.FormActivity",
-                "role": {"name": "initiator"}, 
+                "role": {"name": "initiator"},
                 "parameters": [
                 {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction": "OUT"},
                 {"argument":{"text":"troubleType"}, "variable":{"name": "troubleType"}, "direction": "OUT"} <!-- troubleType 입력 추가 -->
