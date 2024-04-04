@@ -817,7 +817,7 @@ public class HumanActivity extends ReceiveActivity {
 		super.executeActivity(instance);
 	}
 
-	public boolean onComplete(ProcessInstance instance, Object payload) throws Exception {
+	protected boolean onComplete(ProcessInstance instance, Object payload) throws Exception {
 
 		if (!isRunning(instance))
 			throw new NotCompletableException();

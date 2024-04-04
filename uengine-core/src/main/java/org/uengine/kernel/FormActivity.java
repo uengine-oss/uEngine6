@@ -131,7 +131,8 @@ public class FormActivity extends HumanActivity {
 
 	protected void mappingOut(ProcessInstance instance) throws Exception {
 		// load up the HtmlFormContext
-		HtmlFormContext formContext = (HtmlFormContext) getVariableForHtmlFormContext().get(instance, "");
+		// HtmlFormContext formContext = (HtmlFormContext)
+		// getVariableForHtmlFormContext().get(instance, "");
 
 		ParameterContext[] params = getMappingContext().getMappingElements();
 		if (params != null) {
@@ -403,7 +404,7 @@ public class FormActivity extends HumanActivity {
 		boolean isHtmlSave = "true".equals(GlobalContext.getPropertyString("formactivity.save.html", "false"));
 
 		// Form data save to xml
-		saveFormVariableXML(instance, valueMap, fileName + ".xml");
+		// saveFormVariableXML(instance, valueMap, fileName + ".xml");
 		// snapshot save to html
 		// if (isHtmlSave) {
 		// saveFormHTML(instance, valueMap, fileName + ".html");
@@ -609,18 +610,4 @@ public class FormActivity extends HumanActivity {
 		return superVC;
 	}
 
-	// // added by yookjy 2011.04.05
-	// protected void saveSnapshotHTML(ProcessInstance instance) throws Exception {
-	// // if (instance instanceof SimulatorProcessInstance)
-	// // return;
-
-	// ProcessInstance rootInstance = instance.getRootProcessInstance();
-	// int year =
-	// rootInstance.getProcessDefinition().getStartedTime(rootInstance).get(Calendar.YEAR);
-	// String fileName = this.getTaskIds(instance)[0] + ".html";
-	// String filePath = SNAPSHOT_DIRECTORY + year + "/" +
-	// rootInstance.getInstanceId() + "/" + fileName;
-
-	// // saveFormHTML(instance, getMappedResult(instance), filePath);
-	// }
 }
