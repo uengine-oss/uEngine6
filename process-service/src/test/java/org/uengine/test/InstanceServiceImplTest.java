@@ -17,6 +17,7 @@ import org.uengine.five.ProcessServiceApplication;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
+import org.uengine.five.dto.RoleMapping;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.overriding.SpringComponentFactory;
@@ -27,7 +28,6 @@ import org.uengine.kernel.Activity;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.bpmn.CallActivity;
 
 @SpringBootTest(classes = ProcessServiceApplication.class)
@@ -58,10 +58,10 @@ public class InstanceServiceImplTest {
         command.setProcessDefinitionId("sales/simpleProcess.xml");
         command.setSimulation(false);
 
-        RoleMapping roleMapping = RoleMapping.create();
+        RoleMapping roleMapping = new RoleMapping();
         roleMapping.setName("initiator");
-        roleMapping.setEndpoint("initiator@uengine.org");
-        roleMapping.setResourceName("Initiator");
+        roleMapping.setEndpoints(new String[] { "initiator@uengine.org" });
+        roleMapping.setResourceNames(new String[] { "Initiator" });
         command.setRoleMappings(new RoleMapping[] { roleMapping });
 
         InstanceResource instanceResource = instanceService.start(command);
@@ -138,16 +138,17 @@ public class InstanceServiceImplTest {
         // Activity.STATUS_COMPLETED, instance.getStatus());
 
     }
+
     @Test
     public void testBpmnDefinition() throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         command.setProcessDefinitionId("sales/testProcess.xml");
         command.setSimulation(false);
 
-        RoleMapping roleMapping = RoleMapping.create();
+        RoleMapping roleMapping = new RoleMapping();
         roleMapping.setName("initiator");
-        roleMapping.setEndpoint("initiator@uengine.org");
-        roleMapping.setResourceName("Initiator");
+        roleMapping.setEndpoints(new String[] { "initiator@uengine.org" });
+        roleMapping.setResourceNames(new String[] { "Initiator" });
         command.setRoleMappings(new RoleMapping[] { roleMapping });
 
         InstanceResource instanceResource = instanceService.start(command);
