@@ -189,7 +189,7 @@ public class BpmnXMLParser {
 
                             if (className.equals("Task")) {
                                 fullClassName = "org.uengine.kernel.DefaultActivity";
-                            } else if (className.equals("UserTask")) {
+                            } else if (className.equals("UserTask") || className.equals("ManualTask")) {
                                 fullClassName = "org.uengine.kernel.HumanActivity";
                             } else if (className.equals("ScriptTask")) {
                                 fullClassName = "org.uengine.kernel.ScriptActivity";
