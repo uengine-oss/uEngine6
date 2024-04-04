@@ -29,6 +29,19 @@ public class BpmnXMLParser {
 
     static ObjectMapper objectMapper = createTypedJsonObjectMapper();
 
+    public static String convertToJavaType(String simpleTypeName) {
+        switch (simpleTypeName) {
+            case "Text":
+                return "java.lang.String";
+            case "Number":
+                return "java.lang.Number";
+            case "Date":
+                return "java.util.Date";
+            default:
+                throw new IllegalArgumentException("Unknown type: " + simpleTypeName);
+        }
+    }
+
     public static ObjectMapper createTypedJsonObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -85,6 +98,10 @@ public class BpmnXMLParser {
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
                     String nodeName = element.getNodeName();
+                    // LaneSet은 무시
+                    if (nodeName.equals("bpmn:laneSet")) {
+                        continue;
+                    }
                     if (nodeName.equals("bpmn:extensionElements")) {
                         // TODO: Process Variable Parse
                         NodeList extensionNodes = element.getChildNodes();
@@ -102,9 +119,10 @@ public class BpmnXMLParser {
                                         // Create a new ProcessVariable instance
                                         ProcessVariable variable = new ProcessVariable();
                                         variable.setName(varName);
+                                        String javaType = convertToJavaType(type);
                                         try {
                                             // Assuming the type attribute is a fully qualified class name
-                                            variable.setType(Class.forName(type));
+                                            variable.setType(Class.forName(javaType));
                                         } catch (ClassNotFoundException e) {
                                             throw new RuntimeException("Class not found for type: " + type);
                                         }
@@ -249,6 +267,8 @@ public class BpmnXMLParser {
     public ProcessDefinition parse(String xml) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
+        // XML Tag Inner $type Cast to type
+        xml = xml.replace("$type", "type");
         Document document = builder.parse(new InputSource(new StringReader(xml)));
 
         ProcessDefinition processDefinition = new ProcessDefinition();

@@ -2,18 +2,17 @@ package org.uengine.five.dto;
 
 import java.io.Serializable;
 
-import org.uengine.kernel.ProcessVariableValue;
-import org.uengine.kernel.RoleMapping;
-
 // import lombok.Data;
 
 //@Data
 public class ProcessExecutionCommand implements Serializable {
     private String processDefinitionId;
-    private RoleMapping[] roleMappings;
-    private ProcessVariableValue[] processVariableValues;
+
     private String instanceName;
     private boolean isSimulation;
+
+    private RoleMapping[] roleMappings;
+    private ProcessVariableValue[] processVariableValues;
 
     public String getProcessDefinitionId() {
         return processDefinitionId;

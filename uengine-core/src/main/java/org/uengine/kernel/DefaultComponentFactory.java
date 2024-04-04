@@ -1,11 +1,13 @@
 package org.uengine.kernel;
 
 import java.lang.reflect.Constructor;
-
 public class DefaultComponentFactory implements IComponentFactory {
     @Override
     public <T> T getComponent(Class<T> clazz, Object[] constructorParameters) {
         try {
+            if(clazz == ProcessInstance.class) {
+                clazz = (Class<T>) DefaultProcessInstance.class;
+            }
             if (constructorParameters == null || constructorParameters.length == 0) {
                 return clazz.newInstance();
             } else {

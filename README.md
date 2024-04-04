@@ -28,6 +28,13 @@ mvn spring-boot:run
 
 Start a process:
 ```
-http :9094/instance processDefinitionId="sales/simpleProcess.bpmn" roleMappings[0][name]="initiator" roleMappings[0][endpoint]="initiator@uengine.org" roleMappings[0][resourceName]="Initiator"
+http :9094/instance processDefinitionId="sales/simpleProcess.xml" roleMappings[0][name]="initiator" roleMappings[0][endpoints][0]="initiator@uengine.org" roleMappings[0][resourceNames][0]="Initiator"
 ```
+
+Confirm the RoleMapping:
+```
+http http://localhost:9094/instance/1/role-mapping/
+```
+> must return the initiator's endpoint value as "initiator@uengine.org"
+
 
