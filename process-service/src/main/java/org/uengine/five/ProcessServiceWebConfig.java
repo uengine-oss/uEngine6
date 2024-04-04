@@ -74,7 +74,7 @@ public class ProcessServiceWebConfig {
         // String UserName = System.getenv("USER");
         // storage.setBasePath("/Users/" + UserName);
 
-        storage.setBasePath("/Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions");
+        storage.setBasePath("/Users/seongwon/Desktop/uEngine6/definitions");
 
         return storage;
     }

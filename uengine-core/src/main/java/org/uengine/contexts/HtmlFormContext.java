@@ -85,132 +85,133 @@ public class HtmlFormContext implements Serializable, ProcessVariablePartResolve
 		return null;
 	}
 
-	public Object getFindFieldValue(String fieldName, String addTag) throws Exception {
-		Object value = null;
-		// if there is XML value for this entry, use it first.
-		if (valueMap.containsKey(fieldName + addTag + HANDLER_CLASS_NAME)) {
-			String strValue = "";
-			strValue = (String) valueMap.get(fieldName + HANDLER_CLASS_NAME);
-			Class theClass = getClass().getClassLoader().loadClass(strValue);
+	// public Object getFindFieldValue(String fieldName, String addTag) throws Exception {
+	// 	Object value = null;
+	// 	// if there is XML value for this entry, use it first.
+	// 	if (valueMap.containsKey(fieldName + addTag + HANDLER_CLASS_NAME)) {
+	// 		String strValue = "";
+	// 		strValue = (String) valueMap.get(fieldName + HANDLER_CLASS_NAME);
+	// 		Class theClass = getClass().getClassLoader().loadClass(strValue);
 
-			Method theSetter = getMethod(theClass, "parseValue");
+	// 		Method theSetter = getMethod(theClass, "parseValue");
 
-			value = theSetter.invoke(theClass.newInstance(), new Object[] { valueMap, fieldName });
-		} else if (valueMap.containsKey(fieldName + addTag + HANDLER_STRING_NAME)) {
-			String strValue = "";
-			strValue = (String) valueMap.get(fieldName + HANDLER_STRING_NAME);
-			Class theClass = getClass().getClassLoader().loadClass(strValue);
+	// 		value = theSetter.invoke(theClass.newInstance(), new Object[] { valueMap, fieldName });
+	// 	} else if (valueMap.containsKey(fieldName + addTag + HANDLER_STRING_NAME)) {
+	// 		String strValue = "";
+	// 		strValue = (String) valueMap.get(fieldName + HANDLER_STRING_NAME);
+	// 		Class theClass = getClass().getClassLoader().loadClass(strValue);
 
-			Method theSetter = getMethod(theClass, "parseToString");
+	// 		Method theSetter = getMethod(theClass, "parseToString");
 
-			value = theSetter.invoke(theClass.newInstance(), new Object[] { valueMap, fieldName });
-		}
+	// 		value = theSetter.invoke(theClass.newInstance(), new Object[] { valueMap, fieldName });
+	// 	}
 
-		if (valueMap.containsKey(fieldName + XML_VALUE_TAG + addTag)) {
-			String strValue = "";
-			strValue = (String) valueMap.get(fieldName + XML_VALUE_TAG + addTag);
+	// 	if (valueMap.containsKey(fieldName + XML_VALUE_TAG + addTag)) {
+	// 		String strValue = "";
+	// 		strValue = (String) valueMap.get(fieldName + XML_VALUE_TAG + addTag);
 
-			if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
-				value = GlobalContext.deserialize((String) strValue, Object.class);
-		}
+	// 		if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
+	// 			value = GlobalContext.deserialize((String) strValue, Object.class);
+	// 	}
 
-		if (value == null && valueMap.containsKey(fieldName + addTag + XML_VALUE_TAG)) {
-			String strValue = "";
-			strValue = (String) valueMap.get(fieldName + addTag + XML_VALUE_TAG);
+	// 	if (value == null && valueMap.containsKey(fieldName + addTag + XML_VALUE_TAG)) {
+	// 		String strValue = "";
+	// 		strValue = (String) valueMap.get(fieldName + addTag + XML_VALUE_TAG);
 
-			if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
-				value = GlobalContext.deserialize((String) strValue, Object.class);
-		}
+	// 		if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
+	// 			value = GlobalContext.deserialize((String) strValue, Object.class);
+	// 	}
 
-		if (value == null) {
-			if (!valueMap.containsKey(fieldName + addTag)) {
-				value = null;
-			} else {
-				if (fieldName.indexOf(XML_VALUE_TAG) > -1) {
-					String strValue = (String) valueMap.get(fieldName + addTag);
-					if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
-						value = GlobalContext.deserialize((String) strValue, Object.class);
-				} else {
-					value = valueMap.get(fieldName + addTag);
-				}
-			}
-		}
-		return value;
-	}
+	// 	if (value == null) {
+	// 		if (!valueMap.containsKey(fieldName + addTag)) {
+	// 			value = null;
+	// 		} else {
+	// 			if (fieldName.indexOf(XML_VALUE_TAG) > -1) {
+	// 				String strValue = (String) valueMap.get(fieldName + addTag);
+	// 				if (org.uengine.util.UEngineUtil.isNotEmpty(strValue))
+	// 					value = GlobalContext.deserialize((String) strValue, Object.class);
+	// 			} else {
+	// 				value = valueMap.get(fieldName + addTag);
+	// 			}
+	// 		}
+	// 	}
+	// 	return value;
+	// }
 
 	public Object getFieldValue(String fieldName) throws Exception {
 		fieldName = fieldName.toLowerCase();
-		Object value = null;
+		// Object value = null;
 
-		if (valueMap == null) {
-			loadValueMap();
-		}
+		return valueMap.get(fieldName);
+		// if (valueMap == null) {
+		// 	loadValueMap();
+		// }
 		// if there is XML value for this entry, use it first.
-		ProcessVariableValue pvv = new ProcessVariableValue();
-		int arrayLv = 0;
-		for (int i = 0; i < valueMap.size(); i++) {
-			String arrTag = (i == 0 ? "" : "[" + (i - 1) + "]");
-			if (fieldName.indexOf('[') > -1) {
-				fieldName = fieldName.substring(0, fieldName.indexOf('['));
-			}
-			if (i > 0 &&
-					(valueMap.containsKey(fieldName + XML_VALUE_TAG + "[]")
-							|| valueMap.containsKey(fieldName + "[]" + XML_VALUE_TAG)
-							|| valueMap.containsKey(fieldName + "[]")))
-				arrayLv = 1;
-			if (i > 0 &&
-					(valueMap.containsKey(fieldName + XML_VALUE_TAG + "[][]")
-							|| valueMap.containsKey(fieldName + "[][]" + XML_VALUE_TAG)
-							|| valueMap.containsKey(fieldName + "[][]")))
-				arrayLv = 2;
+		// ProcessVariableValue pvv = new ProcessVariableValue();
+		// int arrayLv = 0;
+		// for (int i = 0; i < valueMap.size(); i++) {
+		// 	String arrTag = (i == 0 ? "" : "[" + (i - 1) + "]");
+		// 	if (fieldName.indexOf('[') > -1) {
+		// 		fieldName = fieldName.substring(0, fieldName.indexOf('['));
+		// 	}
+		// 	if (i > 0 &&
+		// 			(valueMap.containsKey(fieldName + XML_VALUE_TAG + "[]")
+		// 					|| valueMap.containsKey(fieldName + "[]" + XML_VALUE_TAG)
+		// 					|| valueMap.containsKey(fieldName + "[]")))
+		// 		arrayLv = 1;
+		// 	if (i > 0 &&
+		// 			(valueMap.containsKey(fieldName + XML_VALUE_TAG + "[][]")
+		// 					|| valueMap.containsKey(fieldName + "[][]" + XML_VALUE_TAG)
+		// 					|| valueMap.containsKey(fieldName + "[][]")))
+		// 		arrayLv = 2;
 
-			// if(arrayLv == 0) continue;
+		// 	// if(arrayLv == 0) continue;
 
-			if (arrayLv > 1) {
-				ProcessVariableValue innerPvv = new ProcessVariableValue();
+		// 	if (arrayLv > 1) {
+		// 		ProcessVariableValue innerPvv = new ProcessVariableValue();
 
-				for (int j = 0; j < valueMap.size(); j++) {
-					String addArrTag = "";
-					if (j > 0) {
-						addArrTag = arrTag + "[" + (j - 1) + "]";
-					} else {
-						addArrTag = arrTag;
-					}
+		// 		for (int j = 0; j < valueMap.size(); j++) {
+		// 			String addArrTag = "";
+		// 			if (j > 0) {
+		// 				addArrTag = arrTag + "[" + (j - 1) + "]";
+		// 			} else {
+		// 				addArrTag = arrTag;
+		// 			}
 
-					value = getFindFieldValue(fieldName, addArrTag);
+		// 			value = getFindFieldValue(fieldName, addArrTag);
 
-					if (value != null) {
-						innerPvv.setValue(value);
-						innerPvv.moveToAdd();
-						value = null;
-					}
-				}
-				innerPvv.beforeFirst();
-				if (innerPvv != null && innerPvv.getValue() != null) {
-					pvv.setValue(innerPvv);
-					pvv.moveToAdd();
-					innerPvv = null;
-				}
-			} else {
-				value = getFindFieldValue(fieldName, arrTag);
+		// 			if (value != null) {
+		// 				innerPvv.setValue(value);
+		// 				innerPvv.moveToAdd();
+		// 				value = null;
+		// 			}
+		// 		}
+		// 		innerPvv.beforeFirst();
+		// 		if (innerPvv != null && innerPvv.getValue() != null) {
+		// 			pvv.setValue(innerPvv);
+		// 			pvv.moveToAdd();
+		// 			innerPvv = null;
+		// 		}
+		// 	} else {
+		// 		value = getFindFieldValue(fieldName, arrTag);
 
-				if (value != null) {
-					pvv.setValue(value);
-					pvv.moveToAdd();
-					value = null;
-				}
-			}
-		}
+		// 		if (value != null) {
+		// 			pvv.setValue(value);
+		// 			pvv.moveToAdd();
+		// 			value = null;
+		// 		}
+		// 	}
+		// }
 
-		pvv.beforeFirst();
+		// pvv.beforeFirst();
 
-		if (pvv.size() == 0)
-			return null;
+		// if (pvv.size() == 0)
+		// 	return null;
 
-		if (pvv.size() == 1)
-			return pvv.getValue();
-		else
-			return pvv;
+		// if (pvv.size() == 1)
+		// 	return pvv.getValue();
+		// else
+		// 	return pvv;
 	}
 
 	public void setFilePath(String filePath) {
@@ -227,7 +228,7 @@ public class HtmlFormContext implements Serializable, ProcessVariablePartResolve
 			valueMap = new HashMap();
 		if (value == null)
 			valueMap.remove(fieldName);
-		valueMap.put(fieldName, value);
+		valueMap.put(fieldName, (Serializable) value);
 
 		if (!instance.getProcessTransactionContext().getTransactionListeners().contains(this)) {
 			this.instance = instance;
@@ -242,11 +243,11 @@ public class HtmlFormContext implements Serializable, ProcessVariablePartResolve
 			return this;
 		String fieldName = partPath[0].toLowerCase();
 
-		if (value instanceof HtmlFormContext) {
-			if (((HtmlFormContext) value).getFilePath() == null) {
-				return null;
-			}
-		}
+		// if (value instanceof HtmlFormContext) {
+		// 	if (((HtmlFormContext) value).getFilePath() == null) {
+		// 		return null;
+		// 	}
+		// }
 
 		Serializable rtnValue = (Serializable) getFieldValue(fieldName);
 
@@ -281,24 +282,24 @@ public class HtmlFormContext implements Serializable, ProcessVariablePartResolve
 		return new FileInputStream(FILE_SYSTEM_DIR + getHtmlPath());
 	}
 
-	transient Map valueMap;
+	/*transient*/ Map<String, Serializable> valueMap;
 
-	public Map getValueMap() {
+	public Map<String, Serializable> getValueMap() {
 		return valueMap;
 	}
 
-	public void loadValueMap() {
-		try {
-			InputStream fis = openValueXMLStream();
-			setValueMap((HashMap) GlobalContext.deserialize(fis, HashMap.class));
-			if (getFilePath() == null)
-				throw new UEngineException("Form has not been initialized.");
-		} catch (Exception e) {
-			throw new RuntimeException("Form has not been initialized.", e);
-		}
-	}
+	// public void loadValueMap() {
+	// 	try {
+	// 		InputStream fis = openValueXMLStream();
+	// 		setValueMap((Map<String, Serializable>) GlobalContext.deserialize(fis, HashMap.class));
+	// 		if (getFilePath() == null)
+	// 			throw new UEngineException("Form has not been initialized.");
+	// 	} catch (Exception e) {
+	// 		throw new RuntimeException("Form has not been initialized.", e);
+	// 	}
+	// }
 
-	public void setValueMap(Map valueMap) {
+	public void setValueMap(Map<String, Serializable> valueMap) {
 		this.valueMap = valueMap;
 
 		// indexing array depth for each variables
@@ -324,39 +325,39 @@ public class HtmlFormContext implements Serializable, ProcessVariablePartResolve
 
 	public void beforeCommit(TransactionContext tx) throws Exception {
 
-		if (getFilePath() == null) {
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSS", Locale.KOREA);
+		// if (getFilePath() == null) {
+		// 	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSS", Locale.KOREA);
 
-			String filePath = UEngineUtil.getCalendarDir();
-			File dirToCreate = new File(FILE_SYSTEM_DIR + filePath);
-			dirToCreate.mkdirs();
+		// 	String filePath = UEngineUtil.getCalendarDir();
+		// 	File dirToCreate = new File(FILE_SYSTEM_DIR + filePath);
+		// 	dirToCreate.mkdirs();
 
-			String datePrefix = sdf.format(new Date());
-			String fileName = instance.getInstanceId() + "_" + datePrefix + ".xml";
-			File newFile = new File(FILE_SYSTEM_DIR + filePath + "/" + fileName);
-			FileOutputStream fos = new FileOutputStream(newFile);
-			GlobalContext.serialize(valueMap, fos, HashMap.class);
-			fos.close();
+		// 	String datePrefix = sdf.format(new Date());
+		// 	String fileName = instance.getInstanceId() + "_" + datePrefix + ".xml";
+		// 	File newFile = new File(FILE_SYSTEM_DIR + filePath + "/" + fileName);
+		// 	FileOutputStream fos = new FileOutputStream(newFile);
+		// 	GlobalContext.serialize(valueMap, fos, HashMap.class);
+		// 	fos.close();
 
-			HtmlFormContext formDefInfo = (HtmlFormContext) variable.getDefaultValue();
-			String[] formDefID = formDefInfo.getFormDefId().split("@");
-			String formDefinitionVersionId = (String) valueMap.get("formdefinitionversionid");
-			if (!UEngineUtil.isNotEmpty(formDefinitionVersionId))
-				formDefinitionVersionId = formDefID[1];
+		// 	HtmlFormContext formDefInfo = (HtmlFormContext) variable.getDefaultValue();
+		// 	String[] formDefID = formDefInfo.getFormDefId().split("@");
+		// 	String formDefinitionVersionId = (String) valueMap.get("formdefinitionversionid");
+		// 	if (!UEngineUtil.isNotEmpty(formDefinitionVersionId))
+		// 		formDefinitionVersionId = formDefID[1];
 
-			HtmlFormContext newFormCtx = new HtmlFormContext();
-			newFormCtx.setFilePath(filePath + "/" + fileName);
-			newFormCtx.setFormDefId(formDefID[0] + "@" + formDefID[1]);
-			newFormCtx.setValueMap(valueMap);
+		// 	HtmlFormContext newFormCtx = new HtmlFormContext();
+		// 	newFormCtx.setFilePath(filePath + "/" + fileName);
+		// 	newFormCtx.setFormDefId(formDefID[0] + "@" + formDefID[1]);
+		// 	newFormCtx.setValueMap(valueMap);
 
-			variable.set(instance, "", newFormCtx);
-		} else {
+		// 	variable.set(instance, "", newFormCtx);
+		// } else {
 
-			FileOutputStream fos = null;
-			fos = new FileOutputStream(FILE_SYSTEM_DIR + getFilePath());
-			GlobalContext.serialize(valueMap, fos, HashMap.class);
-			fos.close();
-		}
+		// 	FileOutputStream fos = null;
+		// 	fos = new FileOutputStream(FILE_SYSTEM_DIR + getFilePath());
+		// 	GlobalContext.serialize(valueMap, fos, HashMap.class);
+		// 	fos.close();
+		// }
 	}
 
 	public void beforeRollback(TransactionContext tx) throws Exception {
