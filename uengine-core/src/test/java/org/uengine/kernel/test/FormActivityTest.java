@@ -3,6 +3,7 @@ package org.uengine.kernel.test;
 import java.util.HashMap;
 
 import org.uengine.contexts.HtmlFormContext;
+import org.uengine.contexts.MappingContext;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.FormActivity;
 import org.uengine.kernel.ParameterContext;
@@ -55,13 +56,20 @@ public class FormActivityTest extends UEngineTest {
         directValueTransformer.setValue("[PREFIX]");
         directValueTransformer.setType(String.class);
 
+        TransformerMapping transformerMapping = new TransformerMapping();
+        transformerMapping.setLinkedArgumentName("out");
+        transformerMapping.setTransformer(directValueTransformer);
+
         ConcatTransformer concatTransformer = new ConcatTransformer();
         concatTransformer.setArgumentSourceMap(new HashMap<>());
-        concatTransformer.getArgumentSourceMap().put("str1", directValueTransformer);
+        concatTransformer.getArgumentSourceMap().put("str1", transformerMapping);
         concatTransformer.getArgumentSourceMap().put("str2", "form.troubleType");
-        parameterContext.getTransformerMapping().setTransformer(new ConcatTransformer());
+        parameterContext.getTransformerMapping().setTransformer(concatTransformer);
 
-        formActivity.setMappingContexts(new ParameterContext[] { parameterContext });
+        // formActivity.setMappingContexts(new ParameterContext[] { parameterContext });
+        MappingContext mappingContext = new MappingContext();
+        mappingContext.setMappingElements(new ParameterContext[] { parameterContext });
+        formActivity.setMappingContext(mappingContext);
 
         Event startEvent = new StartEvent();
         startEvent.setTracingTag("startEvent");
@@ -84,11 +92,11 @@ public class FormActivityTest extends UEngineTest {
 
         HtmlFormContext htmlFormContext = new HtmlFormContext();
         htmlFormContext.setValueMap(new HashMap<>());
-        htmlFormContext.getValueMap().put("troubleType", "sw");
+        htmlFormContext.getValueMap().put("troubletype", "sw");
         htmlFormContext.setFormDefId("troubleTicketForm");
 
         // Step 3: Set the ProcessVariableValue to the process instance
-        instance.set("", "myVar", htmlFormContext);
+        instance.set("", "form", htmlFormContext);
         instance.execute();
         // 서브프로세스 내에서 취소 이벤트 발생
         String message = ((FormActivity) instance.getCurrentRunningActivity().getActivity()).getMessage();
