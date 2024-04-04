@@ -1,41 +1,56 @@
 package org.uengine.kernel;
 
-import org.uengine.processmanager.TransactionContext;
+import java.io.Serializable;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.webservices.worklist.WorkList;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Created by jjy on 2016. 10. 12..
  */
-public interface ProcessInstance extends BeanPropertyResolver{
+public interface ProcessInstance extends BeanPropertyResolver {
 
     abstract public String getInstanceId();
+
     abstract void setInstanceId(String value);
 
     abstract public String getName();
+
     abstract public void setName(String value);
 
     abstract public ProcessDefinition getProcessDefinition() throws Exception;
+
     abstract public ProcessDefinition getProcessDefinition(boolean cached) throws Exception;
-    //	abstract public ProcessDefinition getProcessDefinition(String definitionId);
+
+    // abstract public ProcessDefinition getProcessDefinition(String definitionId);
     abstract public void setProcessDefinition(ProcessDefinition value);
 
     abstract public ValidationContext getValidationContext();
 
     abstract public UEngineException getFault(String tracingTag) throws Exception;
+
     abstract public RoleMapping getRoleMapping(String roleName) throws Exception;
+
     abstract public void putRoleMapping(RoleMapping roleMap) throws Exception;
+
     abstract public void putRoleMapping(String roleName, String endpoint) throws Exception;
+
     abstract public void putRoleMapping(String roleName, RoleMapping rp) throws Exception;
 
     abstract public void set(String tracingTag, String key, Serializable val) throws Exception;
+
     abstract public Serializable get(String tracingTag, String key) throws Exception;
+
     abstract public void add(String scopeByTracingTag, String key, Serializable val, int index) throws Exception;
+
     abstract public void set(String scopeByTracingTag, ProcessVariableValue pvv) throws Exception;
+
     abstract public void setAt(String scopeByTracingTag, String key, int index, Serializable val) throws Exception;
+
     abstract public Serializable getAt(String tracingTag, String key, int index) throws Exception;
 
     /**
@@ -44,65 +59,83 @@ public interface ProcessInstance extends BeanPropertyResolver{
     abstract public ProcessVariableValue getMultiple(String tracingTag, String key) throws Exception;
 
     abstract public void setProperty(String tracingTag, String key, Serializable val) throws Exception;
+
     abstract public Serializable getProperty(String tracingTag, String key) throws Exception;
 
     abstract public String getInXML(String tracingTag, String key) throws Exception;
+
     abstract public Map getAll(String tracingTag) throws Exception;
+
     abstract public Map getAll() throws Exception;
 
-    //instead of direct setting the status, we recommend use 'fireComplete' or 'fireFault' methods
+    // instead of direct setting the status, we recommend use 'fireComplete' or
+    // 'fireFault' methods
     abstract void setStatus(String tracingTag, String status) throws Exception;
+
     abstract public String getStatus(String tracingTag) throws Exception;
 
     abstract public void setInfo(String info) throws Exception;
+
     abstract public String getInfo() throws Exception;
 
-
     abstract public void setDueDate(Calendar date) throws Exception;
+
     abstract public Calendar getDueDate() throws Exception;
 
     abstract public boolean isSubProcess() throws Exception;
+
     abstract public boolean isAdhoc() throws Exception;
+
     abstract public boolean isSimulation() throws Exception;
 
     abstract public String getMainProcessInstanceId();
+
     abstract public void setMainProcessInstanceId(String mainProcessInstanceId);
 
     abstract public String getMainActivityTracingTag();
+
     abstract public String getMainExecutionScope();
 
     abstract public String getRootProcessInstanceId();
+
     abstract public ProcessInstance getSubProcessInstance(String absoluteTracingTag) throws Exception;
+
     abstract public boolean isDontReturn();
+
     abstract public boolean isNew();
 
     abstract public void addMessageListener(String message, String tracingTag) throws Exception;
+
     abstract public Vector getMessageListeners(String message) throws Exception;
+
     abstract public void removeMessageListener(String message, String tracingTag) throws Exception;
 
     /////////////////////// factory methods ////////////////////////
     abstract public ProcessInstance getInstance(String instanceId) throws Exception;
+
     abstract public ProcessInstance getInstance(String instanceId, Map options) throws Exception;
+
     abstract public void remove() throws Exception;
+
     abstract public void stop() throws Exception;
+
     abstract public void stop(String status) throws Exception;
 
     abstract public ProcessInstance createSnapshot() throws Exception;
-
 
     abstract public Calendar calculateDueDate(Calendar startDate, int duration);
 
     abstract public WorkList getWorkList();
 
-////////////////////////hot spots /////////////////////////////////
+    //////////////////////// hot spots /////////////////////////////////
 
-    //event handling
+    // event handling
     public void fireComplete(String tracingTag) throws Exception;
 
     public void fireFault(String tracingTag, UEngineException fault) throws Exception;
     //
 
-    //status accessors
+    // status accessors
     public boolean isRunning(String tracingTag) throws Exception;
 
     public boolean isCompleted(String tracingTag) throws Exception;
@@ -110,11 +143,9 @@ public interface ProcessInstance extends BeanPropertyResolver{
     public boolean isFault(String tracingTag) throws Exception;
 
     public boolean isSuspended(String tracingTag) throws Exception;
-    //end
-
+    // end
 
     void setFault(String tracingTag, FaultContext fc) throws Exception;
-
 
     public void execute() throws Exception;
 
@@ -126,15 +157,8 @@ public interface ProcessInstance extends BeanPropertyResolver{
 
     public Map getActivityDetails(String tracingTag) throws Exception;
 
-    //only for scripting users. don't use if you're developer. :)
-    /**
-     * @deprecated
-     */
     public void set(String key, Object val) throws Exception;
 
-    /**
-     * @deprecated
-     */
     public Serializable get(String key) throws Exception;
     //
 
@@ -148,6 +172,7 @@ public interface ProcessInstance extends BeanPropertyResolver{
 
     /**
      * occurs deep search
+     * 
      * @return
      * @throws Exception
      */
@@ -155,8 +180,7 @@ public interface ProcessInstance extends BeanPropertyResolver{
 
     public List<ActivityInstanceContext> getCurrentRunningActivitiesDeeply() throws Exception;
 
-    public Vector getEventHandlerActivity(String eventHandlerName,Vector runningActivities) throws Exception;
-
+    public Vector getEventHandlerActivity(String eventHandlerName, Vector runningActivities) throws Exception;
 
     public Vector getRunningOrCompletedActivities() throws Exception;
 
@@ -170,12 +194,13 @@ public interface ProcessInstance extends BeanPropertyResolver{
 
     public EventHandler[] getEventHandlersInAction() throws Exception;
 
-//	///////////////////////// static services /////////////////////////////////////
-
+    // ///////////////////////// static services
+    // /////////////////////////////////////
 
     public List<ExecutionScopeContext> getExecutionScopeContexts();
 
-    public ExecutionScopeContext issueNewExecutionScope(Activity rootActivityForScope, Activity triggerActivity, String executionScopeName);
+    public ExecutionScopeContext issueNewExecutionScope(Activity rootActivityForScope, Activity triggerActivity,
+            String executionScopeName);
 
     public ProcessTransactionContext getProcessTransactionContext();
 
@@ -205,17 +230,14 @@ public interface ProcessInstance extends BeanPropertyResolver{
 
     public void removeActivityEventInterceptor(ActivityEventInterceptor aei);
 
-    public boolean fireActivityEventInterceptor(Activity activity, String command, ProcessInstance instance, Object payload) throws Exception;
-
+    public boolean fireActivityEventInterceptor(Activity activity, String command, ProcessInstance instance,
+            Object payload) throws Exception;
 
     public List<String> getActivityCompletionHistory();
 
     public void setActivityCompletionHistory(List<String> activityCompletionHistory);
 
-
-
     public String getFullInstanceId();
-
 
     public String getParentExecutionScopeOf(String executionScope);
 

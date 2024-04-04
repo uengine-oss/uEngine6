@@ -104,25 +104,12 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- cucumber test -->
     <dependency>
-      <groupId>io.cucumber</groupId>
-      <artifactId>cucumber-java</artifactId>
-      <version>${cucumber.version}</version>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>5.7.0</version> <!-- Use the appropriate version for your setup -->
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cucumber</groupId>
-      <artifactId>cucumber-junit</artifactId>
-      <version>${cucumber.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cucumber</groupId>
-      <artifactId>cucumber-spring</artifactId>
-      <version>${cucumber.version}</version>
-      <scope>test</scope>
-    </dependency>
+    </dependency> 
   </dependencies>
 
   <dependencyManagement>
