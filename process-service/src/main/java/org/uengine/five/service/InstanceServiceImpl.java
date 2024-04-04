@@ -86,7 +86,7 @@ public class InstanceServiceImpl implements InstanceService {
     WorklistRepository worklistRepository;
 
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = { RequestMethod.POST,
+    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
@@ -119,10 +119,10 @@ public class InstanceServiceImpl implements InstanceService {
             org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
                     command.getInstanceName(), null);
 
-            RoleMapping[] roleMappings = command.getRoleMappings();
+            org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
             if (roleMappings != null) {
-                for (RoleMapping roleMapping : roleMappings) {
-                    instance.putRoleMapping(roleMapping.getName(), roleMapping);
+                for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
+                    instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
                 }
             }
 
