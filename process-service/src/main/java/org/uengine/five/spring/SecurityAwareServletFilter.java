@@ -11,17 +11,18 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.stereotype.Component;
+import org.uengine.contexts.UserContext;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
-
-import org.springframework.stereotype.Component;
-import org.uengine.five.framework.ProcessTransactionContext;
 
 @Component
 public class SecurityAwareServletFilter implements Filter {
 
     static String userId;
-    static public String getUserId(){
+
+    static public String getUserId() {
         return userId;
     };
 
@@ -47,10 +48,12 @@ public class SecurityAwareServletFilter implements Filter {
                 DecodedJWT decodedJWT = JWT.decode(accessToken);
 
                 String userId = decodedJWT.getClaim("email").asString();
-                // ProcessTransactionContext.getThreadLocalInstance().setSharedContext("loggedUserId", userId);
+                // ProcessTransactionContext.getThreadLocalInstance().setSharedContext("loggedUserId",
+                // userId);
                 // TenantContext.getThreadLocalInstance().setUserId(userId);
 
-                SecurityAwareServletFilter.userId = (userId);
+                UserContext.getThreadLocalInstance().setUserId(userId);
+                UserContext.getThreadLocalInstance().setScopes(null);
             } catch (Exception e) {
                 System.out.println("Error when to parse accesstoken: " + e.getMessage());
             }
@@ -72,5 +75,5 @@ public class SecurityAwareServletFilter implements Filter {
 
     }
 
-    // other methods 
+    // other methods
 }

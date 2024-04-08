@@ -3,6 +3,7 @@ package org.uengine.test;
 import static org.junit.Assert.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Vector;
@@ -13,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.uengine.contexts.UserContext;
 import org.uengine.five.ProcessServiceApplication;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
@@ -50,6 +52,8 @@ public class InstanceServiceImplTest {
     public void setup() {
         ProcessServiceApplication.applicationContext = applicationContext;
         GlobalContext.setComponentFactory(new SpringComponentFactory());
+
+        UserContext.getThreadLocalInstance().setUserId("initiator@uengine.org");
     }
 
     @Test
@@ -78,14 +82,25 @@ public class InstanceServiceImplTest {
         HumanActivity taskB = (HumanActivity) instance.getProcessDefinition().getActivity("Task_b");
         String[] taskIds = taskB.getTaskIds(instance);
         boolean worklistExists = false;
-        for (String taskId : taskIds) {
-            Optional<WorklistEntity> worklistEntity = worklistRepository.findById(Long.parseLong(taskId));
-            if (worklistEntity.isPresent()) {
-                worklistExists = true;
-                break;
-            }
+        // for (String taskId : taskIds) {
+        // Optional<WorklistEntity> worklistEntity =
+        // worklistRepository.findById(Long.parseLong(taskId));
+        // if (worklistEntity.isPresent()) {
+        // worklistExists = true;
+        // break;
+        // }
+
+        List<WorklistEntity> worklistEntity = worklistRepository.findToDo();
+        if (worklistEntity.size() > 0) {
+            worklistExists = true;
+            // break;
         }
+        // }
         assertTrue("Worklist for Task_b should exist", worklistExists);
+
+        UserContext.getThreadLocalInstance().setUserId("otheruser@uengine.org");
+        worklistEntity = worklistRepository.findToDo();
+        assertTrue("Worklist for otheruser@uengine.org should be empty", worklistEntity.size() == 0);
 
         String symptom = "An example error symptom description";
         WorkItemResource workItemResource = new WorkItemResource();

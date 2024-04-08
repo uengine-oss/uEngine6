@@ -5,10 +5,12 @@ import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.overriding.JPAWorkList;
+import org.uengine.five.spring.TenantSecurityEvaluationContextExtension;
 import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
@@ -129,8 +131,8 @@ public class ProcessServiceWebConfig {
     // return new TimerEventJob();
     // }
 
-    // @Bean
-    // EvaluationContextExtension securityExtension() {
-    // return new TenantSecurityEvaluationContextExtension();
-    // }
+    @Bean
+    EvaluationContextExtension securityExtension() {
+        return new TenantSecurityEvaluationContextExtension();
+    }
 }

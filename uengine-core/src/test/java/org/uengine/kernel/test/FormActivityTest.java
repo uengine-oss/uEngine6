@@ -87,6 +87,7 @@ public class FormActivityTest extends UEngineTest {
         ProcessInstance instance = processDefinition.createInstance();
 
         instance.putRoleMapping("reporter", "reporter@uengine.org");
+        instance.execute();
 
         // Step 2: Create a ProcessVariableValue instance and populate it
 
@@ -97,7 +98,7 @@ public class FormActivityTest extends UEngineTest {
 
         // Step 3: Set the ProcessVariableValue to the process instance
         instance.set("", "form", htmlFormContext);
-        instance.execute();
+
         // 서브프로세스 내에서 취소 이벤트 발생
         String message = ((FormActivity) instance.getCurrentRunningActivity().getActivity()).getMessage();
         instance.getProcessDefinition().fireMessage(message, instance, "test");
