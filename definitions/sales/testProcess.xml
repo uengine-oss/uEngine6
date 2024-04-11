@@ -20,7 +20,14 @@
             <bpmn:lane id="Lane_0te9ieq" name="initiator">
                 <bpmn:extensionElements>
                     <uengine:properties>
-                        <uengine:json>{}</uengine:json>
+                        <uengine:json>
+                        {
+                            "role": {
+                                "_type": "org.uengine.five.overriding.IAMRoleResolutionContext",
+                                "scope": "manager"
+                            }
+                        }
+                        </uengine:json>
                     </uengine:properties>
                 </bpmn:extensionElements>
                 <bpmn:flowNodeRef>Event_054atmx</bpmn:flowNodeRef>

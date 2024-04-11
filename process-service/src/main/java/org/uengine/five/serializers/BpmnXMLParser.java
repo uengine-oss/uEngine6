@@ -3,15 +3,20 @@ package org.uengine.five.serializers;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.uengine.five.entity.WorklistEntity;
+import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
+import org.uengine.kernel.Role;
+import org.uengine.kernel.RoleResolutionContext;
 import org.uengine.kernel.ScopeActivity;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SubProcess;
@@ -57,6 +62,7 @@ public class BpmnXMLParser {
                                                                                  // or boolean
 
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
+      
         return objectMapper;
     }
 
@@ -98,8 +104,44 @@ public class BpmnXMLParser {
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
                     String nodeName = element.getNodeName();
+                    
                     // LaneSet은 무시
                     if (nodeName.equals("bpmn:laneSet")) {
+                        // String laneSetId = element.getAttribute("id");
+                        NodeList lanes = element.getElementsByTagName("bpmn:lane");
+                        for (int k = 0; k < lanes.getLength(); k++) {
+                            Node laneNode = lanes.item(k);
+                            if (laneNode.getNodeType() == Node.ELEMENT_NODE) {
+                                Element laneElement = (Element) laneNode;
+                                // String laneId = laneElement.getAttribute("id");
+                                String laneName = laneElement.getAttribute("name");
+                                Role role = new Role();
+            
+                                NodeList propertiesNodes = laneElement.getElementsByTagName("uengine:properties");
+                                for (int l = 0; l < propertiesNodes.getLength(); l++) {
+                                    Node propertiesNode = propertiesNodes.item(l);
+                                    if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                                        NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                                        for (int m = 0; m < jsonNodes.getLength(); m++) {
+                                            Node jsonNode = jsonNodes.item(m);
+                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                                String jsonText = jsonNode.getTextContent();
+                                                try {
+                                                    Role roleContext = objectMapper.readValue(jsonText, Role.class);
+                                                    BeanUtils.copyProperties(role, roleContext);
+                                                } catch (Exception e) {
+                                                    throw new RuntimeException("Error parsing lane JSON", e);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                role.setName(laneName);
+                                
+                                processDefinition.addRole(role);
+                            }
+                        }
+                        // setRoles(new Role[]{});
                         continue;
                     }
                     if (nodeName.equals("bpmn:extensionElements")) {

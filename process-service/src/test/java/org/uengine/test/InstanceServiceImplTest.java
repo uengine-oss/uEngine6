@@ -2,6 +2,7 @@ package org.uengine.test;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,19 +55,22 @@ public class InstanceServiceImplTest {
         GlobalContext.setComponentFactory(new SpringComponentFactory());
 
         UserContext.getThreadLocalInstance().setUserId("initiator@uengine.org");
+        UserContext.getThreadLocalInstance().setScopes(new ArrayList<String>());
+        UserContext.getThreadLocalInstance().getScopes().add("manager");
     }
 
     @Test
     public void testRunDefinition() throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
-        command.setProcessDefinitionId("sales/simpleProcess.xml");
+        // command.setProcessDefinitionId("sales/simpleProcess.xml");
+        command.setProcessDefinitionId("sales/testProcess.xml");
         command.setSimulation(false);
 
-        RoleMapping roleMapping = new RoleMapping();
-        roleMapping.setName("initiator");
-        roleMapping.setEndpoints(new String[] { "initiator@uengine.org" });
-        roleMapping.setResourceNames(new String[] { "Initiator" });
-        command.setRoleMappings(new RoleMapping[] { roleMapping });
+        // RoleMapping roleMapping = new RoleMapping();
+        // roleMapping.setName("initiator");
+        // roleMapping.setEndpoints(new String[] { "initiator@uengine.org" });
+        // roleMapping.setResourceNames(new String[] { "Initiator" });
+        // command.setRoleMappings(new RoleMapping[] { roleMapping });
 
         InstanceResource instanceResource = instanceService.start(command);
         String instanceId = instanceResource.getInstanceId();
@@ -82,6 +86,7 @@ public class InstanceServiceImplTest {
         HumanActivity taskB = (HumanActivity) instance.getProcessDefinition().getActivity("Task_b");
         String[] taskIds = taskB.getTaskIds(instance);
         boolean worklistExists = false;
+
         // for (String taskId : taskIds) {
         // Optional<WorklistEntity> worklistEntity =
         // worklistRepository.findById(Long.parseLong(taskId));
