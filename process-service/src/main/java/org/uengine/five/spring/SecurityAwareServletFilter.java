@@ -1,6 +1,8 @@
 package org.uengine.five.spring;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -32,7 +34,7 @@ public class SecurityAwareServletFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-        String accessToken = req.getHeader("authorization");
+        String accessToken = req.getHeader("Authorization");
 
         if (accessToken != null) {
 
@@ -48,12 +50,14 @@ public class SecurityAwareServletFilter implements Filter {
                 DecodedJWT decodedJWT = JWT.decode(accessToken);
 
                 String userId = decodedJWT.getClaim("email").asString();
+                List<String> roles = (List<String>)decodedJWT.getClaim("realm_access").asMap().get("roles");
                 // ProcessTransactionContext.getThreadLocalInstance().setSharedContext("loggedUserId",
                 // userId);
                 // TenantContext.getThreadLocalInstance().setUserId(userId);
 
                 UserContext.getThreadLocalInstance().setUserId(userId);
-                UserContext.getThreadLocalInstance().setScopes(null);
+                // UserContext.getThreadLocalInstance().setScopes(null);
+                UserContext.getThreadLocalInstance().setScopes(roles);
             } catch (Exception e) {
                 System.out.println("Error when to parse accesstoken: " + e.getMessage());
             }
