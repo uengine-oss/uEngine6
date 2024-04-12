@@ -1,0 +1,53 @@
+<bpmn:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" id="sample-definitions">
+    <bpmn:process id="process1" name="Sample Process">
+        <bpmn:userTask id="formActivity" name="FormActivity">
+            <bpmn:extensionElements>
+                <uengine:properties>
+                    <uengine:json>
+         {
+            "_type": "org.uengine.kernel.FormActivity",
+            "role": {
+                "name": "initiator"
+            },
+            "parameters": [
+                {
+                    "argument": {
+                        "text": "symptom"
+                    },
+                    "variable": {
+                        "name": "symptom"
+                    },
+                    "direction": "OUT"
+                },
+                {
+                    "argument": {
+                        "text": "troubleType"
+                    },
+                    "variable": {
+                        "name": "troubleType"
+                    },
+                    "direction": "OUT"
+                }
+            ],
+            "mappingContexts": [
+                {
+        
+                    "mappingElements": [
+                        {
+                            "_type": "org.uengine.kernel.MappingElement"
+                            
+                        },
+                        {
+                            "_type": "org.uengine.kernel.MappingElement"
+                        }
+                    ]
+                }
+            ]
+        }
+
+                    </uengine:json>
+                </uengine:properties>
+            </bpmn:extensionElements>
+        </bpmn:userTask>
+    </bpmn:process>
+</bpmn:definitions>

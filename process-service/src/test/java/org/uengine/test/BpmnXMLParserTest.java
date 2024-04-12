@@ -273,20 +273,50 @@ public class BpmnXMLParserTest {
         }
     }
 
-    // @Test
+    @Test
     public void testParseFormActivityWithMappingContext() {
         BpmnXMLParser parser = new BpmnXMLParser();
-        String xml = "<bpmn:definitions xmlns:bpmn2=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" id=\"sample-definitions\">\n"
-                + "  <bpmn:process id=\"process1\" name=\"Sample Process\">\n"
-                + "    <bpmn:userTask id=\"formActivity1\" name=\"Form Activity\">\n"
-                + "      <bpmn:extensionElements>\n"
-                + "        <uengine:mappingContext>\n"
-                + "          <uengine:mapping source=\"sourceVariable\" target=\"targetField\"/>\n"
-                + "        </uengine:mappingContext>\n"
-                + "      </bpmn:extensionElements>\n"
-                + "    </bpmn:userTask>\n"
-                + "  </bpmn:process>\n"
-                + "</bpmn:definitions>";
+        String xml = "<bpmn:definitions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:uengine=\"http://uengine\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"Definitions_0bfky9r\" targetNamespace=\"http://bpmn.io/schema/bpmn\" exporter=\"bpmn-js (https://demo.bpmn.io)\" exporterVersion=\"16.4.0\">\n" +
+        "  <bpmn:process id=\"Process_1oscmbn\" isExecutable=\"false\">\n" +
+        "    <bpmn:extensionElements>\n" +
+        "      <uengine:properties>\n" +
+        "        <uengine:variable name=\"das\" type=\"Form\" />\n" +
+        "      </uengine:properties>\n" +
+        "    </bpmn:extensionElements>\n" +
+        "    <bpmn:startEvent id=\"Event_0c84i7x\">\n" +
+        "      <bpmn:outgoing>Flow_0pvjfe5</bpmn:outgoing>\n" +
+        "    </bpmn:startEvent>\n" +
+        "    <bpmn:sequenceFlow id=\"Flow_0pvjfe5\" sourceRef=\"Event_0c84i7x\" targetRef=\"Activity_1yo6ift\" />\n" +
+        "    <bpmn:userTask id=\"Activity_1yo6ift\" name=\"dsad\" $type=\"bpmn:UserTask\">\n" +
+        "      <bpmn:extensionElements>\n" +
+        "        <uengine:properties>\n" +
+        "          <uengine:json>{\"parameters\":[],\"mappingContext\":{\"mappingElements\":[{\"_type\":\"org.uengine.kernel.MappingElement\",\"argument\":\"Variables\",\"transformerMapping\":{\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MinTransformer\",\"name\":\"Min 2\",\"location\":{\"x\":803.5,\"y\":276.09375},\"argumentSourceMap\":{\"value1\":{\"_type\":\"org.uengine.kernel.TransformerMapping\",\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MaxTransformer\",\"name\":\"Max\",\"location\":{\"x\":400.5,\"y\":189.09375},\"argumentSourceMap\":{\"value1\":\"Variables\",\"value2\":\"test1\"}},\"linkedArgumentName\":\"out\"},\"value2\":{\"_type\":\"org.uengine.kernel.TransformerMapping\",\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MinTransformer\",\"name\":\"Min\",\"location\":{\"x\":395.5,\"y\":318.09375},\"argumentSourceMap\":{\"value1\":\"test2\",\"value2\":\"test3\"}},\"linkedArgumentName\":\"out\"}}},\"linkedArgumentName\":\"out\"},\"isKey\":false},{\"_type\":\"org.uengine.kernel.MappingElement\",\"argument\":\"test1\",\"transformerMapping\":{\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MinTransformer\",\"name\":\"Min 2\",\"location\":{\"x\":803.5,\"y\":276.09375},\"argumentSourceMap\":{\"value1\":{\"_type\":\"org.uengine.kernel.TransformerMapping\",\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MaxTransformer\",\"name\":\"Max\",\"location\":{\"x\":400.5,\"y\":189.09375},\"argumentSourceMap\":{\"value1\":\"Variables\",\"value2\":\"test1\"}},\"linkedArgumentName\":\"out\"},\"value2\":{\"_type\":\"org.uengine.kernel.TransformerMapping\",\"transformer\":{\"_type\":\"org.uengine.processdesigner.mapper.transformers.MinTransformer\",\"name\":\"Min\",\"location\":{\"x\":395.5,\"y\":318.09375},\"argumentSourceMap\":{\"value1\":\"test2\",\"value2\":\"test3\"}},\"linkedArgumentName\":\"out\"}}},\"linkedArgumentName\":\"out\"},\"isKey\":false}]},\"_type\":\"org.uengine.kernel.FormActivity\",\"variableForHtmlFormContext\":{\"id\":\"4b3fd763-3495-2aef-9918-de8d445a256d\",\"name\":\"form22\",\"alias\":\"장애처리\",\"fields\":[{\"id\":\"keditor-component-content-1712128377619\",\"html\":\"&lt;input type=\\\"text\\\" id=\\\"keditor-component-content-1712128377619\\\" name=\\\"testname1\\\" value=\\\"\\\" data-alias=\\\"testalias1\\\"&gt;\",\"name\":\"trouble_class\",\"type\":\"text\",\"alias\":\"장애종류\"},{\"id\":\"keditor-component-content-1712128376279\",\"html\":\"&lt;input type=\\\"text\\\" id=\\\"keditor-component-content-1712128376279\\\" name=\\\"testname11\\\" value=\\\"\\\" data-alias=\\\"testalias11\\\"&gt;\",\"name\":\"trouble_desc\",\"type\":\"text\",\"alias\":\"장애설명\"},{\"id\":\"keditor-component-content-1712128374784\",\"html\":\"&lt;input type=\\\"text\\\" id=\\\"keditor-component-content-1712128374784\\\" name=\\\"testname111\\\" value=\\\"\\\" data-alias=\\\"testalias111\\\"&gt;\",\"name\":\"user\",\"type\":\"text\",\"alias\":\"담당자\"}],\"html\":\"&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;section class=\\\"keditor-ui keditor-container keditor-initialized-container\\\" id=\\\"keditor-container-1712128404267\\\"&gt;   &lt;section class=\\\"keditor-ui keditor-container-inner\\\"&gt;&lt;div class=\\\"row\\\"&gt;\\n" + //
+                        "        &lt;div class=\\\"col-sm-12 keditor-container-content ui-droppable ui-sortable\\\" data-type=\\\"container-content\\\" id=\\\"keditor-container-content-1712128404267\\\"&gt;\\n" + //
+                        "        &lt;section class=\\\"keditor-ui keditor-component keditor-initialized-component\\\" data-type=\\\"component-object-form\\\" data-preview-style=\\\"width:50px;\\\" id=\\\"keditor-component-1712128406282\\\"&gt;   &lt;section class=\\\"keditor-ui keditor-component-content\\\" id=\\\"keditor-component-content-1712128406282\\\"&gt;&lt;div name=\\\"formDesigner\\\"&gt;\\n" + //
+                        "        &lt;input type=\\\"text\\\" id=\\\"keditor-component-content-1712128406282\\\" name=\\\"testname2\\\" value=\\\"\\\" data-alias=\\\"testalias2\\\"&gt;\\n" + //
+                        "    &lt;/div&gt;&lt;/section&gt;&lt;div class=\\\"keditor-toolbar keditor-toolbar-component\\\"&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-component-reposition\\\"&gt;&lt;i class=\\\"fa fa-arrows\\\"&gt;&lt;/i&gt;&lt;/a&gt;&lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-component-setting\\\"&gt;&lt;i class=\\\"fa fa-cog\\\"&gt;&lt;/i&gt;&lt;/a&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-component-duplicate\\\"&gt;&lt;i class=\\\"fa fa-files-o\\\"&gt;&lt;/i&gt;&lt;/a&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-component-delete\\\"&gt;&lt;i class=\\\"fa fa-times\\\"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/div&gt;&lt;/section&gt;&lt;/div&gt;\\n" + //
+                        "    &lt;/div&gt;&lt;/section&gt;&lt;div class=\\\"keditor-toolbar keditor-toolbar-container\\\"&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-container-reposition\\\"&gt;&lt;i class=\\\"fa fa-sort\\\"&gt;&lt;/i&gt;&lt;/a&gt;&lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-container-setting\\\"&gt;&lt;i class=\\\"fa fa-cog\\\"&gt;&lt;/i&gt;&lt;/a&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-container-duplicate\\\"&gt;&lt;i class=\\\"fa fa-files-o\\\"&gt;&lt;/i&gt;&lt;/a&gt;   &lt;a href=\\\"javascript:void(0);\\\" class=\\\"keditor-ui btn-container-delete\\\"&gt;&lt;i class=\\\"fa fa-times\\\"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/div&gt;&lt;/section&gt;&lt;/body&gt;&lt;/html&gt;\"}}</uengine:json>\n" +
+        "        </uengine:properties>\n" +
+        "      </bpmn:extensionElements>\n" +
+        "      <bpmn:incoming>Flow_0pvjfe5</bpmn:incoming>\n" +
+        "    </bpmn:userTask>\n" +
+        "  </bpmn:process>\n" +
+        "  <bpmndi:BPMNDiagram id=\"BPMNDiagram_1\">\n" +
+        "    <bpmndi:BPMNPlane id=\"BPMNPlane_1\" bpmnElement=\"Process_1oscmbn\">\n" +
+        "      <bpmndi:BPMNShape id=\"Event_0c84i7x_di\" bpmnElement=\"Event_0c84i7x\">\n" +
+        "        <dc:Bounds x=\"242\" y=\"192\" width=\"36\" height=\"36\" />\n" +
+        "      </bpmndi:BPMNShape>\n" +
+        "      <bpmndi:BPMNShape id=\"Activity_0yqkzj3_di\" bpmnElement=\"Activity_1yo6ift\">\n" +
+        "        <dc:Bounds x=\"330\" y=\"170\" width=\"100\" height=\"80\" />\n" +
+        "        <bpmndi:BPMNLabel />\n" +
+        "      </bpmndi:BPMNShape>\n" +
+        "      <bpmndi:BPMNEdge id=\"Flow_0pvjfe5_di\" bpmnElement=\"Flow_0pvjfe5\">\n" +
+        "        <di:waypoint x=\"278\" y=\"210\" />\n" +
+        "        <di:waypoint x=\"330\" y=\"210\" />\n" +
+        "      </bpmndi:BPMNEdge>\n" +
+        "    </bpmndi:BPMNPlane>\n" +
+        "  </bpmndi:BPMNDiagram>\n" +
+        "</bpmn:definitions>";
 
         try {
             ProcessDefinition processDefinition = parser.parse(xml);

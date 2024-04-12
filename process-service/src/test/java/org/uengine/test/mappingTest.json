@@ -1,0 +1,56 @@
+{
+  "mappingElements": [
+    {
+      "_type": "org.uengine.kernel.MappingElement",
+      "argument": {
+        "text": "Variables"
+      },
+      "transformerMapping": {
+        "transformer": {
+          "_type": "org.uengine.processdesigner.mapper.transformers.MinTransformer",
+          "name": "Min 2",
+          "location": {
+            "x": 803.5,
+            "y": 276.09375
+          },
+          "argumentSourceMap": {
+            "value1": {
+              "_type": "java.lang.Object",
+              "transformer": {
+                "_type": "org.uengine.processdesigner.mapper.transformers.MaxTransformer",
+                "name": "Max",
+                "location": {
+                  "x": 400.5,
+                  "y": 189.09375
+                },
+                "argumentSourceMap": {
+                  "value1": "Variables",
+                  "value2": "test1"
+                }
+              },
+              "linkedArgumentName": "out"
+            },
+            "value2": {
+              "_type": "java.lang.Object",
+              "transformer": {
+                "_type": "org.uengine.processdesigner.mapper.transformers.MinTransformer",
+                "name": "Min",
+                "location": {
+                  "x": 395.5,
+                  "y": 318.09375
+                },
+                "argumentSourceMap": {
+                  "value1": "test2",
+                  "value2": "test3"
+                }
+              },
+              "linkedArgumentName": "out"
+            }
+          }
+        },
+        "linkedArgumentName": "Variables"
+      },
+      "isKey": false
+    }
+  ]
+}

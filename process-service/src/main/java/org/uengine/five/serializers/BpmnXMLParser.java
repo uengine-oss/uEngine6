@@ -42,6 +42,8 @@ public class BpmnXMLParser {
                 return "java.lang.Number";
             case "Date":
                 return "java.util.Date";
+            case "Form":
+                return "org.uengine.kernel.FormActivity";
             default:
                 throw new IllegalArgumentException("Unknown type: " + simpleTypeName);
         }
