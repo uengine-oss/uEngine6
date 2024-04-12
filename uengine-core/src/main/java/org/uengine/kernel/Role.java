@@ -285,13 +285,17 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 				return false;
 		}
 
-		do{
-			if(testingRoleMapping.getEndpoint().equals(thisRoleMapping.getEndpoint())){
-				return true;
-			}
-		}while(thisRoleMapping.next());
-		
-		return false;
+		if(getRoleResolutionContext() instanceof IContainsMapping ){
+			return ((IContainsMapping) getRoleResolutionContext()).containsMapping(instance, testingRoleMapping);
+		} else {
+			do{
+				if(testingRoleMapping.getEndpoint().equals(thisRoleMapping.getEndpoint())){
+					return true;
+				}
+			}while(thisRoleMapping.next());
+			
+			return false;
+		} 
 	}
 	
 	

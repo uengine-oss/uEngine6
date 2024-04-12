@@ -104,6 +104,8 @@ public class InstanceServiceImplTest {
         assertTrue("Worklist for Task_b should exist", worklistExists);
 
         UserContext.getThreadLocalInstance().setUserId("otheruser@uengine.org");
+        UserContext.getThreadLocalInstance().setScopes(new ArrayList<String>());
+        UserContext.getThreadLocalInstance().getScopes().add("worker");
         worklistEntity = worklistRepository.findToDo();
         assertTrue("Worklist for otheruser@uengine.org should be empty", worklistEntity.size() == 0);
 

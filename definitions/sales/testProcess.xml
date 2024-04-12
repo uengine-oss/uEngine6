@@ -22,7 +22,7 @@
                     <uengine:properties>
                         <uengine:json>
                         {
-                            "role": {
+                            "roleResolutionContext": {
                                 "_type": "org.uengine.five.overriding.IAMRoleResolutionContext",
                                 "scope": "manager"
                             }
