@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:uengine="http://uengine" id="Definitions_vacation_management" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Custom BPMN Modeler" exporterVersion="1.0">
+  <bpmn2:collaboration id="Collaboration_1">
+    <bpmn2:participant id="Participant" name="Participant" processRef="vacation_management" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="vacation_management" isExecutable="true">
+    <bpmn2:extensionElements>
+      <uengine:properties>
+        <uengine:variable name="symptom1" type="string" />
+        <uengine:variable name="symptom2" type="string" />
+      </uengine:properties>
+    </bpmn2:extensionElements>
+    <bpmn2:laneSet id="LaneSet_1">
+      <bpmn2:lane id="Lane_0" name="직원">
+        <bpmn2:flowNodeRef>apply_vacation</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>email_notification</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>return_vacation</bpmn2:flowNodeRef>
+      </bpmn2:lane>
+      <bpmn2:lane id="Lane_1" name="관리자">
+        <bpmn2:flowNodeRef>approve_vacation</bpmn2:flowNodeRef>
+      </bpmn2:lane>
+    </bpmn2:laneSet>
+    <bpmn2:sequenceFlow id="SequenceFlow_apply_vacation_approve_vacation" name="" sourceRef="apply_vacation" targetRef="approve_vacation">
+      <bpmn2:extensionElements description="">
+        <uengine:properties>
+          <uengine:json> { "condition": { "_type": "org.uengine.kernel.Evaluate", "key":
+                        "troubleType", "value": "sw" } } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SequenceFlow_approve_vacation_email_notification" name="" sourceRef="approve_vacation" targetRef="email_notification">
+      <bpmn2:extensionElements description="">
+        <uengine:properties>
+          <uengine:json> { "condition": { "_type": "org.uengine.kernel.Evaluate", "key":
+                        "troubleType", "value": "sw" } } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SequenceFlow_email_notification_return_vacation" name="" sourceRef="email_notification" targetRef="return_vacation">
+      <bpmn2:extensionElements description="">
+        <uengine:properties>
+          <uengine:json> { "condition": { "_type": "org.uengine.kernel.Evaluate", "key":
+                        "troubleType", "value": "sw" } } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:startEvent id="StartEvent_1" name="StartEvent" />
+    <bpmn2:sequenceFlow id="SequenceFlow_StartEvent_apply_vacation" name="" sourceRef="StartEvent_1" targetRef="apply_vacation">
+      <bpmn2:extensionElements>
+        <uengine:properties>
+          <uengine:json> { "condition": { "_type": "org.uengine.kernel.Evaluate", "key":
+                        "troubleType", "value": "sw" } }</uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:userTask id="apply_vacation" name="휴가 신청">
+      <bpmn2:extensionElements>
+        <uengine:properties>
+          <uengine:json> { "role": {"name": "initiator"}, "parameters": [
+                        {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction":
+                        "OUT"}, {"argument":{"text":"troubleType"}, "variable":{"name":
+                        "troubleType"}, "direction": "OUT"}  ] } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_StartEvent_apply_vacation</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_apply_vacation_approve_vacation</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="approve_vacation" name="휴가 승인">
+      <bpmn2:extensionElements />
+      <bpmn2:incoming>SequenceFlow_apply_vacation_approve_vacation</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_approve_vacation_email_notification</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:scriptTask id="email_notification" name="메일 발송">
+      <bpmn2:extensionElements>
+        <uengine:properties>
+          <uengine:json> { "role": {"name": "initiator"}, "parameters": [
+                        {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction":
+                        "OUT"}, {"argument":{"text":"troubleType"}, "variable":{"name":
+                        "troubleType"}, "direction": "OUT"}  ] } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_approve_vacation_email_notification</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_email_notification_return_vacation</bpmn2:outgoing>
+    </bpmn2:scriptTask>
+    <bpmn2:endEvent id="EndEvent" name="EndEvent" />
+    <bpmn2:sequenceFlow id="SequenceFlow_return_vacation_EndEvent" name="" sourceRef="return_vacation" targetRef="EndEvent">
+      <bpmn2:extensionElements>
+        <uengine:properties>
+          <uengine:json> { "condition": { "_type": "org.uengine.kernel.Evaluate", "key":
+                        "troubleType", "value": "sw" } } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+    </bpmn2:sequenceFlow>
+    <bpmn2:userTask id="return_vacation" name="휴가 복귀">
+      <bpmn2:extensionElements>
+        <uengine:properties>
+          <uengine:json> { "role": {"name": "initiator"}, "parameters": [
+                        {"argument":{"text":"symptom"}, "variable":{"name": "symptom"}, "direction":
+                        "OUT"}, {"argument":{"text":"troubleType"}, "variable":{"name":
+                        "troubleType"}, "direction": "OUT"}  ] } </uengine:json>
+        </uengine:properties>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_email_notification_return_vacation</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_return_vacation_EndEvent</bpmn2:outgoing>
+    </bpmn2:userTask>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="BPMNShape_1" bpmnElement="Lane_1" isHorizontal="true">
+        <dc:Bounds x="100" y="200" width="600" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0" bpmnElement="Lane_0" isHorizontal="true">
+        <dc:Bounds x="100" y="100" width="600" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="140" y="136" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_apply_vacation" bpmnElement="apply_vacation">
+        <dc:Bounds x="260" y="120" width="80" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_approve_vacation" bpmnElement="approve_vacation">
+        <dc:Bounds x="380" y="220" width="80" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_email_notification" bpmnElement="email_notification">
+        <dc:Bounds x="500" y="120" width="80" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_di" bpmnElement="EndEvent">
+        <dc:Bounds x="740" y="136" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_return_vacation" bpmnElement="return_vacation">
+        <dc:Bounds x="620" y="120" width="80" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_apply_vacation_approve_vacation" bpmnElement="SequenceFlow_apply_vacation_approve_vacation">
+        <di:waypoint x="340" y="150" />
+        <di:waypoint x="380" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_approve_vacation_email_notification" bpmnElement="SequenceFlow_approve_vacation_email_notification">
+        <di:waypoint x="460" y="250" />
+        <di:waypoint x="500" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_email_notification_return_vacation" bpmnElement="SequenceFlow_email_notification_return_vacation">
+        <di:waypoint x="580" y="150" />
+        <di:waypoint x="620" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_StartEvent_apply_vacation" bpmnElement="SequenceFlow_StartEvent_apply_vacation">
+        <di:waypoint x="176" y="154" />
+        <di:waypoint x="260" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_return_vacation_EndEvent" bpmnElement="SequenceFlow_return_vacation_EndEvent">
+        <di:waypoint x="700" y="150" />
+        <di:waypoint x="740" y="154" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

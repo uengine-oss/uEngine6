@@ -139,11 +139,10 @@ public class BpmnXMLParser {
                                     }
                                 }
                                 role.setName(laneName);
-                                
+
                                 processDefinition.addRole(role);
                             }
                         }
-                        // setRoles(new Role[]{});
                         continue;
                     }
                     if (nodeName.equals("bpmn:extensionElements")) {

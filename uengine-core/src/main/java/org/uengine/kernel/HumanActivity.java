@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.Vector;
 
 import org.uengine.contexts.TextContext;
+import org.uengine.contexts.UserContext;
 import org.uengine.kernel.bpmn.StartEvent;
 import org.uengine.util.ActivityForLoop;
 import org.uengine.util.UEngineUtil;
@@ -551,7 +552,8 @@ public class HumanActivity extends ReceiveActivity {
 						currentLogin = instance.getRootProcessInstance().getRoleMapping("Initiator");
 					} else {
 						currentLogin = RoleMapping.create();
-						currentLogin.setEndpoint(GlobalContext.getUserId());
+						// currentLogin.setEndpoint(GlobalContext.getUserId());
+						currentLogin.setEndpoint(UserContext.getThreadLocalInstance().getUserId());
 					}
 				} catch (Exception e) {
 					cause = e;

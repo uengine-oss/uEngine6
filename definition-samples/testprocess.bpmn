@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r"
+    targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)"
+    exporterVersion="16.4.0">
+    <bpmn:collaboration id="Collaboration_0ae3sim">
+        <bpmn:participant id="Participant_0k9z9xa" name="participant" processRef="Process_0m3xn88"
+            $type="bpmn:Participant">
+            <bpmn:extensionElements>
+                <uengine:properties>
+                    <uengine:json>{"description":"","role":{"name":""},"extendedProperties":[]}</uengine:json>
+                </uengine:properties>
+            </bpmn:extensionElements>
+        </bpmn:participant>
+    </bpmn:collaboration>
+    <bpmn:process id="Process_0m3xn88">
+        <bpmn:laneSet id="LaneSet_0pixj7j">
+            <bpmn:lane id="Lane_0js76t9" name="initiator" $type="bpmn:Lane">
+                <bpmn:extensionElements>
+                    <uengine:properties>
+                        <uengine:json>{"description":"","role":{"name":""},"extendedProperties":[]}</uengine:json>
+                    </uengine:properties>
+                </bpmn:extensionElements>
+                <bpmn:flowNodeRef>Event_140znuf</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Activity_0ku6m8s</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Event_0naluwa</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Activity_0ncb4ub</bpmn:flowNodeRef>
+            </bpmn:lane>
+            <bpmn:lane id="Lane_0o3z0w6" name="user" $type="bpmn:Lane">
+                <bpmn:extensionElements>
+                    <uengine:properties>
+                        <uengine:json>{"description":"","role":{"name":""},"extendedProperties":[]}</uengine:json>
+                    </uengine:properties>
+                </bpmn:extensionElements>
+            </bpmn:lane>
+        </bpmn:laneSet>
+        <bpmn:startEvent id="Event_140znuf">
+            <bpmn:outgoing>Flow_1egtnbi</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:sequenceFlow id="Flow_1egtnbi" sourceRef="Event_140znuf" targetRef="Activity_0ku6m8s" />
+        <bpmn:userTask id="Activity_0ku6m8s" name="Task1" $type="bpmn:UserTask">
+            <bpmn:extensionElements>
+                <uengine:properties>
+                    <uengine:json>
+                        {"description":"","role":{"name":"initiator"},"extendedProperties":[]}</uengine:json>
+                </uengine:properties>
+            </bpmn:extensionElements>
+            <bpmn:incoming>Flow_1egtnbi</bpmn:incoming>
+            <bpmn:outgoing>Flow_0kzhdmu</bpmn:outgoing>
+        </bpmn:userTask>
+        <bpmn:sequenceFlow id="Flow_0kzhdmu" sourceRef="Activity_0ku6m8s"
+            targetRef="Activity_0ncb4ub" />
+        <bpmn:endEvent id="Event_0naluwa">
+            <bpmn:incoming>Flow_1lssnsk</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_1lssnsk" sourceRef="Activity_0ncb4ub" targetRef="Event_0naluwa" />
+        <bpmn:userTask id="Activity_0ncb4ub" name="Task2" $type="bpmn:UserTask">
+            <bpmn:extensionElements>
+                <uengine:properties>
+                    <uengine:json>
+                        {"description":"","role":{"name":"initiator"},"extendedProperties":[]}</uengine:json>
+                </uengine:properties>
+            </bpmn:extensionElements>
+            <bpmn:incoming>Flow_0kzhdmu</bpmn:incoming>
+            <bpmn:outgoing>Flow_1lssnsk</bpmn:outgoing>
+        </bpmn:userTask>
+    </bpmn:process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0ae3sim">
+            <bpmndi:BPMNShape id="Participant_0k9z9xa_di" bpmnElement="Participant_0k9z9xa"
+                isHorizontal="true">
+                <dc:Bounds x="280" y="120" width="600" height="250" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Lane_0js76t9_di" bpmnElement="Lane_0js76t9" isHorizontal="true">
+                <dc:Bounds x="310" y="120" width="570" height="125" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Lane_0o3z0w6_di" bpmnElement="Lane_0o3z0w6" isHorizontal="true">
+                <dc:Bounds x="310" y="245" width="570" height="125" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_140znuf_di" bpmnElement="Event_140znuf">
+                <dc:Bounds x="352" y="162" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_07i11mc_di" bpmnElement="Activity_0ku6m8s">
+                <dc:Bounds x="460" y="140" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_0naluwa_di" bpmnElement="Event_0naluwa">
+                <dc:Bounds x="822" y="162" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_1muqs0k_di" bpmnElement="Activity_0ncb4ub">
+                <dc:Bounds x="640" y="140" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_1egtnbi_di" bpmnElement="Flow_1egtnbi">
+                <di:waypoint x="388" y="180" />
+                <di:waypoint x="460" y="180" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_0kzhdmu_di" bpmnElement="Flow_0kzhdmu">
+                <di:waypoint x="560" y="180" />
+                <di:waypoint x="640" y="180" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1lssnsk_di" bpmnElement="Flow_1lssnsk">
+                <di:waypoint x="740" y="180" />
+                <di:waypoint x="822" y="180" />
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</bpmn:definitions>
