@@ -289,7 +289,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     public void deleteDefinition(HttpServletRequest request) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        String definitionPath = path.substring(DEFINITION.length() + 1);
+        String definitionPath = path.substring(DEFINITION_RAW.length());
+        if (definitionPath.indexOf(".") != -1) {
+            definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
+        }
         IResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
         resourceManager.delete(resource);
 
@@ -346,7 +349,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         Object definitionDeployed = null;
 
-        if (fileExt.endsWith("bpmn")) {
+        if (fileExt.endsWith("xml")) {
             resourceManager.save(resource, definition);
         } else {
             throw new Exception("unknown resource type: " + definitionPath);
@@ -383,7 +386,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                                                                                   * , @RequestParam(value = "unwrap",
                                                                                   * required = false) boolean unwrap
                                                                                   */) throws Exception {
-
         definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);

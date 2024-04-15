@@ -1,0 +1,70 @@
+server:
+  port: 8088
+
+---
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: definition-servicce
+          uri: http://localhost:9093
+          predicates:
+            - Path=/definition/**, /version/**
+        - id: instance-servicce
+          uri: http://localhost:9094
+          predicates:
+            - Path=/worklist/**, /instance/**, /work-item/**
+        - id: frontend
+          uri: http://localhost:5173
+          predicates:
+            - Path=/** 
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        - id: muv-service-master-data
+          uri: http://muv-service-master-data:8080
+          predicates:
+            - Path=/cars/**, /customers/**, /products/**, /branchStores/**, /affiliateDiscountRates/**, /parkingLots/**
+        - id: muv-service-car-preparation
+          uri: http://muv-service-car-preparation:8080
+          predicates:
+            - Path=/carPreparations/**, /parkingStatuses/**
+        - id: muv-service-notice
+          uri: http://muv-service-notice:8080
+          predicates:
+            - Path=/notices/** 
+        - id: muv-service-short-period-reservation
+          uri: http://muv-service-short-period-reservation:8080
+          predicates:
+            - Path=/reservations/** 
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
