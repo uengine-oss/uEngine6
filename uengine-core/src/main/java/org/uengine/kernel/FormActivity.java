@@ -29,10 +29,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:bigmahler@users.sourceforge.net">Jong-Uk Jeong</a>
  * @version $Id: FormActivity.java,v 1.78 2011/07/22 07:33:14 curonide Exp $
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
-@JsonSubTypes({
-	@JsonSubTypes.Type(value = FormActivity.class, name = "org.uengine.kernel.FormActivity")
-})
+
 public class FormActivity extends HumanActivity {
 	private static final long serialVersionUID = GlobalContext.SERIALIZATION_UID;
 

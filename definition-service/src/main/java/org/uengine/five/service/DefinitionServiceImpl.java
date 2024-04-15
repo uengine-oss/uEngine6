@@ -349,7 +349,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         Object definitionDeployed = null;
 
-        if (fileExt.endsWith("bpmn") || fileExt.endsWith("xml")) {
+        if (fileExt.endsWith("xml")) {
             resourceManager.save(resource, definition);
         } else {
             throw new Exception("unknown resource type: " + definitionPath);

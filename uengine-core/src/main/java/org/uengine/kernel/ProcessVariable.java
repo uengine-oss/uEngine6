@@ -25,10 +25,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 /**
  * @author Jinyoung Jang
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
-@JsonSubTypes({
-	@JsonSubTypes.Type(value = ProcessVariable.class, name = "org.uengine.kernel.ProcessVariable")
-})
 public class ProcessVariable implements java.io.Serializable, NeedArrangementToSerialize, Cloneable, Validatable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
