@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.namespace.QName;
@@ -17,10 +18,17 @@ import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.VersionManager;
 import org.uengine.util.UEngineUtil;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  * @author Jinyoung Jang
  */
-
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
+@JsonSubTypes({
+	@JsonSubTypes.Type(value = ProcessVariable.class, name = "org.uengine.kernel.ProcessVariable")
+})
 public class ProcessVariable implements java.io.Serializable, NeedArrangementToSerialize, Cloneable, Validatable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
@@ -31,6 +39,22 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		}
 		public void setName(String value) {
 			name = value;
+		}
+	
+	FormField[] fields;
+		public FormField[] getFields() {
+			return fields;
+		}
+		public void setFields(FormField[] fields) {
+			this.fields = fields;
+		}
+
+	String html;
+		public String getHtml() {
+			return html;
+		}
+		public void setHtml(String html) {
+			this.html = html;
 		}
 
 	TextContext displayName = org.uengine.contexts.TextContext.createInstance();

@@ -20,12 +20,19 @@ import org.uengine.processdesigner.mapper.Transformer;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 import org.uengine.util.UEngineUtil;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 /**
  * TODO Insert type comment for FormActivity.
  * 
  * @author <a href="mailto:bigmahler@users.sourceforge.net">Jong-Uk Jeong</a>
  * @version $Id: FormActivity.java,v 1.78 2011/07/22 07:33:14 curonide Exp $
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
+@JsonSubTypes({
+	@JsonSubTypes.Type(value = FormActivity.class, name = "org.uengine.kernel.FormActivity")
+})
 public class FormActivity extends HumanActivity {
 	private static final long serialVersionUID = GlobalContext.SERIALIZATION_UID;
 
@@ -587,7 +594,16 @@ public class FormActivity extends HumanActivity {
 	 * }
 	 */
 
-	public String getTool() {
+	public String getTool(ProcessInstance instance) {
+		HtmlFormContext formContext;
+		try {
+			formContext = (HtmlFormContext) getVariableForHtmlFormContext().get(instance, "");
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		if(formContext != null) {
+			return formContext.getFormDefId();
+		}
 		return "formHandler";
 	}
 

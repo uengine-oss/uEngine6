@@ -9,6 +9,8 @@ import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  * This class holds descriptive string in multi-lingual support. 
  * It contains each language-specific string in the localedTexts hashmap with key as the locale.
@@ -18,6 +20,7 @@ import org.uengine.kernel.ProcessInstance;
  * @author Jinyoung Jang
  */
 
+@JsonDeserialize(using = TextContextDeserializer.class)
 public class TextContext implements Serializable{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	

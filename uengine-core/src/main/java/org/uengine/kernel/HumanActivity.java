@@ -70,7 +70,11 @@ public class HumanActivity extends ReceiveActivity {
 
 	String tool;
 
-	public String getTool() {
+	public String getTool(ProcessInstance processInstance) {
+		return getTool();
+	}
+
+	public String getTool( ) {
 		return tool;
 	}
 
@@ -452,7 +456,7 @@ public class HumanActivity extends ReceiveActivity {
 
 		kpv.setProperty("disOption", "" + getRole().getDispatchingOption());
 
-		kpv.setProperty(KeyedParameter.TOOL, getTool());
+		kpv.setProperty(KeyedParameter.TOOL, getTool(instance));
 		kpv.setProperty(KeyedParameter.TRACINGTAG, getTracingTag());
 		kpv.setProperty(KeyedParameter.MESSAGE, getMessage() != null ? getMessage() : "");
 		String title = getName(GlobalContext.DEFAULT_LOCALE);
