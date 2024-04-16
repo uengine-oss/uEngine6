@@ -4,7 +4,10 @@ spring:
   application:
     name: definition
 ---
-
+uengine:
+  definition:
+    basePath: C:\Users\roede\Desktop\uEngine\uEngine6\definitions
+    
 spring:
   profiles: default
   jpa:

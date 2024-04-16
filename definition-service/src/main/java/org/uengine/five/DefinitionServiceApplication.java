@@ -1,5 +1,6 @@
 package org.uengine.five;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -51,7 +52,7 @@ public class DefinitionServiceApplication {
         LocalFileStorage storage = new LocalFileStorage();
         // String userName = System.getenv("USER");
         // storage.setBasePath("/Users/" + userName);
-        storage.setBasePath("./definitions");
+        storage.setBasePath(basePath);
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource("."))
                     + " ---> file system is mounted.");
@@ -64,6 +65,9 @@ public class DefinitionServiceApplication {
 
         return storage;
     }
+
+    @Value("${uengine.definition.basePath}")
+    String basePath = "";
 
     @Bean
     @Scope("prototype")

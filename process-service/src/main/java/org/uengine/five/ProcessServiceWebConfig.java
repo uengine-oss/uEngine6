@@ -2,6 +2,7 @@ package org.uengine.five;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -76,11 +77,13 @@ public class ProcessServiceWebConfig {
         // String UserName = System.getenv("USER");
         // storage.setBasePath("/Users/" + UserName);
 
-        storage.setBasePath("/Users/seongwon/Desktop/uEngine6/definitions");
+        storage.setBasePath(basePath);
 
         return storage;
     }
 
+    @Value("${uengine.definition.basePath}") // 추가된 부분
+    String basePath = "";
     // @Bean
     // public TenantAwareFilter tenantAwareFilter(){
     // return new TenantAwareFilter();

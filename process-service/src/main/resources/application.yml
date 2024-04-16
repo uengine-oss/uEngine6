@@ -10,6 +10,9 @@ spring:
   main:
     allow-bean-definition-overriding: true
 ---
+uengine:
+  definition:
+    basePath: C:\Users\roede\Desktop\uEngine\uEngine6\definitions
 
 spring:
   profiles: default
