@@ -52,7 +52,7 @@ public class DefinitionServiceApplication {
         LocalFileStorage storage = new LocalFileStorage();
         // String userName = System.getenv("USER");
         // storage.setBasePath("/Users/" + userName);
-        storage.setBasePath(basePath);
+        storage.setBasePath("./definitions");
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource("."))
                     + " ---> file system is mounted.");
@@ -65,9 +65,6 @@ public class DefinitionServiceApplication {
 
         return storage;
     }
-
-    @Value("${uengine.definition.basePath}")
-    String basePath = "";
 
     @Bean
     @Scope("prototype")
