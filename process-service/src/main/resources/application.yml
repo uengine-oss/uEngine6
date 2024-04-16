@@ -12,7 +12,7 @@ spring:
 ---
 uengine:
   definition:
-    basePath: C:\Users\roede\Desktop\uEngine\uEngine6\definitions
+    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions
 
 spring:
   profiles: default

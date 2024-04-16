@@ -36,7 +36,7 @@ public class SecurityAwareServletFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) response;
         String accessToken = req.getHeader("Authorization");
 
-        if (accessToken != null) {
+        if (accessToken != null) {  
 
             try {
 

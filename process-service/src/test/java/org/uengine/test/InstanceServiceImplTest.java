@@ -139,7 +139,7 @@ public class InstanceServiceImplTest {
         taskIds = taskB.getTaskIds(instance);
 
         workItemResource.setParameterValues(parameterValues);
-        instanceService.putWorkItem(taskIds[0], workItemResource);
+        instanceService.n(taskIds[0], workItemResource);
 
         assertEquals("Task_d should be in Running status", Activity.STATUS_RUNNING,
                 instance.getStatus("Task_d"));
