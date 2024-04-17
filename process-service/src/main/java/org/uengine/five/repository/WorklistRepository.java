@@ -18,6 +18,15 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     // ?#{loggedUserId} or wl.endpoint in ?#{loggedUserScopes}) and (wl.status =
     // 'NEW' or wl.status = 'DRAFT')")
 
-    @Query("select wl from WorklistEntity wl where wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes} and (wl.status = 'NEW' or wl.status = 'DRAFT')")
+    @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status = 'NEW' or wl.status = 'DRAFT' or wl.status = 'TODO')")
     public List<WorklistEntity> findToDo();
+
+    @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status = 'IN_PROGRESS')")
+    public List<WorklistEntity> findInProgress();
+
+    @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status = 'PENDING')")
+    public List<WorklistEntity> findPending();
+
+    @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status = 'COMPLETED')")
+    public List<WorklistEntity> findCompleted();
 }
