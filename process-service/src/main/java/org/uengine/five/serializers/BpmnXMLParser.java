@@ -161,6 +161,23 @@ public class BpmnXMLParser {
 
                                         // Create a new ProcessVariable instance
                                         ProcessVariable variable = new ProcessVariable();
+
+                                        if (variableNode.getNodeType() == Node.ELEMENT_NODE) {
+                                            NodeList jsonNodes = ((Element) variableNode).getElementsByTagName("uengine:json");
+                                            for (int m = 0; m < jsonNodes.getLength(); m++) {
+                                                Node jsonNode = jsonNodes.item(m);
+                                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                                    String jsonText = jsonNode.getTextContent();
+                                                    try {
+                                                        variable = objectMapper.readValue(jsonText, ProcessVariable.class);
+                                                        
+                                                    } catch (Exception e) {
+                                                        throw new RuntimeException("Error parsing lane JSON", e);
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                         variable.setName(varName);
                                         String javaType = convertToJavaType(type);
                                         try {

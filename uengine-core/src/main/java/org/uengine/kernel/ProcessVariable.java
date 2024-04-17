@@ -36,22 +36,6 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 		public void setName(String value) {
 			name = value;
 		}
-	
-	FormField[] fields;
-		public FormField[] getFields() {
-			return fields;
-		}
-		public void setFields(FormField[] fields) {
-			this.fields = fields;
-		}
-
-	String html;
-		public String getHtml() {
-			return html;
-		}
-		public void setHtml(String html) {
-			this.html = html;
-		}
 
 	TextContext displayName = org.uengine.contexts.TextContext.createInstance();
 		public TextContext getDisplayName(){
