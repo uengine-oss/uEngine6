@@ -364,29 +364,16 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         return new DefinitionResource(resource);
     }
 
-    private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
-
-        Map<String, DeployFilter> filters = GlobalContext.getComponents(DeployFilter.class);
-        if (filters != null && filters.size() > 0) {
-            for (DeployFilter theFilter : filters.values()) {
-                try {
-                    theFilter.beforeDeploy(definitionDeployed, null, path, true);
-                } catch (Exception e) {
-                    throw new UEngineException("Error when to invoke DeployFilter: " + theFilter.getClass().getName(),
-                            e);
-                }
-            }
-        }
-
-    }
-
     @RequestMapping(value = DEFINITION_RAW
             + "/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getRawDefinition(@PathVariable("defPath") String definitionPath/*
                                                                                   * , @RequestParam(value = "unwrap",
                                                                                   * required = false) boolean unwrap
                                                                                   */) throws Exception {
-        definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
+        if(definitionPath.indexOf(".") == -1){
+            definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
+        }
+        
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
@@ -411,6 +398,76 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String definitionPath = path.substring(DEFINITION_RAW.length() + 1);
 
         return getRawDefinition(definitionPath);
+
+    }
+
+    @RequestMapping(value = DEFINITION_MAP + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
+    public DefinitionResource putRawDefinitionMap(@RequestBody String definition, HttpServletRequest request)
+            throws Exception {
+
+        // String path = (String)
+        // request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+        // if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
+        // IContainer container = new ContainerResource();
+        // container.setPath(RESOURCE_ROOT + "/" + definitionPath);
+        // resourceManager.createFolder(container);
+        // return new DefinitionResource(container);
+        // }
+        String definitionPath = RESOURCE_ROOT + "/" + "map.json";
+        String fileExt = UEngineUtil.getFileExt(definitionPath);
+
+        // 무조건 xml 파일로 결국 저장됨.
+        DefaultResource resource = new DefaultResource(definitionPath);
+
+        Object definitionDeployed = null;
+
+        if (fileExt.endsWith("json")) {
+            resourceManager.save(resource, definition);
+        } else {
+            throw new Exception("unknown resource type: " + definitionPath);
+        }
+
+        // TODO: deploy filter 로 등록된 bean 들을 호출:
+        if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
+            invokeDeployFilters((ProcessDefinition) definitionDeployed,
+                    resource.getPath().substring(RESOURCE_ROOT.length() + 2));
+        }
+
+        return new DefinitionResource(resource);
+    }
+
+    private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
+
+        Map<String, DeployFilter> filters = GlobalContext.getComponents(DeployFilter.class);
+        if (filters != null && filters.size() > 0) {
+            for (DeployFilter theFilter : filters.values()) {
+                try {
+                    theFilter.beforeDeploy(definitionDeployed, null, path, true);
+                } catch (Exception e) {
+                    throw new UEngineException("Error when to invoke DeployFilter: " + theFilter.getClass().getName(),
+                            e);
+                }
+            }
+        }
+
+    }
+
+    @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getRawDefinitionMap() throws Exception {
+        String definitionPath = RESOURCE_ROOT + "/" + "map.json";
+        // 무조건 xml 파일로 결국 저장됨.
+        DefaultResource resource = new DefaultResource(definitionPath);
+        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
+
+        // if(unwrap) {
+        // return objectMapper.writeValueAsString(definition);
+        // }else{
+        // DefinitionWrapper definitionWrapper = new DefinitionWrapper(definition);
+        // String uEngineProcessJSON =
+        // objectMapper.writeValueAsString(definitionWrapper);
+        return definition;
+        // }
 
     }
 

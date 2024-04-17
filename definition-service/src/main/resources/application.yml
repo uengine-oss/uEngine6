@@ -5,6 +5,10 @@ spring:
     name: definition
 ---
 
+uengine:
+  definition:
+    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions
+        
 spring:
   profiles: default
   jpa:

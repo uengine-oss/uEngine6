@@ -8,11 +8,11 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: definition-servicce
+        - id: definition-service
           uri: http://localhost:9093
           predicates:
             - Path=/definition/**, /version/**
-        - id: instance-servicce
+        - id: instance-service
           uri: http://localhost:9094
           predicates:
             - Path=/worklist/**, /instance/**, /work-item/**

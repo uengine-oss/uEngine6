@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  * @author Jinyoung Jang
  */
 
-@JsonDeserialize(using = TextContextDeserializer.class)
 public class TextContext implements Serializable{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	

@@ -27,15 +27,17 @@ public class DefinitionResource extends RepresentationModel {
         setName(resource1.getName());
         setDirectory(resource1 instanceof IContainer);
 
-        String relativePath = resource1.getPath().substring(DefinitionServiceImpl.RESOURCE_ROOT.length() + 1);
+        // String relativePath =
+        // resource1.getPath().substring(DefinitionServiceImpl.RESOURCE_ROOT.length() +
+        // 1);
 
-        setPath(relativePath);
-
+        // setPath(relativePath);
+        setPath(resource1.getPath());
         add(
                 linkTo(
                         methodOn(DefinitionServiceImpl.class)
                                 .getDefinition(
-                                        relativePath))
+                                    resource1.getPath()))
                         .withSelfRel());
 
         if (!isDirectory()) {
@@ -43,7 +45,7 @@ public class DefinitionResource extends RepresentationModel {
                     linkTo(
                             methodOn(DefinitionServiceImpl.class)
                                     .getRawDefinition(
-                                            UEngineUtil.getNamedExtFile(relativePath, "json")))
+                                            UEngineUtil.getNamedExtFile(resource1.getPath(), "json")))
                             .withRel("raw"));
             // add(
             // linkTo(

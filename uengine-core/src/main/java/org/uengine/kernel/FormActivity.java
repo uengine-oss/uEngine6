@@ -605,7 +605,7 @@ public class FormActivity extends HumanActivity {
 			throw new RuntimeException(e);
 		}
 		if(formContext != null) {
-			return "formHandler_"+formContext.getFormDefId();
+			return "formHandler:"+formContext.getFormDefId();
 		}
 		return "formHandler";
 	}

@@ -21,6 +21,7 @@ public interface DefinitionService {
 
     public static final String DEFINITION_RAW = "/definition/raw";
     public static final String DEFINITION = "/definition";
+    public static final String DEFINITION_MAP = "/definition/map";
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
     public RepresentationModel listDefinition(String basePath) throws Exception;
@@ -37,9 +38,10 @@ public interface DefinitionService {
     @RequestMapping(value = DEFINITION + "/{defPath}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public RepresentationModel getDefinition(@PathVariable("defPath") String definitionPath) throws Exception;
 
-
     @RequestMapping(value = DEFINITION_RAW + "/{defPath}", method = RequestMethod.GET)
     public Object getRawDefinition(@PathVariable("defPath") String definitionPath/*,  @RequestParam(value = "unwrap", required = false) boolean unwrap*/) throws Exception;
 
-
+    @RequestMapping(value = DEFINITION_MAP + "/{defPath}", method = RequestMethod.GET)
+    public Object getRawDefinitionMap() throws Exception;    
 }
+

@@ -63,7 +63,7 @@ public class InstanceServiceImplTest {
     public void testRunDefinition() throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         // command.setProcessDefinitionId("sales/simpleProcess.xml");
-        command.setProcessDefinitionId("sales/testProcess.xml");
+        command.setProcessDefinitionId("sales/simpleProcess.xml");
         command.setSimulation(false);
 
         // RoleMapping roleMapping = new RoleMapping();

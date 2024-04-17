@@ -10,6 +10,9 @@ spring:
   main:
     allow-bean-definition-overriding: true
 ---
+uengine:
+  definition:
+    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions
 
 spring:
   profiles: default
