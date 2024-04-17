@@ -285,7 +285,7 @@ public class BpmnXMLParserTest {
         BpmnXMLParser parser = new BpmnXMLParser();
 
         try {
-            String xmlFilePath = "src/test/java/org/uengine/test/mappingTest.xml";
+            String xmlFilePath = "src/test/java/org/uengine/test/formProcess.xml";
             String xml = new String(Files.readAllBytes(Paths.get(xmlFilePath)));
 
             String testJsonPath = "src/test/java/org/uengine/test/mappingTest.json";
