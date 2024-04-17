@@ -278,7 +278,7 @@ public class BpmnXMLParser {
                                                 }
                                                 Object jsonObject = objectMapper.readValue(jsonText, castingClass);
                                                 // Use the JSON object to set properties on the Activity object
-                                                // BeanUtils.copyProperties(task, jsonObject);
+                                                // BeanUtils.copyProperties(task, jsonObject)d;
                                                 task = (Activity) jsonObject;
                                             }
                                         }

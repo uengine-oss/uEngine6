@@ -39,6 +39,9 @@ public class DefinitionServiceApplication {
         return resourceManager;
     }
 
+    @Value("${uengine.definition.basePath}")
+    String basePath;
+
     @Bean
     /**
      *
@@ -52,7 +55,7 @@ public class DefinitionServiceApplication {
         LocalFileStorage storage = new LocalFileStorage();
         // String userName = System.getenv("USER");
         // storage.setBasePath("/Users/" + userName);
-        storage.setBasePath("./definitions");
+        storage.setBasePath(basePath);
         try {
             System.out.println("-------------------> " + storage.exists(new DefaultResource("."))
                     + " ---> file system is mounted.");

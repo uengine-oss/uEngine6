@@ -63,7 +63,7 @@ public class InstanceServiceImplTest {
     public void testRunDefinition() throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         // command.setProcessDefinitionId("sales/simpleProcess.xml");
-        command.setProcessDefinitionId("sales/testProcess.xml");
+        command.setProcessDefinitionId("sales/simpleProcess.xml");
         command.setSimulation(false);
 
         // RoleMapping roleMapping = new RoleMapping();
@@ -139,7 +139,7 @@ public class InstanceServiceImplTest {
         taskIds = taskB.getTaskIds(instance);
 
         workItemResource.setParameterValues(parameterValues);
-        instanceService.n(taskIds[0], workItemResource);
+        instanceService.putWorkItem(taskIds[0], workItemResource);
 
         assertEquals("Task_d should be in Running status", Activity.STATUS_RUNNING,
                 instance.getStatus("Task_d"));
