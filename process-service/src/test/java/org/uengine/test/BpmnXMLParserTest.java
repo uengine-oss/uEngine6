@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.junit.Test;
+import org.uengine.contexts.HtmlFormContext;
+import org.uengine.contexts.MappingContext;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.Evaluate;
@@ -23,6 +25,8 @@ import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SubProcess;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -281,8 +285,14 @@ public class BpmnXMLParserTest {
         BpmnXMLParser parser = new BpmnXMLParser();
 
         try {
-            String xmlFilePath = "src/test/java/org/uengine/test/mappingTest.xml";
+            String xmlFilePath = "src/test/java/org/uengine/test/formProcess.xml";
             String xml = new String(Files.readAllBytes(Paths.get(xmlFilePath)));
+
+            String testJsonPath = "src/test/java/org/uengine/test/mappingTest.json";
+            String testJsonXml = new String(Files.readAllBytes(Paths.get(testJsonPath)));
+
+            // ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
+            // HtmlFormContext result = objectMapper.readValue(testJsonXml, HtmlFormContext.class);
 
             ProcessDefinition processDefinition = parser.parse(xml);
             Map<String, Activity> activities = processDefinition.getWholeChildActivities();
@@ -296,5 +306,46 @@ public class BpmnXMLParserTest {
             fail("Parsing FormActivity with MappingContext failed with exception: " + e.getMessage());
         }
     }
+
+    @Test
+public void testParseProcessVariablesWithComplexDefaultValue() {
+    BpmnXMLParser parser = new BpmnXMLParser();
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<bpmn:definitions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:uengine=\"http://uengine\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"Definitions_0bfky9r\" targetNamespace=\"http://bpmn.io/schema/bpmn\" exporter=\"bpmn-js (https://demo.bpmn.io)\" exporterVersion=\"16.4.0\">\n" +
+            "  <bpmn:process id=\"Process_1oscmbn\" isExecutable=\"false\">\n" +
+            "    <bpmn:extensionElements>\n" +
+            "      <uengine:properties>\n" +
+            "        <uengine:variable name=\"장애신고\" type=\"Form\">\n" +
+            "          <uengine:json>\n" +
+            "            {\n" +
+            "              \"defaultValue\": {\n" +
+            "                \"_type\": \"org.uengine.contexts.HtmlFormContext\",\n"+
+            "                \"formDefId\": \"form11\",\n" +
+            "                \"filePath\": \"\"\n" +
+            "              }\n" +
+            "            }\n" +
+            "          </uengine:json>\n" +
+            "        </uengine:variable>\n" +
+            "      </uengine:properties>\n" +
+            "    </bpmn:extensionElements>\n" +
+            "  </bpmn:process>\n" +
+            "</bpmn:definitions>";
+
+    try {
+        ProcessDefinition processDefinition = parser.parse(xml);
+        ProcessVariable variable = processDefinition.getProcessVariable("장애신고");
+        assertNotNull("Process variable '장애신고' should not be null", variable);
+
+        // Assuming ProcessVariable has a method to get complex defaultValue
+        // Replace 'getDefaultValue' and 'getValueMap' with actual method names if different
+        Map<String, Object> defaultValue = (Map<String, Object>) variable.getDefaultValue();
+        assertNotNull("defaultValue should not be null", defaultValue);
+
+        assertEquals("formDefId should be 'form11'", "form11", defaultValue.get("formDefId"));
+        assertTrue("valueMap should contain fields", ((Map) defaultValue.get("valueMap")).containsKey("fields"));
+    } catch (Exception e) {
+        fail("Parsing process variables with complex default values failed with exception: " + e.getMessage());
+    }
+}
 
 }

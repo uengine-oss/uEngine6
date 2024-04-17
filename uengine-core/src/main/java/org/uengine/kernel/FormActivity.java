@@ -594,7 +594,15 @@ public class FormActivity extends HumanActivity {
 	public String getTool(ProcessInstance instance) {
 		HtmlFormContext formContext;
 		try {
-			formContext = (HtmlFormContext) getVariableForHtmlFormContext().get(instance, "");
+			formContext = null;
+			for(ProcessVariable v : instance.getProcessDefinition().getProcessVariables()){
+				if(v.getDefaultValue() instanceof HtmlFormContext){
+					HtmlFormContext defaultValue = (HtmlFormContext) v.getDefaultValue();
+					if(defaultValue.getFormDefId() != null && defaultValue.getFormDefId().equals(getVariableForHtmlFormContext().getName())){
+						formContext = defaultValue;
+					}
+				}
+			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
