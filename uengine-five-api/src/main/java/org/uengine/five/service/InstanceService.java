@@ -87,7 +87,11 @@ public interface InstanceService {
         public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
-        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
-                        throws Exception;
+        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+
+        @RequestMapping(value = "/work-item/{taskId}/complate", method = RequestMethod.POST)
+        public void putWorkItemComplate(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+
+                        
 
 }
