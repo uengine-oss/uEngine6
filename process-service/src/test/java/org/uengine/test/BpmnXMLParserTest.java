@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
@@ -368,6 +369,23 @@ public class BpmnXMLParserTest {
             // Read the content of the form file
             String formContent = new String(Files.readAllBytes(Paths.get(formFilePath)));
             System.out.println("Form Content: \n" + formContent);
+        } catch (Exception e) {
+            fail("Parsing FormActivity with MappingContext failed with exception: " + e.getMessage());
+        }
+    }
+
+
+    @Test
+    public void testSerializeHtml() {
+        BpmnXMLParser parser = new BpmnXMLParser();
+
+        try {
+            HtmlFormContext htmlFormContext = new HtmlFormContext();
+            htmlFormContext.setValueMap(new HashMap<>());
+            htmlFormContext.getValueMap().put("troubletype", "sw");
+            htmlFormContext.setFormDefId("troubleTicketForm");
+
+            System.out.println(BpmnXMLParser.createTypedJsonObjectMapper().writeValueAsString(htmlFormContext));
         } catch (Exception e) {
             fail("Parsing FormActivity with MappingContext failed with exception: " + e.getMessage());
         }

@@ -37,6 +37,7 @@ import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.repository.WorklistRepository;
+import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
@@ -84,6 +85,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     WorklistRepository worklistRepository;
+
+    static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -258,9 +261,10 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     @ProcessTransactional
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
-            @RequestBody String varValue) throws Exception {
+            @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        instance.set("", varName, (Serializable) varValue);
+        Serializable value = objectMapper.readValue(json, Serializable.class);
+        instance.set("", varName, value);
     }
 
     @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
@@ -376,7 +380,6 @@ public class InstanceServiceImpl implements InstanceService {
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             UEngineUtil.copyStream(request.getInputStream(), bao);
 
-            ObjectMapper objectMapper = new ObjectMapper();
 
             JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
 

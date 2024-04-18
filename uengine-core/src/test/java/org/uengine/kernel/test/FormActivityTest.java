@@ -6,6 +6,7 @@ import org.uengine.contexts.HtmlFormContext;
 import org.uengine.contexts.MappingContext;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.FormActivity;
+import org.uengine.kernel.MappingElement;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
@@ -47,7 +48,7 @@ public class FormActivityTest extends UEngineTest {
         formActivity.setVariableForHtmlFormContext(formVariable);
         formActivity.setRole(processDefinition.getRole("reporter"));
 
-        ParameterContext parameterContext = new ParameterContext();
+        MappingElement parameterContext = new MappingElement();
         parameterContext.setArgument(TextContext.createInstance());
         parameterContext.getArgument().setText("troubleType");
         parameterContext.setTransformerMapping(new TransformerMapping());
@@ -68,7 +69,7 @@ public class FormActivityTest extends UEngineTest {
 
         // formActivity.setMappingContexts(new ParameterContext[] { parameterContext });
         MappingContext mappingContext = new MappingContext();
-        mappingContext.setMappingElements(new ParameterContext[] { parameterContext });
+        mappingContext.setMappingElements(new MappingElement[] { parameterContext });
         formActivity.setMappingContext(mappingContext);
 
         Event startEvent = new StartEvent();
@@ -95,7 +96,6 @@ public class FormActivityTest extends UEngineTest {
         htmlFormContext.setValueMap(new HashMap<>());
         htmlFormContext.getValueMap().put("troubletype", "sw");
         htmlFormContext.setFormDefId("troubleTicketForm");
-
         // Step 3: Set the ProcessVariableValue to the process instance
         instance.set("", "form", htmlFormContext);
 
