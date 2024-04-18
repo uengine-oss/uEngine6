@@ -258,7 +258,7 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     @ProcessTransactional
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
-            @RequestParam("varValue") String varValue) throws Exception {
+            @RequestBody String varValue) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         instance.set("", varName, (Serializable) varValue);
     }

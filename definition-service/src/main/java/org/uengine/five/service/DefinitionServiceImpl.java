@@ -197,7 +197,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         }
 
         // case of file:
-        definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
+        // definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
 
         resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
 
@@ -342,18 +342,13 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
-        definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
 
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
 
         Object definitionDeployed = null;
 
-        if (fileExt.endsWith("xml")) {
-            resourceManager.save(resource, definition);
-        } else {
-            throw new Exception("unknown resource type: " + definitionPath);
-        }
+        resourceManager.save(resource, definition);
 
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
