@@ -370,10 +370,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                                                                                   * , @RequestParam(value = "unwrap",
                                                                                   * required = false) boolean unwrap
                                                                                   */) throws Exception {
-        if(definitionPath.indexOf(".") == -1){
+        if (definitionPath.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         }
-        
+
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
