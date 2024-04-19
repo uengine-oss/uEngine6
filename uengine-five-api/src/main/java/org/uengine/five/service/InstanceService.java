@@ -68,7 +68,7 @@ public interface InstanceService {
 
         @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
         public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
-                        @RequestParam("varValue") String varValue) throws Exception;
+                        @RequestBody String varValue) throws Exception;
 
         @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
         public RoleMapping getRoleMapping(@PathVariable("instId") String instId,
@@ -87,7 +87,11 @@ public interface InstanceService {
         public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
-        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
-                        throws Exception;
+        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+
+        @RequestMapping(value = "/work-item/{taskId}/complate", method = RequestMethod.POST)
+        public void putWorkItemComplate(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+
+                        
 
 }

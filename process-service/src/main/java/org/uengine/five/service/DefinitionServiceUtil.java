@@ -22,13 +22,18 @@ public class DefinitionServiceUtil {
 
     public Object getDefinition(String defPath, boolean production) throws Exception {
 
-        if (defPath.indexOf(".") == -1) {
-            defPath = defPath + ".xml";
+        if (defPath.indexOf(".bpmn") == -1) {
+            defPath = defPath + ".bpmn";
         }
         Object returned = definitionService.getXMLDefinition(defPath, production);
         String xml = (String) returned;
 
         ProcessDefinition processDefinition = bpmnXMLParser.parse(xml);
+
+        int extIndex = defPath.lastIndexOf(".");
+        if (extIndex != -1) {
+            defPath = defPath.substring(0, extIndex);
+        }
         processDefinition.setId(defPath);
 
         return processDefinition;

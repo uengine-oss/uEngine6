@@ -268,17 +268,17 @@ public class HtmlFormContext
 		return filePath;
 	}
 
-	public String getHtmlPath() {
-		return getFilePath() != null ? getFilePath().replace(".xml", ".html") : null;
-	}
+	// public String getHtmlPath() {
+	// 	return getFilePath() != null ? getFilePath().replace(".xml", ".html") : null;
+	// }
 
 	public InputStream openValueXMLStream() throws IOException {
 		return new FileInputStream(FILE_SYSTEM_DIR + getFilePath());
 	}
 
-	public InputStream openValueHTMLStream() throws IOException {
-		return new FileInputStream(FILE_SYSTEM_DIR + getHtmlPath());
-	}
+	// public InputStream openValueHTMLStream() throws IOException {
+	// 	return new FileInputStream(FILE_SYSTEM_DIR + getHtmlPath());
+	// }
 
 	/* transient */ Map<String, Serializable> valueMap;
 

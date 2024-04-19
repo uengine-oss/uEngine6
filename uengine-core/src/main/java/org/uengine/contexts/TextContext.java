@@ -9,8 +9,6 @@ import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 /**
  * This class holds descriptive string in multi-lingual support. 
  * It contains each language-specific string in the localedTexts hashmap with key as the locale.

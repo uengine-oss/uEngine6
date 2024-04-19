@@ -37,6 +37,7 @@ import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.repository.WorklistRepository;
+import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
@@ -84,6 +85,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     WorklistRepository worklistRepository;
+
+    static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -258,9 +261,10 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     @ProcessTransactional
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
-            @RequestParam("varValue") String varValue) throws Exception {
+            @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        instance.set("", varName, (Serializable) varValue);
+        Serializable value = objectMapper.readValue(json, Serializable.class);
+        instance.set("", varName, value);
     }
 
     @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
@@ -376,7 +380,6 @@ public class InstanceServiceImpl implements InstanceService {
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             UEngineUtil.copyStream(request.getInputStream(), bao);
 
-            ObjectMapper objectMapper = new ObjectMapper();
 
             JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
 
@@ -593,25 +596,88 @@ public class InstanceServiceImpl implements InstanceService {
                         }
                     }
 
+                    variableChanges.put(parameterContext.getVariable().getName(),data);
+                }
+            }
+        }
+
+        // if (workItem.getWorklist() != null && "SAVED".equals(workItem.getWorklist().getStatus())) {
+        humanActivity.saveWorkItem(instance, variableChanges);
+        // } else {
+        //     try {
+        //         humanActivity.fireReceived(instance, variableChanges);
+        //     } catch (Exception e) {
+        //         humanActivity.fireFault(instance, e);
+
+        //         throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
+        //                 humanActivity);
+        //     }
+        // }
+
+    }
+
+    @RequestMapping(value = "/work-item/{taskId}/complate", method = RequestMethod.POST)
+    @org.springframework.transaction.annotation.Transactional
+    @ProcessTransactional // important!
+    public void putWorkItemComplate(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception {
+
+        WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
+
+        String instanceId = worklistEntity.getInstId().toString();
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+        HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
+                .getActivity(worklistEntity.getTrcTag()));
+
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
+                    + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
+        }
+
+        // map the argument list to variables change list
+        Map variableChanges = new HashMap<String, Object>();
+
+        if (workItem.getParameterValues() != null
+                && humanActivity.getParameters() != null) {
+            for (ParameterContext parameterContext : humanActivity.getParameters()) {
+                if (parameterContext.getDirection().indexOf("OUT") >= 0
+                        && workItem.getParameterValues().containsKey(parameterContext.getArgument().getText())) {
+
+                    Serializable data = (Serializable) workItem.getParameterValues()
+                            .get(parameterContext.getArgument().getText());
+                    // if("REST".equals(parameterContext.getVariable().getPersistOption())){
+                    // RestResourceProcessVariableValue restResourceProcessVariableValue = new
+                    // RestResourceProcessVariableValue();
+                    // data = restResourceProcessVariableValue.lightweight(data,
+                    // parameterContext.getVariable(), instance);
+                    // }
+
+                    if (data instanceof Map && ((Map) data).containsKey("_type")) {
+                        String typeName = null;
+                        try {
+                            typeName = (String) ((Map) data).get("_type");
+                            Class classType = Thread.currentThread().getContextClassLoader().loadClass(typeName);
+                            data = (Serializable) ProcessServiceApplication.objectMapper.convertValue(data, classType);
+                        } catch (Exception e) {
+                            throw new Exception("Error while convert map to type: " + typeName, e);
+                        }
+                    }
+
                     variableChanges.put(parameterContext.getVariable().getName(),
                             data);
                 }
             }
         }
 
-        if (workItem.getWorklist() != null && "SAVED".equals(workItem.getWorklist().getStatus())) {
-            humanActivity.saveWorkItem(instance, variableChanges);
-        } else {
-            try {
-                humanActivity.fireReceived(instance, variableChanges);
-            } catch (Exception e) {
-                humanActivity.fireFault(instance, e);
+       
+        try {
+            humanActivity.fireReceived(instance, variableChanges);
+        } catch (Exception e) {
+            humanActivity.fireFault(instance, e);
 
-                throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
-                        humanActivity);
-            }
+            throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
+                    humanActivity);
         }
-
     }
 
     @Override
