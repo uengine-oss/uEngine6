@@ -78,7 +78,6 @@
         <bpmn:userTask id="formActivity1" name="장애신고" $type="bpmn:UserTask">
             <bpmn:extensionElements>
                 <uengine:properties>
-<<<<<<< HEAD
                 <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext": {
   
   "mappingElements": [
@@ -118,9 +117,6 @@
     }
   ]
 },"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
-=======
-                <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
->>>>>>> dd479ba5bcc0c9c72f4caa2b5dfb2e9bb26bb1ad
                 </uengine:properties>
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_1wr87dt</bpmn:incoming>
