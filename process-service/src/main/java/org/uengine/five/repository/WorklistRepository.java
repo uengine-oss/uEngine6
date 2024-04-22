@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 //import org.metaworks.multitenancy.persistence.MultitenantRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.uengine.five.entity.WorklistEntity;
 
@@ -29,4 +30,7 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
 
     @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status = 'COMPLETED')")
     public List<WorklistEntity> findCompleted();
+
+    @Query("select wl from WorklistEntity wl where (wl.instId = :instId and wl.status = 'COMPLETED') order by wl.endDate ")
+    public List<WorklistEntity> findWorkListByInstId(@Param(value = "instId") Long instId);
 }
