@@ -14,39 +14,6 @@
             <uengine:properties>
                 <uengine:variable name="troubleType" type="Text" />
                 <uengine:variable name="symptom" type="Text" />
-                <uengine:variable name="장애신고" type="Form">
-                    <uengine:json>
-                        {
-                        "defaultValue": {
-                            "_type": "org.uengine.contexts.HtmlFormContext",
-                            "formDefId": "form11",
-                            "filePath": ""
-                        }
-                        }
-                    </uengine:json>
-                </uengine:variable>
-                <uengine:variable name="장애처리" type="Form">
-                    <uengine:json>
-                        {
-                        "defaultValue": {
-                            "_type": "org.uengine.contexts.HtmlFormContext",
-                            "formDefId": "form22",
-                            "filePath": ""
-                        }
-                        }
-                    </uengine:json>
-                </uengine:variable>
-                <uengine:variable name="처리알림" type="Form">
-                    <uengine:json>
-                        {
-                        "defaultValue": {
-                            "_type": "org.uengine.contexts.HtmlFormContext",
-                            "formDefId": "form33",
-                            "filePath": ""
-                        }
-                        }
-                    </uengine:json>
-                </uengine:variable>
             </uengine:properties>
         </bpmn:extensionElements>
         <bpmn:laneSet id="LaneSet_005z1xd">
@@ -64,7 +31,7 @@
                     </uengine:properties>
                 </bpmn:extensionElements>
                 <bpmn:flowNodeRef>Event_054atmx</bpmn:flowNodeRef>
-                <bpmn:flowNodeRef>formActivity1</bpmn:flowNodeRef>
+                <bpmn:flowNodeRef>Task_a</bpmn:flowNodeRef>
                 <bpmn:flowNodeRef>Event_1pife2k</bpmn:flowNodeRef>
                 <bpmn:flowNodeRef>Task_b</bpmn:flowNodeRef>
                 <bpmn:flowNodeRef>Task_c</bpmn:flowNodeRef>
@@ -75,59 +42,17 @@
         <bpmn:startEvent id="Event_054atmx">
             <bpmn:outgoing>Flow_1wr87dt</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:userTask id="formActivity1" name="장애신고" $type="bpmn:UserTask">
+        <bpmn:task id="Task_a" name="Task_a">
             <bpmn:extensionElements>
                 <uengine:properties>
-<<<<<<< HEAD
-                <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext": {
-  
-  "mappingElements": [
-    {
-      "argument": {
-        "text": "장애유형"
-      },
-      "transformerMapping": {
-        "transformer": {
-          "_type": "org.uengine.processdesigner.mapper.transformers.ConcatTransformer",
-          "name": "Concat",
-          "location": {
-            "x": 403,
-            "y": 156.09375
-          },
-          "argumentSourceMap": {
-            "str1": "장애신고.trouble_class",
-            "str2": {
-              "_type": "org.uengine.processdesigner.mapper.TransformerMapping",
-              "transformer": {
-                "_type": "org.uengine.processdesigner.mapper.transformers.DirectValueTransformer",
-                "name": "DirectValue",
-                "location": {
-                  "x": 179,
-                  "y": 261.09375
-                },
-                "argumentSourceMap": {},
-                "value": "[PREFIX]"
-              },
-              "linkedArgumentName": "out"
-            }
-          }
-        },
-        "linkedArgumentName": "장애유형"
-      },
-      "isKey": false
-    }
-  ]
-},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
-=======
-                <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
->>>>>>> dd479ba5bcc0c9c72f4caa2b5dfb2e9bb26bb1ad
+                    <uengine:json>{}</uengine:json>
                 </uengine:properties>
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_1wr87dt</bpmn:incoming>
             <bpmn:outgoing>Flow_0cbi0zl</bpmn:outgoing>
-        </bpmn:userTask>
-        <bpmn:sequenceFlow id="Flow_1wr87dt" sourceRef="Event_054atmx" targetRef="formActivity1" />
-        <bpmn:sequenceFlow id="Flow_0cbi0zl" sourceRef="formActivity1"
+        </bpmn:task>
+        <bpmn:sequenceFlow id="Flow_1wr87dt" sourceRef="Event_054atmx" targetRef="Task_a" />
+        <bpmn:sequenceFlow id="Flow_0cbi0zl" sourceRef="Task_a"
             targetRef="Task_b" />
         <bpmn:sequenceFlow id="Flow_0izz0ep" sourceRef="Task_b"
             targetRef="Task_c">
@@ -215,7 +140,7 @@
             <bpmndi:BPMNShape id="Event_054atmx_di" bpmnElement="Event_054atmx">
                 <dc:Bounds x="132" y="212" width="36" height="36" />
             </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="formActivity1_di" bpmnElement="formActivity1">
+            <bpmndi:BPMNShape id="Task_a_di" bpmnElement="Task_a">
                 <dc:Bounds x="220" y="190" width="100" height="80" />
                 <bpmndi:BPMNLabel />
             </bpmndi:BPMNShape>

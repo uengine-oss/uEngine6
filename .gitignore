@@ -1,6 +1,7 @@
 target/
 !.mvn/wrapper/maven-wrapper.jar
 back-office/node_modules/
+definitions/instances/
 ### STS ###
 .apt_generated
 .classpath

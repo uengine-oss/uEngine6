@@ -10,7 +10,7 @@
   <entry>
     <string>Task_a:_start_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309447</time>
+      <time>1713413718264</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
@@ -19,13 +19,9 @@
     <string>Running</string>
   </entry>
   <entry>
-    <string>Task_b:_previous:prop</string>
-    <string>Task_b</string>
-  </entry>
-  <entry>
     <string>Task_b:_due date:prop</string>
     <gregorian-calendar>
-      <time>1712647309447</time>
+      <time>1713845718264</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
@@ -38,10 +34,6 @@
     <int>1</int>
   </entry>
   <entry>
-    <string>:currentStep:prop</string>
-    <int>0</int>
-  </entry>
-  <entry>
     <string>Task_b:_loopBackCnt:prop</string>
     <int>1</int>
   </entry>
@@ -52,21 +44,21 @@
   <entry>
     <string>Event_054atmx:_end_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309446</time>
+      <time>1713413718263</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
   <entry>
     <string>Event_054atmx:_start_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309446</time>
+      <time>1713413718263</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
   <entry>
     <string>Task_b:_start_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309447</time>
+      <time>1713413718264</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
@@ -75,7 +67,7 @@
     <com.defaultcompany.organization.DefaultCompanyRoleMapping>
       <name>initiator</name>
       <resourceName>Initiator</resourceName>
-      <endpoint>initiator@uengine.org</endpoint>
+      <endpoint>manager</endpoint>
       <assignType>0</assignType>
       <dispatchingOption>0</dispatchingOption>
       <isMale>true</isMale>
@@ -83,20 +75,7 @@
       <cursor>0</cursor>
       <isSingle>false</isSingle>
       <multipleMappings>
-        <com.defaultcompany.organization.DefaultCompanyRoleMapping>
-          <name>initiator</name>
-          <resourceName>Initiator</resourceName>
-          <endpoint>initiator@uengine.org</endpoint>
-          <assignType>0</assignType>
-          <dispatchingOption>0</dispatchingOption>
-          <isMale>true</isMale>
-          <isGroup>false</isGroup>
-          <cursor>0</cursor>
-          <isSingle>false</isSingle>
-          <multipleMappings>
-            <com.defaultcompany.organization.DefaultCompanyRoleMapping reference="../.."/>
-          </multipleMappings>
-        </com.defaultcompany.organization.DefaultCompanyRoleMapping>
+        <com.defaultcompany.organization.DefaultCompanyRoleMapping reference="../.."/>
       </multipleMappings>
     </com.defaultcompany.organization.DefaultCompanyRoleMapping>
   </entry>
@@ -111,14 +90,14 @@
   <entry>
     <string>:_due date:prop</string>
     <gregorian-calendar>
-      <time>1713079309446</time>
+      <time>1714277718263</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
   <entry>
     <string>Task_a:_end_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309447</time>
+      <time>1713413718264</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>
@@ -133,7 +112,7 @@
   <entry>
     <string>:_start_time:prop</string>
     <gregorian-calendar>
-      <time>1712215309446</time>
+      <time>1713413718263</time>
       <timezone>Asia/Seoul</timezone>
     </gregorian-calendar>
   </entry>

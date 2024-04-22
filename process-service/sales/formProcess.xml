@@ -78,49 +78,7 @@
         <bpmn:userTask id="formActivity1" name="장애신고" $type="bpmn:UserTask">
             <bpmn:extensionElements>
                 <uengine:properties>
-<<<<<<< HEAD
-                <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext": {
-  
-  "mappingElements": [
-    {
-      "argument": {
-        "text": "장애유형"
-      },
-      "transformerMapping": {
-        "transformer": {
-          "_type": "org.uengine.processdesigner.mapper.transformers.ConcatTransformer",
-          "name": "Concat",
-          "location": {
-            "x": 403,
-            "y": 156.09375
-          },
-          "argumentSourceMap": {
-            "str1": "장애신고.trouble_class",
-            "str2": {
-              "_type": "org.uengine.processdesigner.mapper.TransformerMapping",
-              "transformer": {
-                "_type": "org.uengine.processdesigner.mapper.transformers.DirectValueTransformer",
-                "name": "DirectValue",
-                "location": {
-                  "x": 179,
-                  "y": 261.09375
-                },
-                "argumentSourceMap": {},
-                "value": "[PREFIX]"
-              },
-              "linkedArgumentName": "out"
-            }
-          }
-        },
-        "linkedArgumentName": "장애유형"
-      },
-      "isKey": false
-    }
-  ]
-},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
-=======
                 <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form11"}}</uengine:json>
->>>>>>> dd479ba5bcc0c9c72f4caa2b5dfb2e9bb26bb1ad
                 </uengine:properties>
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_1wr87dt</bpmn:incoming>
