@@ -113,7 +113,7 @@ public class InstanceServiceImpl implements InstanceService {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Definition not found", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
         }
 
         if (definition instanceof ProcessDefinition) {
