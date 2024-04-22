@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
+  <bpmn:process id="Process_1oscmbn" isExecutable="false">
+    <bpmn:extensionElements>
+      <uengine:properties>
+        <uengine:variable name="trouble" type="Form">
+          <uengine:json>{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"장애신고","filePath":"장애신고.form"}</uengine:json>
+        </uengine:variable>
+      </uengine:properties>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Event_0yn22vr">
+      <bpmn:outgoing>Flow_1r1l05z</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1r1l05z" sourceRef="Event_0yn22vr" targetRef="Activity_0l5tqa7" />
+    <bpmn:userTask id="Activity_0l5tqa7" name="장애신고" $type="bpmn:UserTask">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"trouble"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1r1l05z</bpmn:incoming>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1oscmbn">
+      <bpmndi:BPMNShape id="Event_0yn22vr_di" bpmnElement="Event_0yn22vr">
+        <dc:Bounds x="212" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1x2sta3_di" bpmnElement="Activity_0l5tqa7">
+        <dc:Bounds x="300" y="210" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1r1l05z_di" bpmnElement="Flow_1r1l05z">
+        <di:waypoint x="248" y="250" />
+        <di:waypoint x="300" y="250" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

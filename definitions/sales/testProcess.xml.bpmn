@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
+  <bpmn:process id="Process_1oscmbn" isExecutable="false">
+    <bpmn:extensionElements>
+      <uengine:properties>
+        <uengine:variable name="장애신고" type="Form">
+          <uengine:json>
+            {
+              "defaultValue": {
+                "_type": "org.uengine.contexts.HtmlFormContext",
+                "formDefId": "form11",
+                "filePath": ""
+              }
+            }
+          </uengine:json>
+        </uengine:variable>
+        <uengine:variable name="장애처리" type="Form">
+          <uengine:json>
+            {
+              "defaultValue": {
+                "_type": "org.uengine.contexts.HtmlFormContext",
+                "formDefId": "form22",
+                "filePath": ""
+              }
+            }
+          </uengine:json>
+        </uengine:variable>
+        <uengine:variable name="처리알림" type="Form">
+          <uengine:json>
+            {
+              "defaultValue": {
+                "_type": "org.uengine.contexts.HtmlFormContext",
+                "formDefId": "form33",
+                "filePath": ""
+              }
+            }
+          </uengine:json>
+        </uengine:variable>
+      </uengine:properties>
+    </bpmn:extensionElements>
+    <bpmn:startEvent id="Event_0bmlfg1">
+      <bpmn:outgoing>Flow_1xa67bo</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1xa67bo" sourceRef="Event_0bmlfg1" targetRef="Activity_0l6yqo9" />
+    <bpmn:userTask id="Activity_0l6yqo9" name="장애신고" $type="bpmn:UserTask">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>
+          {
+            "role": {
+              "name": "initiator"
+            },
+            "parameters": [],
+            "mappingContext": {},
+            "_type": "org.uengine.kernel.FormActivity",
+            "variableForHtmlFormContext": {
+              "name": "form11"
+            }
+          }
+          </uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1xa67bo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1s4wwn2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1s4wwn2" sourceRef="Activity_0l6yqo9" targetRef="Activity_1hbfl4x" />
+    <bpmn:userTask id="formActivity1" name="장애처리" $type="bpmn:UserTask">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form22"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1s4wwn2</bpmn:incoming>
+      <bpmn:outgoing>Flow_00nros7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_00nros7" sourceRef="Activity_1hbfl4x" targetRef="Activity_10uo268" />
+    <bpmn:userTask id="Activity_10uo268" name="처리알림" $type="bpmn:UserTask">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"role":{"name":"initiator"},"parameters":[],"mappingContext":{},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"form33","displayName":"처리알림"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_00nros7</bpmn:incoming>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1oscmbn">
+      <bpmndi:BPMNShape id="Event_0bmlfg1_di" bpmnElement="Event_0bmlfg1">
+        <dc:Bounds x="282" y="282" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_11w8zhd_di" bpmnElement="Activity_0l6yqo9">
+        <dc:Bounds x="370" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ydq7ol_di" bpmnElement="Activity_1hbfl4x">
+        <dc:Bounds x="530" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1o7y1qx_di" bpmnElement="Activity_10uo268">
+        <dc:Bounds x="690" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1xa67bo_di" bpmnElement="Flow_1xa67bo">
+        <di:waypoint x="318" y="300" />
+        <di:waypoint x="370" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1s4wwn2_di" bpmnElement="Flow_1s4wwn2">
+        <di:waypoint x="470" y="300" />
+        <di:waypoint x="530" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00nros7_di" bpmnElement="Flow_00nros7">
+        <di:waypoint x="630" y="300" />
+        <di:waypoint x="690" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+
+
