@@ -22,7 +22,7 @@ public class MappingContext implements Serializable {
 
     MappingElement[] mappingElements;
 
-    public ParameterContext[] getMappingElements() {
+    public MappingElement[] getMappingElements() {
         return mappingElements;
     }
 
