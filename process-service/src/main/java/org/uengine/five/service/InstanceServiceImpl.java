@@ -616,10 +616,10 @@ public class InstanceServiceImpl implements InstanceService {
 
     }
 
-    @RequestMapping(value = "/work-item/{taskId}/complate", method = RequestMethod.POST)
+    @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
-    public void putWorkItemComplate(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception {
+    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception {
 
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
@@ -663,8 +663,7 @@ public class InstanceServiceImpl implements InstanceService {
                         }
                     }
 
-                    variableChanges.put(parameterContext.getVariable().getName(),
-                            data);
+                    variableChanges.put(parameterContext.getVariable().getName(), data);
                 }
             }
         }
