@@ -22,6 +22,8 @@ public class InstanceResource extends RepresentationModel {
 
         String instanceId;
 
+        String status;
+
         public String getInstanceId() {
                 return instanceId;
         }
@@ -30,12 +32,21 @@ public class InstanceResource extends RepresentationModel {
                 this.instanceId = instanceId;
         }
 
+        public String getStatus() {
+                return status;
+        }
+
+        public void setStatus(String status) {
+                this.status = status;
+        }
+
         public InstanceResource() {
         }
 
         public InstanceResource(ProcessInstance processInstance) throws Exception {
                 setName(processInstance.getName());
                 setInstanceId(processInstance.getInstanceId());
+                setStatus(processInstance.getStatus());
 
                 add(
                                 linkTo(

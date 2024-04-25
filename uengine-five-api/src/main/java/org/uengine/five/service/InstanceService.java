@@ -89,8 +89,8 @@ public interface InstanceService {
         @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
         public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
 
-        @RequestMapping(value = "/work-item/{taskId}/complate", method = RequestMethod.POST)
-        public void putWorkItemComplate(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+        @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
 
                         
 
