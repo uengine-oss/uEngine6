@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -13,6 +14,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
@@ -101,6 +103,8 @@ public class BpmnXMLParser {
 
         if (processNode.getNodeType() == Node.ELEMENT_NODE) {
             NodeList childNodes = processNode.getChildNodes();
+            HashMap<String, String> taskToLaneMap = new HashMap<>();
+
             for (int j = 0; j < childNodes.getLength(); j++) {
                 Node node = childNodes.item(j);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -115,6 +119,11 @@ public class BpmnXMLParser {
                             Node laneNode = lanes.item(k);
                             if (laneNode.getNodeType() == Node.ELEMENT_NODE) {
                                 Element laneElement = (Element) laneNode;
+                                NodeList flowNodeRefs = laneElement.getElementsByTagName("bpmn:flowNodeRef");
+                                for (int flowIndex = 0; flowIndex < flowNodeRefs.getLength(); flowIndex++) {
+                                    Element flowNodeRef = (Element) flowNodeRefs.item(flowIndex);
+                                    taskToLaneMap.put(flowNodeRef.getTextContent(), laneElement.getAttribute("name"));
+                                }
                                 // String laneId = laneElement.getAttribute("id");
                                 String laneName = laneElement.getAttribute("name");
                                 Role role = new Role();
@@ -246,7 +255,6 @@ public class BpmnXMLParser {
                             String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
 
                             String fullClassName = null;
-
                             if (className.equals("Task")) {
                                 fullClassName = "org.uengine.kernel.DefaultActivity";
                             } else if (className.equals("UserTask") || className.equals("ManualTask")) {
@@ -281,8 +289,7 @@ public class BpmnXMLParser {
                                 for (int k = 0; k < propertiesNodes.getLength(); k++) {
                                     Node propertiesNode = propertiesNodes.item(k);
                                     if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                        NodeList jsonNodes = ((Element) propertiesNode)
-                                                .getElementsByTagName("uengine:json");
+                                        NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
                                         for (int l = 0; l < jsonNodes.getLength(); l++) {
                                             Node jsonNode = jsonNodes.item(l);
                                             if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
@@ -293,6 +300,7 @@ public class BpmnXMLParser {
                                                 if (jsonText.contains("_type")) {
                                                     castingClass = Activity.class;
                                                 }
+                                                
                                                 Object jsonObject = objectMapper.readValue(jsonText, castingClass);
                                                 // Use the JSON object to set properties on the Activity object
                                                 // BeanUtils.copyProperties(task, jsonObject)d;
@@ -301,7 +309,12 @@ public class BpmnXMLParser {
                                         }
                                     }
                                 }
+                               
 
+                                if (task instanceof HumanActivity) {
+                                    Role role = createRoleInLane(taskToLaneMap, id);
+                                    ((HumanActivity) task).setRole(role);
+                                }
                                 task.setTracingTag(id);
                                 task.setName(name);
 
@@ -322,6 +335,13 @@ public class BpmnXMLParser {
                 }
             }
         }
+    }
+
+    public Role createRoleInLane(Map<String, String> taskToLaneMap, String id) {
+        Role role = new Role();
+        String laneRoleName = taskToLaneMap.get(id);
+        role.setName(laneRoleName);
+        return role;
     }
 
     public ProcessDefinition parse(String xml) throws Exception {
