@@ -598,9 +598,12 @@ public class FormActivity extends HumanActivity {
 			for(ProcessVariable v : instance.getProcessDefinition().getProcessVariables()){
 				if(v.getDefaultValue() instanceof HtmlFormContext){
 					HtmlFormContext defaultValue = (HtmlFormContext) v.getDefaultValue();
-					if(defaultValue.getFormDefId() != null && defaultValue.getFormDefId().equals(getVariableForHtmlFormContext().getName())){
+					if(defaultValue.getFormDefId() != null && v.name.equals(getVariableForHtmlFormContext().getName())){
 						formContext = defaultValue;
 					}
+					// if(defaultValue.getFormDefId() != null && defaultValue.getFormDefId().equals(getVariableForHtmlFormContext().getName())){
+					// 	formContext = defaultValue;
+					// }
 				}
 			}
 		} catch (Exception e) {
