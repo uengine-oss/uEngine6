@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
+  <bpmn:collaboration id="Collaboration_106qlvn">
+    <bpmn:participant id="Participant_0fwqjpg" name="" processRef="Process_1oscmbn">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1oscmbn" isExecutable="false">
+    <bpmn:extensionElements>
+      <uengine:properties>
+        <uengine:variable name="troubleReport" type="Form">
+          <uengine:json>{"defaultValue": {"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"troubleReport","filePath":"troubleReport.form"} }</uengine:json>
+        </uengine:variable>
+        <uengine:variable name="PersonInCharge" type="Form">
+          <uengine:json>{"defaultValue": {"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"PersonInCharge","filePath":"PersonInCharge.form"}}</uengine:json>
+        </uengine:variable>
+        <uengine:variable name="담당자 명" type="Text">
+          <uengine:json>{"defaultValue":"\"\""}</uengine:json>
+        </uengine:variable>
+      </uengine:properties>
+    </bpmn:extensionElements>
+    <bpmn:laneSet id="LaneSet_1gax4vn">
+      <bpmn:lane id="Lane_1intw9k" name="신고자" $type="bpmn:Lane">
+        <bpmn:extensionElements>
+          <uengine:properties>
+            <uengine:json>{"roleResolutionContext":{"_type":"org.uengine.five.overriding.IAMRoleResolutionContext","scope":"manager"}}</uengine:json>
+          </uengine:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>Event_0c4ytc6</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1v7r2x2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_0b7vslb</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_04apc1b</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_01r92qp" name="관리자">
+        <bpmn:extensionElements>
+          <uengine:properties>
+            <uengine:json>
+             {
+              "roleResolutionContext": {
+                  "_type": "org.uengine.five.overriding.IAMRoleResolutionContext",
+                  "scope": "manager"
+                }
+              }
+            </uengine:json>
+          </uengine:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>Activity_11ml94o</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_0v9wwl0" name="담당자">
+        <bpmn:extensionElements>
+          <uengine:properties>
+            <uengine:json>
+             {
+              "roleResolutionContext": {
+                  "_type": "org.uengine.five.overriding.IAMRoleResolutionContext",
+                  "scope": "manager"
+                }
+              }
+            </uengine:json>
+          </uengine:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>Activity_1jvyjvv</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Event_0c4ytc6">
+      <bpmn:outgoing>Flow_0ujikxh</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_1v7r2x2" name="장애 신고">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"parameters":[],"mappingContext":{"mappingElements":[]},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"troubleReport"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ujikxh</bpmn:incoming>
+      <bpmn:outgoing>Flow_02k5vch</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0ujikxh" sourceRef="Event_0c4ytc6" targetRef="Activity_1v7r2x2" />
+    <bpmn:sequenceFlow id="Flow_10ztknl" sourceRef="Activity_0b7vslb" targetRef="Event_04apc1b" />
+    <bpmn:sequenceFlow id="Flow_02k5vch" sourceRef="Activity_1v7r2x2" targetRef="Activity_11ml94o" />
+    <bpmn:sequenceFlow id="Flow_132hakl" sourceRef="Activity_11ml94o" targetRef="Activity_1jvyjvv" />
+    <bpmn:sequenceFlow id="Flow_167r267" sourceRef="Activity_1jvyjvv" targetRef="Activity_0b7vslb" />
+    <bpmn:userTask id="Activity_11ml94o" name="담당자 지정">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"parameters":[],"mappingContext":{"mappingElements":[{"argument":{"text":"담당자 명"},"variable":{"name":"PersonInCharge","askWhenInit":false,"isVolatile":false},"isKey":false}]},"_type":"org.uengine.kernel.FormActivity","variableForHtmlFormContext":{"name":"PersonInCharge"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_02k5vch</bpmn:incoming>
+      <bpmn:outgoing>Flow_132hakl</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_1jvyjvv" name="장애처리">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_132hakl</bpmn:incoming>
+      <bpmn:outgoing>Flow_167r267</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_0b7vslb" name="이메일 결과 발송">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"role":{"name":"신고자"},"parameters":[]}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_167r267</bpmn:incoming>
+      <bpmn:outgoing>Flow_10ztknl</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_04apc1b">
+      <bpmn:incoming>Flow_10ztknl</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_106qlvn">
+      <bpmndi:BPMNShape id="Participant_0fwqjpg_di" bpmnElement="Participant_0fwqjpg" isHorizontal="true">
+        <dc:Bounds x="100" y="210" width="840" height="440" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0v9wwl0_di" bpmnElement="Lane_0v9wwl0" isHorizontal="true">
+        <dc:Bounds x="130" y="510" width="810" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_01r92qp_di" bpmnElement="Lane_01r92qp" isHorizontal="true">
+        <dc:Bounds x="130" y="370" width="810" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1intw9k_di" bpmnElement="Lane_1intw9k" isHorizontal="true">
+        <dc:Bounds x="130" y="210" width="810" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0c4ytc6_di" bpmnElement="Event_0c4ytc6">
+        <dc:Bounds x="152" y="282" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0d9au3u_di" bpmnElement="Activity_1v7r2x2">
+        <dc:Bounds x="240" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0alpmc5_di" bpmnElement="Activity_11ml94o">
+        <dc:Bounds x="390" y="410" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1fooytk_di" bpmnElement="Activity_1jvyjvv">
+        <dc:Bounds x="550" y="540" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0p29533_di" bpmnElement="Activity_0b7vslb">
+        <dc:Bounds x="720" y="250" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_04apc1b_di" bpmnElement="Event_04apc1b">
+        <dc:Bounds x="882" y="272" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0ujikxh_di" bpmnElement="Flow_0ujikxh">
+        <di:waypoint x="188" y="300" />
+        <di:waypoint x="240" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10ztknl_di" bpmnElement="Flow_10ztknl">
+        <di:waypoint x="820" y="290" />
+        <di:waypoint x="882" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02k5vch_di" bpmnElement="Flow_02k5vch">
+        <di:waypoint x="340" y="300" />
+        <di:waypoint x="365" y="300" />
+        <di:waypoint x="365" y="450" />
+        <di:waypoint x="390" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_132hakl_di" bpmnElement="Flow_132hakl">
+        <di:waypoint x="490" y="450" />
+        <di:waypoint x="525" y="450" />
+        <di:waypoint x="525" y="580" />
+        <di:waypoint x="550" y="580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_167r267_di" bpmnElement="Flow_167r267">
+        <di:waypoint x="650" y="580" />
+        <di:waypoint x="685" y="580" />
+        <di:waypoint x="685" y="290" />
+        <di:waypoint x="720" y="290" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
