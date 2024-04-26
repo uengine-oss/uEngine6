@@ -119,24 +119,25 @@ public class InstanceServiceImpl implements InstanceService {
         if (definition instanceof ProcessDefinition) {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
-            org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
-                    command.getInstanceName(), null);
-
-            org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
-            if (roleMappings != null) {
-                for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
-                    instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
-                }
-            }
-
             try {
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
+                        command.getInstanceName(), null);
+
+                org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
+                if (roleMappings != null) {
+                    for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
+                        instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
+                    }
+                }
+
                 instance.execute();
+                return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance",
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error executing process instance: " + e.getMessage(),
                         e);
             }
 
-            return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
         }
         return null;
 
@@ -380,7 +381,6 @@ public class InstanceServiceImpl implements InstanceService {
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             UEngineUtil.copyStream(request.getInputStream(), bao);
 
-
             JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
 
             // convert jsonNode to object instance.
@@ -596,22 +596,24 @@ public class InstanceServiceImpl implements InstanceService {
                         }
                     }
 
-                    variableChanges.put(parameterContext.getVariable().getName(),data);
+                    variableChanges.put(parameterContext.getVariable().getName(), data);
                 }
             }
         }
 
-        // if (workItem.getWorklist() != null && "SAVED".equals(workItem.getWorklist().getStatus())) {
+        // if (workItem.getWorklist() != null &&
+        // "SAVED".equals(workItem.getWorklist().getStatus())) {
         humanActivity.saveWorkItem(instance, variableChanges);
         // } else {
-        //     try {
-        //         humanActivity.fireReceived(instance, variableChanges);
-        //     } catch (Exception e) {
-        //         humanActivity.fireFault(instance, e);
+        // try {
+        // humanActivity.fireReceived(instance, variableChanges);
+        // } catch (Exception e) {
+        // humanActivity.fireFault(instance, e);
 
-        //         throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
-        //                 humanActivity);
-        //     }
+        // throw new UEngineException(e.getMessage(), null, new
+        // UEngineException(e.getMessage(), e), instance,
+        // humanActivity);
+        // }
         // }
 
     }
@@ -619,7 +621,8 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
-    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception {
+    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+            throws Exception {
 
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
@@ -668,7 +671,6 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
 
-       
         try {
             humanActivity.fireReceived(instance, variableChanges);
         } catch (Exception e) {

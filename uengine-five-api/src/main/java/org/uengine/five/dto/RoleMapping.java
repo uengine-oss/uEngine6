@@ -32,9 +32,13 @@ public class RoleMapping {
     public org.uengine.kernel.RoleMapping toKernelRoleMapping() {
         org.uengine.kernel.RoleMapping kernelRoleMapping = org.uengine.kernel.RoleMapping.create();
         kernelRoleMapping.setName(name);
-        for (int i = 0; i < resourceNames.length; i++) {
+
+        if (endpoints == null)
+            throw new RuntimeException("endpoints is null");
+
+        for (int i = 0; i < endpoints.length; i++) {
             kernelRoleMapping.setEndpoint(endpoints[i]);
-            kernelRoleMapping.setResourceName(resourceNames[i]);
+            // kernelRoleMapping.setResourceName(resourceNames[i]);
             kernelRoleMapping.moveToAdd();
         }
 
