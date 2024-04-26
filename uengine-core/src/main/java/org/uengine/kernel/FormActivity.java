@@ -168,8 +168,8 @@ public class FormActivity extends HumanActivity {
 						value = instance.getBeanProperty(srcVariableName);
 
 						ProcessVariable pv = getProcessDefinition().getProcessVariable(srcVariableName);
-						if (pv == getVariableForHtmlFormContext()) { // maps only the child fields of the form
-																		// activity's target html form
+						if (getVariableForHtmlFormContext().equals(pv)) { // maps only the child fields of the form
+																			// activity's target html form
 
 							instance.setBeanProperty(targetFieldName, (Serializable) value);
 
@@ -595,10 +595,11 @@ public class FormActivity extends HumanActivity {
 		HtmlFormContext formContext;
 		try {
 			formContext = null;
-			for(ProcessVariable v : instance.getProcessDefinition().getProcessVariables()){
-				if(v.getDefaultValue() instanceof HtmlFormContext){
+			for (ProcessVariable v : instance.getProcessDefinition().getProcessVariables()) {
+				if (v.getDefaultValue() instanceof HtmlFormContext) {
 					HtmlFormContext defaultValue = (HtmlFormContext) v.getDefaultValue();
-					if(defaultValue.getFormDefId() != null && defaultValue.getFormDefId().equals(getVariableForHtmlFormContext().getName())){
+					if (defaultValue.getFormDefId() != null
+							&& defaultValue.getFormDefId().contains(getVariableForHtmlFormContext().getName())) {
 						formContext = defaultValue;
 					}
 				}
@@ -606,8 +607,8 @@ public class FormActivity extends HumanActivity {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		if(formContext != null) {
-			return "formHandler:"+formContext.getFormDefId();
+		if (formContext != null) {
+			return "formHandler:" + formContext.getFormDefId();
 		}
 		return "formHandler";
 	}
