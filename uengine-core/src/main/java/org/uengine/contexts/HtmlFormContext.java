@@ -137,7 +137,7 @@ public class HtmlFormContext
 	// }
 
 	public Object getFieldValue(String fieldName) throws Exception {
-		fieldName = fieldName.toLowerCase();
+		// fieldName = fieldName.toLowerCase();
 		// Object value = null;
 
 		return valueMap.get(fieldName);
@@ -269,7 +269,7 @@ public class HtmlFormContext
 	}
 
 	// public String getHtmlPath() {
-	// 	return getFilePath() != null ? getFilePath().replace(".xml", ".html") : null;
+	// return getFilePath() != null ? getFilePath().replace(".xml", ".html") : null;
 	// }
 
 	public InputStream openValueXMLStream() throws IOException {
@@ -277,7 +277,7 @@ public class HtmlFormContext
 	}
 
 	// public InputStream openValueHTMLStream() throws IOException {
-	// 	return new FileInputStream(FILE_SYSTEM_DIR + getHtmlPath());
+	// return new FileInputStream(FILE_SYSTEM_DIR + getHtmlPath());
 	// }
 
 	/* transient */ Map<String, Serializable> valueMap;
