@@ -339,9 +339,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             resourceManager.createFolder(container);
             return new DefinitionResource(container);
         }
-
+        // definitionPath = definitionPath + ".bpmn";
         String fileExt = UEngineUtil.getFileExt(definitionPath);
-
 
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);

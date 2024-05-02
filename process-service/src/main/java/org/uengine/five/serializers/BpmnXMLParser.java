@@ -20,6 +20,7 @@ import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
 import org.uengine.kernel.RoleResolutionContext;
 import org.uengine.kernel.ScopeActivity;
+import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SubProcess;
 import org.w3c.dom.Document;
@@ -66,7 +67,7 @@ public class BpmnXMLParser {
                                                                                  // or boolean
 
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
-      
+
         return objectMapper;
     }
 
@@ -110,7 +111,7 @@ public class BpmnXMLParser {
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
                     String nodeName = element.getNodeName();
-                    
+
                     // LaneSet은 무시
                     if (nodeName.equals("bpmn:laneSet")) {
                         // String laneSetId = element.getAttribute("id");
@@ -127,15 +128,18 @@ public class BpmnXMLParser {
                                 // String laneId = laneElement.getAttribute("id");
                                 String laneName = laneElement.getAttribute("name");
                                 Role role = new Role();
-            
+
                                 NodeList propertiesNodes = laneElement.getElementsByTagName("uengine:properties");
                                 for (int l = 0; l < propertiesNodes.getLength(); l++) {
                                     Node propertiesNode = propertiesNodes.item(l);
                                     if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                        NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                                        NodeList jsonNodes = ((Element) propertiesNode)
+                                                .getElementsByTagName("uengine:json");
                                         for (int m = 0; m < jsonNodes.getLength(); m++) {
                                             Node jsonNode = jsonNodes.item(m);
-                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                                    || jsonNode.getNodeType() == Node.TEXT_NODE
+                                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                                                 String jsonText = jsonNode.getTextContent();
                                                 try {
                                                     Role roleContext = objectMapper.readValue(jsonText, Role.class);
@@ -172,14 +176,18 @@ public class BpmnXMLParser {
                                         ProcessVariable variable = new ProcessVariable();
 
                                         if (variableNode.getNodeType() == Node.ELEMENT_NODE) {
-                                            NodeList jsonNodes = ((Element) variableNode).getElementsByTagName("uengine:json");
+                                            NodeList jsonNodes = ((Element) variableNode)
+                                                    .getElementsByTagName("uengine:json");
                                             for (int m = 0; m < jsonNodes.getLength(); m++) {
                                                 Node jsonNode = jsonNodes.item(m);
-                                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                                        || jsonNode.getNodeType() == Node.TEXT_NODE
+                                                        || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                                                     String jsonText = jsonNode.getTextContent();
                                                     try {
-                                                        variable = objectMapper.readValue(jsonText, ProcessVariable.class);
-                                                        
+                                                        variable = objectMapper.readValue(jsonText,
+                                                                ProcessVariable.class);
+
                                                     } catch (Exception e) {
                                                         throw new RuntimeException("Error parsing lane JSON", e);
                                                     }
@@ -282,34 +290,42 @@ public class BpmnXMLParser {
                             try {
                                 Class<?> clazz = Class.forName(fullClassName);
                                 Object instance = clazz.getDeclaredConstructor().newInstance();
-
                                 Activity task = (Activity) instance;
+
                                 // JSON parsing and property setting logic
                                 NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
                                 for (int k = 0; k < propertiesNodes.getLength(); k++) {
                                     Node propertiesNode = propertiesNodes.item(k);
                                     if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                        NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                                        NodeList jsonNodes = ((Element) propertiesNode)
+                                                .getElementsByTagName("uengine:json");
                                         for (int l = 0; l < jsonNodes.getLength(); l++) {
                                             Node jsonNode = jsonNodes.item(l);
                                             if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
                                                     || jsonNode.getNodeType() == Node.TEXT_NODE
                                                     || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                                        
                                                 String jsonText = jsonNode.getTextContent();
                                                 Class castingClass = clazz;
                                                 if (jsonText.contains("_type")) {
                                                     castingClass = Activity.class;
                                                 }
-                                                
+
                                                 Object jsonObject = objectMapper.readValue(jsonText, castingClass);
                                                 // Use the JSON object to set properties on the Activity object
                                                 // BeanUtils.copyProperties(task, jsonObject)d;
-                                                task = (Activity) jsonObject;
+
+                                                if (className.equals("BoundaryEvent")) {
+                                                    task = (Event) jsonObject;
+                                                    ((Event) task).setAttachedToRef(element.getAttribute("attachedToRef"));
+                                                } else {
+
+                                                    task = (Activity) jsonObject;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                               
 
                                 if (task instanceof HumanActivity) {
                                     Role role = createRoleInLane(taskToLaneMap, id);
