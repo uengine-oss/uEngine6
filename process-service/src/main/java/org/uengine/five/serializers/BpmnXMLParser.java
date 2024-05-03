@@ -284,13 +284,18 @@ public class BpmnXMLParser {
                                                 + "Event")
                                         .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
 
-                            } else
+                            } else {
                                 fullClassName = "org.uengine.kernel.bpmn." + className;
+                            }
 
                             try {
                                 Class<?> clazz = Class.forName(fullClassName);
                                 Object instance = clazz.getDeclaredConstructor().newInstance();
                                 Activity task = (Activity) instance;
+
+                                if ("SubProcess".equals(className)) {
+                                    parseActivities(element, (SubProcess) task);
+                                }
 
                                 // JSON parsing and property setting logic
                                 NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
@@ -304,8 +309,8 @@ public class BpmnXMLParser {
                                             if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
                                                     || jsonNode.getNodeType() == Node.TEXT_NODE
                                                     || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                                        
                                                 String jsonText = jsonNode.getTextContent();
+
                                                 Class castingClass = clazz;
                                                 if (jsonText.contains("_type")) {
                                                     castingClass = Activity.class;
@@ -317,11 +322,14 @@ public class BpmnXMLParser {
 
                                                 if (className.equals("BoundaryEvent")) {
                                                     task = (Event) jsonObject;
-                                                    ((Event) task).setAttachedToRef(element.getAttribute("attachedToRef"));
+                                                    ((Event) task)
+                                                            .setAttachedToRef(
+                                                                    element.getAttribute("attachedToRef"));
                                                 } else {
 
                                                     task = (Activity) jsonObject;
                                                 }
+
                                             }
                                         }
                                     }
@@ -334,10 +342,9 @@ public class BpmnXMLParser {
                                 task.setTracingTag(id);
                                 task.setName(name);
 
-                                if ("SubProcess".equals(className)) {
-
-                                    parseActivities(node, (SubProcess) task);
-                                }
+                                // if ("SubProcess".equals(className)) {
+                                // parseActivities(node, (SubProcess) task);
+                                // }
 
                                 processDefinition.addChildActivity(task);
 
