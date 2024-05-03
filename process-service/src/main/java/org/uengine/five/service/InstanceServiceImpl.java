@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
@@ -52,6 +52,7 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
+import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
@@ -203,6 +204,15 @@ public class InstanceServiceImpl implements InstanceService {
             throw new ResourceNotFoundException(); // make 404 error
 
         return new InstanceResource(instance);
+    }
+
+    @RequestMapping(value="/instance/{instanceId}/eventList")
+    @ProcessTransactional(readOnly = true)
+    public Vector getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        Vector messageListener = (Vector) instance.getMessageListeners("event");
+        
+        return messageListener;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -681,8 +691,20 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
+    @RequestMapping(value = "/instance/{instanceId}/fire-message", method = RequestMethod.POST)
+    @ProcessTransactional
+    public void fireMessage(@PathVariable("instanceId") String instanceId, @RequestBody Message message) throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance != null) {
+            instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
+        } else {
+            throw new ResourceNotFoundException("Instance not found for ID: " + instanceId);
+        }
+    }
+
     @Override
     public void postMessage(String instanceId, Message message) throws Exception {
+        // Boundary Event 또는 Signal Event 발생 시 호출
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         if (instance != null) {
             instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
