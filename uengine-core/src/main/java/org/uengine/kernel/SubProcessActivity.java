@@ -180,7 +180,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         forEachRole = role;
     }
 
-    ProcessVariable c;
+    ProcessVariable forEachVariable;
 
     // @Hidden
     public ProcessVariable getForEachVariable() {

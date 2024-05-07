@@ -233,55 +233,55 @@ public class BpmnXMLParserTest {
         assertEquals("Variable2 should be of type Integer", "java.lang.Integer", variable2.getType().getName());
     }
 
-    // @Test
-    // public void testParseSubProcessWithNestedActivities() {
-    //     BpmnXMLParser parser = new BpmnXMLParser();
-    //     ClassLoader classLoader = getClass().getClassLoader();
-    //     File file = new File(classLoader.getResource("org/uengine/test/subProcess.xml").getFile());
-    //     String xml = "";
-    //     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-    //         StringBuilder stringBuilder = new StringBuilder();
-    //         String line;
-    //         while ((line = reader.readLine()) != null) {
-    //             stringBuilder.append(line).append("\n");
-    //         }
-    //         xml = stringBuilder.toString();
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-    //     try {
-    //         ProcessDefinition processDefinition = parser.parse(xml);
-    //         assertNotNull("Process definition should not be null", processDefinition);
+    @Test
+    public void testParseSubProcessWithNestedActivities() {
+        BpmnXMLParser parser = new BpmnXMLParser();
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("org/uengine/test/TroubleAlertTest-Parser.bpmn").getFile());
+        String xml = "";
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line).append("\n");
+            }
+            xml = stringBuilder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ProcessDefinition processDefinition = parser.parse(xml);
+            assertNotNull("Process definition should not be null", processDefinition);
 
-    //         Activity subProcessActivity = processDefinition.getActivity("Activity_06htr8g");
-    //         assertNotNull("SubProcess Activity_06htr8g should not be null", subProcessActivity);
-    //         assertTrue("Activity_06htr8g should be an instance of SubProcess",
-    //                 subProcessActivity instanceof SubProcess);
+            Activity subProcessActivity = processDefinition.getActivity("Activity_0gf1pdp");
+            assertNotNull("SubProcess Activity_0gf1pdp should not be null", subProcessActivity);
+            assertTrue("Activity_0gf1pdp should be an instance of SubProcess",
+                    subProcessActivity instanceof SubProcess);
 
-    //         SubProcess subProcess = (SubProcess) subProcessActivity;
-    //         assertFalse("SubProcess should have child activities", subProcess.getChildActivities().isEmpty());
+            SubProcess subProcess = (SubProcess) subProcessActivity;
+            assertFalse("SubProcess should have child activities", subProcess.getChildActivities().isEmpty());
 
-    //         // Check for nested SubProcess
-    //         Activity nestedSubProcessActivity = subProcess.getChildActivities().stream()
-    //                 .filter(activity -> "Activity_0scpd12".equals(activity.getTracingTag()))
-    //                 .findFirst()
-    //                 .orElse(null);
-    //         assertNotNull("Nested SubProcess Activity_0scpd12 should not be null", nestedSubProcessActivity);
-    //         assertTrue("Activity_0scpd12 should be an instance of SubProcess",
-    //                 nestedSubProcessActivity instanceof SubProcess);
+            // Check for nested SubProcess
+            Activity nestedSubProcessActivity = subProcess.getChildActivities().stream()
+                    .filter(activity -> "Activity_0hon0vy".equals(activity.getTracingTag()))
+                    .findFirst()
+                    .orElse(null);
+            assertNotNull("Nested SubProcess Activity_0hon0vy should not be null", nestedSubProcessActivity);
+            // assertTrue("Activity_0hon0vy should be an instance of SubProcess",
+            //         nestedSubProcessActivity instanceof SubProcess);
 
-    //         SubProcess nestedSubProcess = (SubProcess) nestedSubProcessActivity;
-    //         assertFalse("Nested SubProcess should have child activities",
-    //                 nestedSubProcess.getChildActivities().isEmpty());
+            // SubProcess nestedSubProcess = (SubProcess) nestedSubProcessActivity;
+            // assertFalse("Nested SubProcess should have child activities",
+            //         nestedSubProcess.getChildActivities().isEmpty());
 
-    //         // Additional checks can be performed here for other activities and properties
-    //         // within the nested subprocess
+            // Additional checks can be performed here for other activities and properties
+            // within the nested subprocess
 
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //         fail("Parsing failed with exception: " + e.getMessage());
-    //     }
-    // }
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Parsing failed with exception: " + e.getMessage());
+        }
+    }
 
     @Test
     public void testParseFormActivityWithMappingContext() {
