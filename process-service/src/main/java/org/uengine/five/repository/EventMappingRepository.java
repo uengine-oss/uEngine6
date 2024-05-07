@@ -1,0 +1,13 @@
+package org.uengine.five.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.uengine.five.entity.EventMappingEntity;
+
+@RepositoryRestResource(collectionResourceRel = "event-mapping", path = "event-mapping")
+public interface EventMappingRepository extends JpaRepository<EventMappingEntity, String> {
+
+    @Query("SELECT e.definitionId FROM EventMappingEntity e WHERE e.eventType = ?1")
+    String findDefinitionIdByEventType(String eventType);
+}

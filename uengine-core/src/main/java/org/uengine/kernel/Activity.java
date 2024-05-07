@@ -28,6 +28,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.uengine.contexts.EventSynchronization;
 //import org.springframework.expression.spel.standard.SpelExpressionParser;
 //import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.uengine.contexts.TextContext;
@@ -2095,4 +2096,13 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 			}
 	}
 
+	EventSynchronization eventSynchronization;
+	
+	public EventSynchronization getEventSynchronization() {
+		return eventSynchronization;
+	}
+
+	public void setEventSynchronization(EventSynchronization eventSynchronization) {
+		this.eventSynchronization = eventSynchronization;
+	}
 }
