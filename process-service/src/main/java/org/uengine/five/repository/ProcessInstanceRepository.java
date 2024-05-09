@@ -49,6 +49,7 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     @Query("select pi from ProcessInstanceEntity pi where pi.rootInstId = :instId")
     List<ProcessInstanceEntity> findChild(@Param("instId") Long instId);
 
+    // @Query("select pi from ProcessInstanceEntity pi where pi.corrKey = :corrKey and pi.status = :status")
     List<ProcessInstanceEntity> findByCorrKeyAndStatus(String corrKey, String status);
 }
 
