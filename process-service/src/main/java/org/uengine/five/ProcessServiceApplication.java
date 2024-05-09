@@ -21,7 +21,7 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.uengine.five.config.kafka.KafkaProcessor;
 
 @SpringBootApplication
-// @EnableBinding(KafkaProcessor.class)
+@EnableBinding(KafkaProcessor.class)
 @EnableFeignClients
 public class ProcessServiceApplication {
 
