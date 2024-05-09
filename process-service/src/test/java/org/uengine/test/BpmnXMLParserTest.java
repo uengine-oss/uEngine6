@@ -270,12 +270,7 @@ public class BpmnXMLParserTest {
             // assertTrue("Activity_0hon0vy should be an instance of SubProcess",
             //         nestedSubProcessActivity instanceof SubProcess);
 
-            // SubProcess nestedSubProcess = (SubProcess) nestedSubProcessActivity;
-            // assertFalse("Nested SubProcess should have child activities",
-            //         nestedSubProcess.getChildActivities().isEmpty());
-
-            // Additional checks can be performed here for other activities and properties
-            // within the nested subprocess
+            
 
         } catch (Exception e) {
             e.printStackTrace();

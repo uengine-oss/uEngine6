@@ -23,6 +23,16 @@ public class WorkItemResource extends RepresentationModel {
         this.worklist = worklist;
     }
 
+    String execScope;
+
+    public String getExecScope() {
+        return execScope;
+    }
+
+    public void setExecScope(String execScope) {
+        this.execScope = execScope;
+    }
+
     Activity activity;
 
     public Activity getActivity() {
