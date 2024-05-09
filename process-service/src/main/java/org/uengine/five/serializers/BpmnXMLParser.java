@@ -409,6 +409,7 @@ public class BpmnXMLParser {
                                             }
                                         }
                                         subTask.setTracingTag(subId);
+                                        // subTask.setName
                                         ((SubProcess) task).addChildActivity(subTask);
                                         
 

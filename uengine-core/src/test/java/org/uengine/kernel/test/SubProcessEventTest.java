@@ -16,6 +16,31 @@ public class SubProcessEventTest extends UEngineTest {
 
     ProcessDefinition processDefinition;
 
+    /**
+     * BPMN Text Diagram:
+     * 
+     * [StartEvent] --> (startEvent)
+     *     |
+     *     v
+     * [SubProcess] --> (subProcess)
+     *     |
+     *     |--> [ReceiveActivity] --> (activityWithinSubProcess)
+     *     |
+     *     v
+     * [Event] --> (cancelEvent)
+     *     |
+     *     v
+     * [DefaultActivity] --> (activityAfterSubProcess)
+     * 
+     * Sequence Flows:
+     * startEvent -> subProcess -> activityAfterSubProcess
+     * 
+     * Methods:
+     * setUp(): Initializes the process definition with the specified BPMN elements and sequence flows.
+     */
+
+
+    
     public void setUp() throws Exception {
         processDefinition = new ProcessDefinition();
 

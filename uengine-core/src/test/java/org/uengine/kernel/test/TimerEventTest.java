@@ -135,7 +135,7 @@ public class TimerEventTest extends UEngineTest {
         System.out.println("testNone");
     }
 
-    public void dontTestTimerEvent() throws Exception {
+    public void testTimerEvent() throws Exception {
 
         ProcessInstance instance = processDefinition.createInstance("test", null);
 

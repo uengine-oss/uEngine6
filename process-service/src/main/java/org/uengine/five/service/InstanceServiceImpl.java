@@ -634,11 +634,14 @@ public class InstanceServiceImpl implements InstanceService {
     public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
             throws Exception {
 
+        // execution scope
+        // instance.setExecutionScope(esc.getExecutionScope());
+        
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-
+        instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
                 .getActivity(worklistEntity.getTrcTag()));
 
