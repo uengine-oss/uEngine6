@@ -88,6 +88,7 @@ public class InstanceServiceImpl implements InstanceService {
     WorklistRepository worklistRepository;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
+    static ObjectMapper defaultObjectMapper = new ObjectMapper();
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -206,12 +207,12 @@ public class InstanceServiceImpl implements InstanceService {
         return new InstanceResource(instance);
     }
 
-    @RequestMapping(value="/instance/{instanceId}/eventList")
+    @RequestMapping(value = "/instance/{instanceId}/eventList")
     @ProcessTransactional(readOnly = true)
     public Vector getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         Vector messageListener = (Vector) instance.getMessageListeners("event");
-        
+
         return messageListener;
     }
 
@@ -274,7 +275,7 @@ public class InstanceServiceImpl implements InstanceService {
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
             @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        Serializable value = objectMapper.readValue(json, Serializable.class);
+        Serializable value = defaultObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
     }
 
@@ -693,7 +694,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/instance/{instanceId}/fire-message", method = RequestMethod.POST)
     @ProcessTransactional
-    public void fireMessage(@PathVariable("instanceId") String instanceId, @RequestBody Message message) throws Exception {
+    public void fireMessage(@PathVariable("instanceId") String instanceId, @RequestBody Message message)
+            throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         if (instance != null) {
             instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
