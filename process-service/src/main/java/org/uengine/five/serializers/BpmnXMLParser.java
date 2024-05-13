@@ -99,348 +99,652 @@ public class BpmnXMLParser {
     // }
     // }
     // }
+    void parseActivities(Node processNode, Map<String, String> taskToLaneMap, ScopeActivity processDefinition, ScopeActivity mainProcessDefinition)
+            throws Exception {
+        if (processNode.getNodeType() != Node.ELEMENT_NODE) {
+            return;
+        }
+
+        NodeList childNodes = processNode.getChildNodes();
+
+        for (int j = 0; j < childNodes.getLength(); j++) {
+            Node node = childNodes.item(j);
+            if (node.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
+
+            Element element = (Element) node;
+            String nodeName = element.getNodeName();
+
+            switch (nodeName) {
+                case "bpmn:laneSet":
+                    parseLaneSet(element, taskToLaneMap, processDefinition);
+                    break;
+                case "bpmn:extensionElements":
+                    parseExtensionElements(element, processDefinition);
+                    break;
+                default:
+                    parseNode(element, taskToLaneMap, processDefinition, mainProcessDefinition);
+                    break;
+            }
+        }
+    }
 
     void parseActivities(Node processNode, ScopeActivity processDefinition) throws Exception {
+        if (processNode.getNodeType() != Node.ELEMENT_NODE) {
+            return;
+        }
 
-        if (processNode.getNodeType() == Node.ELEMENT_NODE) {
-            NodeList childNodes = processNode.getChildNodes();
-            HashMap<String, String> taskToLaneMap = new HashMap<>();
+        NodeList childNodes = processNode.getChildNodes();
+        HashMap<String, String> taskToLaneMap = new HashMap<>();
 
-            for (int j = 0; j < childNodes.getLength(); j++) {
-                Node node = childNodes.item(j);
-                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                    Element element = (Element) node;
-                    String nodeName = element.getNodeName();
+        for (int j = 0; j < childNodes.getLength(); j++) {
+            Node node = childNodes.item(j);
+            if (node.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
 
-                    // LaneSet은 무시
-                    if (nodeName.equals("bpmn:laneSet")) {
-                        // String laneSetId = element.getAttribute("id");
-                        NodeList lanes = element.getElementsByTagName("bpmn:lane");
-                        for (int k = 0; k < lanes.getLength(); k++) {
-                            Node laneNode = lanes.item(k);
-                            if (laneNode.getNodeType() == Node.ELEMENT_NODE) {
-                                Element laneElement = (Element) laneNode;
-                                NodeList flowNodeRefs = laneElement.getElementsByTagName("bpmn:flowNodeRef");
-                                for (int flowIndex = 0; flowIndex < flowNodeRefs.getLength(); flowIndex++) {
-                                    Element flowNodeRef = (Element) flowNodeRefs.item(flowIndex);
-                                    taskToLaneMap.put(flowNodeRef.getTextContent(), laneElement.getAttribute("name"));
-                                }
-                                // String laneId = laneElement.getAttribute("id");
-                                String laneName = laneElement.getAttribute("name");
-                                Role role = new Role();
+            Element element = (Element) node;
+            String nodeName = element.getNodeName();
 
-                                NodeList propertiesNodes = laneElement.getElementsByTagName("uengine:properties");
-                                for (int l = 0; l < propertiesNodes.getLength(); l++) {
-                                    Node propertiesNode = propertiesNodes.item(l);
-                                    if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                        NodeList jsonNodes = ((Element) propertiesNode)
-                                                .getElementsByTagName("uengine:json");
-                                        for (int m = 0; m < jsonNodes.getLength(); m++) {
-                                            Node jsonNode = jsonNodes.item(m);
-                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                                    || jsonNode.getNodeType() == Node.TEXT_NODE
-                                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                                String jsonText = jsonNode.getTextContent();
-                                                try {
-                                                    Role roleContext = objectMapper.readValue(jsonText, Role.class);
-                                                    BeanUtils.copyProperties(role, roleContext);
-                                                } catch (Exception e) {
-                                                    throw new RuntimeException("Error parsing lane JSON", e);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                role.setName(laneName);
+            switch (nodeName) {
+                case "bpmn:laneSet":
+                    parseLaneSet(element, taskToLaneMap, processDefinition);
+                    break;
+                case "bpmn:extensionElements":
+                    parseExtensionElements(element, processDefinition);
+                    break;
+                default:
+                    parseNode(element, taskToLaneMap, processDefinition, null);
+                    break;
+            }
+        }
+    }
 
-                                processDefinition.addRole(role);
-                            }
-                        }
-                        continue;
-                    }
-                    if (nodeName.equals("bpmn:extensionElements")) {
-                        // TODO: Process Variable Parse
-                        NodeList extensionNodes = element.getChildNodes();
-                        for (int k = 0; k < extensionNodes.getLength(); k++) {
-                            Node extensionNode = extensionNodes.item(k);
-                            if (extensionNode.getNodeName().equals("uengine:properties")) {
-                                NodeList variableNodes = extensionNode.getChildNodes();
-                                for (int i = 0; i < variableNodes.getLength(); i++) {
-                                    Node variableNode = variableNodes.item(i);
-                                    if (variableNode.getNodeName().equals("uengine:variable")) {
-                                        Element variableElement = (Element) variableNode;
-                                        String varName = variableElement.getAttribute("name");
-                                        String type = variableElement.getAttribute("type");
+    private void parseLaneSet(Element element, Map<String, String> taskToLaneMap, ScopeActivity processDefinition)
+            throws Exception {
+        NodeList lanes = element.getElementsByTagName("bpmn:lane");
+        for (int k = 0; k < lanes.getLength(); k++) {
+            Node laneNode = lanes.item(k);
+            if (laneNode.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
 
-                                        // Create a new ProcessVariable instance
-                                        ProcessVariable variable = new ProcessVariable();
+            Element laneElement = (Element) laneNode;
+            parseLane(laneElement, taskToLaneMap, processDefinition);
+        }
+    }
 
-                                        if (variableNode.getNodeType() == Node.ELEMENT_NODE) {
-                                            NodeList jsonNodes = ((Element) variableNode)
-                                                    .getElementsByTagName("uengine:json");
-                                            for (int m = 0; m < jsonNodes.getLength(); m++) {
-                                                Node jsonNode = jsonNodes.item(m);
-                                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                                        || jsonNode.getNodeType() == Node.TEXT_NODE
-                                                        || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                                    String jsonText = jsonNode.getTextContent();
-                                                    try {
-                                                        variable = objectMapper.readValue(jsonText,
-                                                                ProcessVariable.class);
+    private void parseLane(Element laneElement, Map<String, String> taskToLaneMap, ScopeActivity processDefinition)
+            throws Exception {
+        NodeList flowNodeRefs = laneElement.getElementsByTagName("bpmn:flowNodeRef");
+        for (int flowIndex = 0; flowIndex < flowNodeRefs.getLength(); flowIndex++) {
+            Element flowNodeRef = (Element) flowNodeRefs.item(flowIndex);
+            taskToLaneMap.put(flowNodeRef.getTextContent(), laneElement.getAttribute("name"));
+        }
 
-                                                    } catch (Exception e) {
-                                                        throw new RuntimeException("Error parsing lane JSON", e);
-                                                    }
-                                                }
-                                            }
-                                        }
+        String laneName = laneElement.getAttribute("name");
+        Role role = parseRole(laneElement);
+        role.setName(laneName);
+        processDefinition.addRole(role);
+    }
 
-                                        variable.setName(varName);
-                                        String javaType = convertToJavaType(type);
-                                        try {
-                                            // Assuming the type attribute is a fully qualified class name
-                                            variable.setType(Class.forName(javaType));
-                                        } catch (ClassNotFoundException e) {
-                                            throw new RuntimeException("Class not found for type: " + type);
-                                        }
-
-                                        // Add the variable to the process definition
-                                        processDefinition.addProcessVariable(variable);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        String id = element.getAttribute("id");
-                        String name = element.getAttribute("name");
-                        nodeName = element.getNodeName();
-                        if (nodeName.contains(":")) {
-                            nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
-                        }
-                        if (nodeName.equals("sequenceFlow")) {
-                            String sourceRef = element.getAttribute("sourceRef");
-                            String targetRef = element.getAttribute("targetRef");
-                            SequenceFlow sequenceFlow = new SequenceFlow();
-
-                            // JSON parsing and property setting logic for sequenceFlow
-                            NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
-                            for (int k = 0; k < propertiesNodes.getLength(); k++) {
-                                Node propertiesNode = propertiesNodes.item(k);
-                                if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                    NodeList jsonNodes = ((Element) propertiesNode)
-                                            .getElementsByTagName("uengine:json");
-                                    for (int l = 0; l < jsonNodes.getLength(); l++) {
-                                        Node jsonNode = jsonNodes.item(l);
-                                        if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                                || jsonNode.getNodeType() == Node.TEXT_NODE
-                                                || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                            String jsonText = jsonNode.getTextContent();
-                                            try {
-                                                // Assuming the JSON structure matches the SequenceFlow class structure
-                                                SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText,
-                                                        SequenceFlow.class);
-                                                // Use the JSON object to set properties on the SequenceFlow object
-                                                BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
-                                            } catch (Exception e) {
-                                                throw new RuntimeException("Error parsing sequenceFlow JSON", e);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            sequenceFlow.setTracingTag(id);
-                            sequenceFlow.setSourceRef(sourceRef);
-                            sequenceFlow.setTargetRef(targetRef);
-
-                            processDefinition.addSequenceFlow(sequenceFlow);
-                        } else {
-                            if (nodeName.equals("incoming") || nodeName.equals("outgoing")) {
-                                // Skip processing for incoming or outgoing nodes
-                                continue;
-                            }
-
-                            String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
-
-                            String fullClassName = null;
-                            if (className.equals("Task")) {
-                                fullClassName = "org.uengine.kernel.DefaultActivity";
-                            } else if (className.equals("UserTask") || className.equals("ManualTask")) {
-                                fullClassName = "org.uengine.kernel.HumanActivity";
-                            } else if (className.equals("ScriptTask")) {
-                                fullClassName = "org.uengine.kernel.ScriptActivity";
-                            } else if (className.equals("BoundaryEvent")) {
-                                List<String> eventTypes = Arrays.asList("timer", "signal", "error", "message");
-                                fullClassName = eventTypes.stream()
-                                        .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
-                                                .getLength() > 0
-                                                || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
-                                                        .getLength() > 0)
-                                        .findFirst()
-                                        .map(eventType -> "org.uengine.kernel.bpmn."
-                                                + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
-                                                + "Event")
-                                        .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
-
-                            } else {
-                                fullClassName = "org.uengine.kernel.bpmn." + className;
-                            }
-
-                            try {
-                                Class<?> clazz = Class.forName(fullClassName);
-                                Object instance = clazz.getDeclaredConstructor().newInstance();
-                                Activity task = (Activity) instance;
-
-                                // if ("SubProcess".equals(className)) {
-                                // parseActivities(element, (SubProcess) task);
-                                // }
-
-                                // JSON parsing and property setting logic
-                                NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
-                                for (int k = 0; k < propertiesNodes.getLength(); k++) {
-                                    Node propertiesNode = propertiesNodes.item(k);
-                                    if (propertiesNode.getParentNode().getParentNode().getNodeName()
-                                            .equals(element.getNodeName())) {
-                                        if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                                            NodeList jsonNodes = ((Element) propertiesNode)
-                                                    .getElementsByTagName("uengine:json");
-                                            for (int l = 0; l < jsonNodes.getLength(); l++) {
-                                                Node jsonNode = jsonNodes.item(l);
-                                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                                        || jsonNode.getNodeType() == Node.TEXT_NODE
-                                                        || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                                    String jsonText = jsonNode.getTextContent();
-
-                                                    Class castingClass = clazz;
-                                                    if (jsonText.contains("_type")) {
-                                                        castingClass = Activity.class;
-                                                    }
-
-                                                    Object jsonObject = objectMapper.readValue(jsonText, castingClass);
-                                                    // Use the JSON object to set properties on the Activity object
-                                                    // BeanUtils.copyProperties(task, jsonObject)d;
-
-                                                    if (className.equals("BoundaryEvent")) {
-                                                        task = (Event) jsonObject;
-                                                        ((Event) task)
-                                                                .setAttachedToRef(
-                                                                        element.getAttribute("attachedToRef"));
-                                                    } else {
-
-                                                        task = (Activity) jsonObject;
-                                                    }
-
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        // subProcess의 childActivity에 넣기
-                                        // parseActivities(propertiesNode, (SubProcess) task);
-                                        Node subNode = propertiesNode.getParentNode().getParentNode();
-                                        String subId = subNode.getAttributes().getNamedItem("id").getTextContent();
-                                        String subName = subNode.getAttributes().getNamedItem("name").getTextContent();
-                                        String subNodeName = subNode.getNodeName();
-                                        if (subNodeName.contains(":")) {
-                                            subNodeName = subNodeName.substring(subNodeName.indexOf(":") + 1);
-                                        }
-                                        String subClassName = subNodeName.substring(0, 1).toUpperCase()
-                                                + subNodeName.substring(1);
-
-                                        String fullSubClassName = null;
-                                        if (subClassName.equals("Task")) {
-                                            fullSubClassName = "org.uengine.kernel.DefaultActivity";
-                                        } else if (subClassName.equals("UserTask")
-                                                || subClassName.equals("ManualTask")) {
-                                            fullSubClassName = "org.uengine.kernel.HumanActivity";
-                                        } else if (subClassName.equals("ScriptTask")) {
-                                            fullSubClassName = "org.uengine.kernel.ScriptActivity";
-                                        } else if (subClassName.equals("BoundaryEvent")) {
-
-                                            List<String> eventTypes = Arrays.asList("timer", "signal");
-
-                                            fullSubClassName = eventTypes.stream()
-                                                    .filter(eventType -> element
-                                                            .getElementsByTagName(eventType + "EventDefinition")
-                                                            .getLength() > 0
-                                                            || element
-                                                                    .getElementsByTagName(
-                                                                            "bpmn:" + eventType + "EventDefinition")
-                                                                    .getLength() > 0)
-                                                    .findFirst()
-                                                    .map(eventType -> "org.uengine.kernel.bpmn."
-                                                            + Character.toUpperCase(eventType.charAt(0))
-                                                            + eventType.substring(1)
-                                                            + "Event")
-                                                    .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
-
-                                        } else {
-                                            fullSubClassName = "org.uengine.kernel.bpmn." + subClassName;
-                                        }
-                                        Class<?> subClazz = Class.forName(fullSubClassName);
-                                        Object subInstance = subClazz.getDeclaredConstructor().newInstance();
-                                        Activity subTask = (Activity) subInstance;
-                                        NodeList jsonNodes = ((Element) propertiesNode)
-                                                .getElementsByTagName("uengine:json");
-                                        for (int l = 0; l < jsonNodes.getLength(); l++) {
-                                            Node jsonNode = jsonNodes.item(l);
-                                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                                    || jsonNode.getNodeType() == Node.TEXT_NODE
-                                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                                String jsonText = jsonNode.getTextContent();
-
-                                                Class castingClass = subClazz;
-                                                if (jsonText.contains("_type")) {
-                                                    castingClass = Activity.class;
-                                                }
-
-                                                Object jsonObject = objectMapper.readValue(jsonText, castingClass);
-                                                // Use the JSON object to set properties on the Activity object
-                                                // BeanUtils.copyProperties(task, jsonObject)d;
-
-                                                if (subClassName.equals("BoundaryEvent")) {
-                                                    subTask = (Event) jsonObject;
-                                                    ((Event) subTask)
-                                                            .setAttachedToRef(
-                                                                    element.getAttribute("attachedToRef"));
-                                                } else {
-                                                    subTask = (Activity) jsonObject;
-                                                }
-
-                                            }
-                                        }
-                                        subTask.setTracingTag(subId);
-                                        subTask.setName(subName);
-                                        // subTask.setName
-                                        ((SubProcess) task).addChildActivity(subTask);
-
-                                    }
-
-                                }
-
-                                if (task instanceof HumanActivity) {
-                                    Role role = createRoleInLane(taskToLaneMap, id);
-                                    ((HumanActivity) task).setRole(role);
-                                }
-                                task.setTracingTag(id);
-                                task.setName(name);
-
-                                // if ("SubProcess".equals(className)) {
-                                // parseActivities(node, (SubProcess) task);
-                                // }
-
-                                processDefinition.addChildActivity(task);
-
-                            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException
-                                    | NoSuchMethodException | InvocationTargetException e) {
-                                throw new RuntimeException("Error parsing task JSON:" + e.getMessage(), e);
-                            }
-
-                        }
+    private Role parseRole(Element laneElement) throws Exception {
+        NodeList propertiesNodes = laneElement.getElementsByTagName("uengine:properties");
+        for (int l = 0; l < propertiesNodes.getLength(); l++) {
+            Node propertiesNode = propertiesNodes.item(l);
+            if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                for (int m = 0; m < jsonNodes.getLength(); m++) {
+                    Node jsonNode = jsonNodes.item(m);
+                    if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE
+                            || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                        String jsonText = jsonNode.getTextContent();
+                        return objectMapper.readValue(jsonText, Role.class);
                     }
                 }
             }
         }
+        return new Role(); // Return a default role if no JSON is found
     }
+
+    private void parseExtensionElements(Element element, ScopeActivity processDefinition) throws Exception {
+        NodeList extensionNodes = element.getChildNodes();
+        for (int k = 0; k < extensionNodes.getLength(); k++) {
+            Node extensionNode = extensionNodes.item(k);
+            if (extensionNode.getNodeName().equals("uengine:properties")) {
+                parseVariables(extensionNode, processDefinition);
+            }
+        }
+    }
+
+    private void parseVariables(Node extensionNode, ScopeActivity processDefinition) throws Exception {
+        NodeList variableNodes = extensionNode.getChildNodes();
+        for (int i = 0; i < variableNodes.getLength(); i++) {
+            Node variableNode = variableNodes.item(i);
+            if (variableNode.getNodeName().equals("uengine:variable")) {
+                parseVariable((Element) variableNode, processDefinition);
+            }
+        }
+    }
+
+    private void parseVariable(Element variableElement, ScopeActivity processDefinition) throws Exception {
+        String varName = variableElement.getAttribute("name");
+        String type = variableElement.getAttribute("type");
+        ProcessVariable variable = new ProcessVariable();
+
+        NodeList jsonNodes = variableElement.getElementsByTagName("uengine:json");
+        for (int m = 0; m < jsonNodes.getLength(); m++) {
+            Node jsonNode = jsonNodes.item(m);
+            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE
+                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                String jsonText = jsonNode.getTextContent();
+                variable = objectMapper.readValue(jsonText, ProcessVariable.class);
+                variable.setName(varName);
+                String javaType = convertToJavaType(type);
+                variable.setType(Class.forName(javaType));
+            }
+        }
+
+        processDefinition.addProcessVariable(variable);
+    }
+
+    private void parseNode(Element element, Map<String, String> taskToLaneMap, ScopeActivity processDefinition, ScopeActivity mainProcessDefinition)
+            throws Exception {
+        String id = element.getAttribute("id");
+        String name = element.getAttribute("name");
+        String nodeName = element.getNodeName();
+        if (nodeName.contains(":")) {
+            nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
+        }
+
+        switch (nodeName) {
+            case "sequenceFlow":
+                parseSequenceFlow(element, processDefinition);
+                break;
+            case "incoming":
+            case "outgoing":
+                // Skip processing for incoming or outgoing nodes
+                break;
+            default:
+                parseActivity(element, taskToLaneMap, processDefinition);
+                break;
+        }
+    }
+
+    private void parseSequenceFlow(Element element, ScopeActivity processDefinition) throws Exception {
+        String id = element.getAttribute("id");
+        String sourceRef = element.getAttribute("sourceRef");
+        String targetRef = element.getAttribute("targetRef");
+        SequenceFlow sequenceFlow = new SequenceFlow();
+        sequenceFlow.setTracingTag(id);
+        sequenceFlow.setSourceRef(sourceRef);
+        sequenceFlow.setTargetRef(targetRef);
+
+        NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
+        for (int k = 0; k < propertiesNodes.getLength(); k++) {
+            Node propertiesNode = propertiesNodes.item(k);
+            if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                for (int l = 0; l < jsonNodes.getLength(); l++) {
+                    Node jsonNode = jsonNodes.item(l);
+                    if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE
+                            || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                        String jsonText = jsonNode.getTextContent();
+                        SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText, SequenceFlow.class);
+                        BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+                    }
+                }
+            }
+        }
+
+        processDefinition.addSequenceFlow(sequenceFlow);
+    }
+
+    private void parseActivity(Element element, Map<String, String> taskToLaneMap, ScopeActivity processDefinition)
+            throws Exception {
+        String id = element.getAttribute("id");
+        String name = element.getAttribute("name");
+        String nodeName = element.getNodeName();
+        if (nodeName.contains(":")) {
+            nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
+        }
+
+        String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
+        String fullClassName = parseFullClassName(element, className);
+
+        Class<?> clazz = Class.forName(fullClassName);
+        Activity task = (Activity) clazz.getDeclaredConstructor().newInstance();
+
+        // JSON 파싱 및 속성 설정
+        NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
+        for (int k = 0; k < propertiesNodes.getLength(); k++) {
+            Node propertiesNode = propertiesNodes.item(k);
+            if (propertiesNode.getParentNode().getParentNode().getNodeName().equals(element.getNodeName())) {
+                if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                    NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                    for (int l = 0; l < jsonNodes.getLength(); l++) {
+                        Node jsonNode = jsonNodes.item(l);
+                        if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                || jsonNode.getNodeType() == Node.TEXT_NODE
+                                || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                            String jsonText = jsonNode.getTextContent();
+                            if (jsonText.contains("_type")) {
+                                clazz = Activity.class;
+                            }
+
+                            Object jsonObject = objectMapper.readValue(jsonText, clazz);
+                            if (className.equals("SubProcess")) {
+                                parseActivities(element, taskToLaneMap, (SubProcess) task, processDefinition);
+                            } else if (className.equals("BoundaryEvent")) {
+                                task = (Event) jsonObject;
+                                ((Event) task)
+                                        .setAttachedToRef(
+                                                element.getAttribute("attachedToRef"));
+                            } else {
+                                task = (Activity) jsonObject;
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        if (task instanceof HumanActivity) {
+            if (((HumanActivity) task).getRole() == null) {
+                Role role = createRoleInLane(taskToLaneMap, id);
+                ((HumanActivity) task).setRole(role);
+            }
+
+        }
+
+        task.setTracingTag(id);
+        task.setName(name);
+        processDefinition.addChildActivity(task);
+
+    }
+
+    private String parseFullClassName(Element element, String className) {
+        String fullClassName;
+        if (className.equals("Task")) {
+            fullClassName = "org.uengine.kernel.DefaultActivity";
+        } else if (className.equals("UserTask") || className.equals("ManualTask")) {
+            fullClassName = "org.uengine.kernel.HumanActivity";
+        } else if (className.equals("ScriptTask")) {
+            fullClassName = "org.uengine.kernel.ScriptActivity";
+        } else if (className.equals("BoundaryEvent")) {
+            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+                    "message");
+            fullClassName = eventTypes.stream()
+                    .filter(eventType -> element.getElementsByTagName(eventType +
+                            "EventDefinition")
+                            .getLength() > 0
+                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                    .getLength() > 0)
+                    .findFirst()
+                    .map(eventType -> "org.uengine.kernel.bpmn."
+                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+                            + "Event")
+                    .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+
+        } else {
+            fullClassName = "org.uengine.kernel.bpmn." + className;
+        }
+
+        return fullClassName;
+    }
+    // void parseActivities(Node processNode, ScopeActivity processDefinition)
+    // throws Exception {
+
+    // if (processNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList childNodes = processNode.getChildNodes();
+    // HashMap<String, String> taskToLaneMap = new HashMap<>();
+
+    // for (int j = 0; j < childNodes.getLength(); j++) {
+    // Node node = childNodes.item(j);
+    // if (node.getNodeType() == Node.ELEMENT_NODE) {
+    // Element element = (Element) node;
+    // String nodeName = element.getNodeName();
+
+    // // LaneSet은 무시
+    // if (nodeName.equals("bpmn:laneSet")) {
+    // // String laneSetId = element.getAttribute("id");
+    // NodeList lanes = element.getElementsByTagName("bpmn:lane");
+    // for (int k = 0; k < lanes.getLength(); k++) {
+    // Node laneNode = lanes.item(k);
+    // if (laneNode.getNodeType() == Node.ELEMENT_NODE) {
+    // Element laneElement = (Element) laneNode;
+    // NodeList flowNodeRefs = laneElement.getElementsByTagName("bpmn:flowNodeRef");
+    // for (int flowIndex = 0; flowIndex < flowNodeRefs.getLength(); flowIndex++) {
+    // Element flowNodeRef = (Element) flowNodeRefs.item(flowIndex);
+    // taskToLaneMap.put(flowNodeRef.getTextContent(),
+    // laneElement.getAttribute("name"));
+    // }
+    // // String laneId = laneElement.getAttribute("id");
+    // String laneName = laneElement.getAttribute("name");
+    // Role role = new Role();
+
+    // NodeList propertiesNodes =
+    // laneElement.getElementsByTagName("uengine:properties");
+    // for (int l = 0; l < propertiesNodes.getLength(); l++) {
+    // Node propertiesNode = propertiesNodes.item(l);
+    // if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList jsonNodes = ((Element) propertiesNode)
+    // .getElementsByTagName("uengine:json");
+    // for (int m = 0; m < jsonNodes.getLength(); m++) {
+    // Node jsonNode = jsonNodes.item(m);
+    // if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+    // || jsonNode.getNodeType() == Node.TEXT_NODE
+    // || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+    // String jsonText = jsonNode.getTextContent();
+    // try {
+    // Role roleContext = objectMapper.readValue(jsonText, Role.class);
+    // BeanUtils.copyProperties(role, roleContext);
+    // } catch (Exception e) {
+    // throw new RuntimeException("Error parsing lane JSON", e);
+    // }
+    // }
+    // }
+    // }
+    // }
+    // role.setName(laneName);
+
+    // processDefinition.addRole(role);
+    // }
+    // }
+    // continue;
+    // }
+    // if (nodeName.equals("bpmn:extensionElements")) {
+    // // TODO: Process Variable Parse
+    // NodeList extensionNodes = element.getChildNodes();
+    // for (int k = 0; k < extensionNodes.getLength(); k++) {
+    // Node extensionNode = extensionNodes.item(k);
+    // if (extensionNode.getNodeName().equals("uengine:properties")) {
+    // NodeList variableNodes = extensionNode.getChildNodes();
+    // for (int i = 0; i < variableNodes.getLength(); i++) {
+    // Node variableNode = variableNodes.item(i);
+    // if (variableNode.getNodeName().equals("uengine:variable")) {
+    // Element variableElement = (Element) variableNode;
+    // String varName = variableElement.getAttribute("name");
+    // String type = variableElement.getAttribute("type");
+
+    // // Create a new ProcessVariable instance
+    // ProcessVariable variable = new ProcessVariable();
+
+    // if (variableNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList jsonNodes = ((Element) variableNode)
+    // .getElementsByTagName("uengine:json");
+    // for (int m = 0; m < jsonNodes.getLength(); m++) {
+    // Node jsonNode = jsonNodes.item(m);
+    // if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+    // || jsonNode.getNodeType() == Node.TEXT_NODE
+    // || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+    // String jsonText = jsonNode.getTextContent();
+    // try {
+    // variable = objectMapper.readValue(jsonText,
+    // ProcessVariable.class);
+
+    // } catch (Exception e) {
+    // throw new RuntimeException("Error parsing lane JSON", e);
+    // }
+    // }
+    // }
+    // }
+
+    // variable.setName(varName);
+    // String javaType = convertToJavaType(type);
+    // try {
+    // // Assuming the type attribute is a fully qualified class name
+    // variable.setType(Class.forName(javaType));
+    // } catch (ClassNotFoundException e) {
+    // throw new RuntimeException("Class not found for type: " + type);
+    // }
+
+    // // Add the variable to the process definition
+    // processDefinition.addProcessVariable(variable);
+    // }
+    // }
+    // }
+    // }
+    // } else {
+    // String id = element.getAttribute("id");
+    // String name = element.getAttribute("name");
+    // nodeName = element.getNodeName();
+    // if (nodeName.contains(":")) {
+    // nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
+    // }
+    // if (nodeName.equals("sequenceFlow")) {
+    // String sourceRef = element.getAttribute("sourceRef");
+    // String targetRef = element.getAttribute("targetRef");
+    // SequenceFlow sequenceFlow = new SequenceFlow();
+
+    // // JSON parsing and property setting logic for sequenceFlow
+    // NodeList propertiesNodes =
+    // element.getElementsByTagName("uengine:properties");
+    // for (int k = 0; k < propertiesNodes.getLength(); k++) {
+    // Node propertiesNode = propertiesNodes.item(k);
+    // if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList jsonNodes = ((Element) propertiesNode)
+    // .getElementsByTagName("uengine:json");
+    // for (int l = 0; l < jsonNodes.getLength(); l++) {
+    // Node jsonNode = jsonNodes.item(l);
+    // if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+    // || jsonNode.getNodeType() == Node.TEXT_NODE
+    // || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+    // String jsonText = jsonNode.getTextContent();
+    // try {
+    // // Assuming the JSON structure matches the SequenceFlow class structure
+    // SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText,
+    // SequenceFlow.class);
+    // // Use the JSON object to set properties on the SequenceFlow object
+    // BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+    // } catch (Exception e) {
+    // throw new RuntimeException("Error parsing sequenceFlow JSON", e);
+    // }
+    // }
+    // }
+    // }
+    // }
+
+    // sequenceFlow.setTracingTag(id);
+    // sequenceFlow.setSourceRef(sourceRef);
+    // sequenceFlow.setTargetRef(targetRef);
+
+    // processDefinition.addSequenceFlow(sequenceFlow);
+    // } else {
+    // if (nodeName.equals("incoming") || nodeName.equals("outgoing")) {
+    // // Skip processing for incoming or outgoing nodes
+    // continue;
+    // }
+
+    // String className = nodeName.substring(0, 1).toUpperCase() +
+    // nodeName.substring(1);
+
+    // String fullClassName = null;
+    // if (className.equals("Task")) {
+    // fullClassName = "org.uengine.kernel.DefaultActivity";
+    // } else if (className.equals("UserTask") || className.equals("ManualTask")) {
+    // fullClassName = "org.uengine.kernel.HumanActivity";
+    // } else if (className.equals("ScriptTask")) {
+    // fullClassName = "org.uengine.kernel.ScriptActivity";
+    // } else if (className.equals("BoundaryEvent")) {
+    // List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+    // "message");
+    // fullClassName = eventTypes.stream()
+    // .filter(eventType -> element.getElementsByTagName(eventType +
+    // "EventDefinition")
+    // .getLength() > 0
+    // || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+    // .getLength() > 0)
+    // .findFirst()
+    // .map(eventType -> "org.uengine.kernel.bpmn."
+    // + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+    // + "Event")
+    // .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+
+    // } else {
+    // fullClassName = "org.uengine.kernel.bpmn." + className;
+    // }
+
+    // try {
+    // Class<?> clazz = Class.forName(fullClassName);
+    // Object instance = clazz.getDeclaredConstructor().newInstance();
+    // Activity task = (Activity) instance;
+
+    // // if ("SubProcess".equals(className)) {
+    // // parseActivities(element, (SubProcess) task);
+    // // }
+
+    // // JSON parsing and property setting logic
+    // NodeList propertiesNodes =
+    // element.getElementsByTagName("uengine:properties");
+    // for (int k = 0; k < propertiesNodes.getLength(); k++) {
+    // Node propertiesNode = propertiesNodes.item(k);
+    // if (propertiesNode.getParentNode().getParentNode().getNodeName()
+    // .equals(element.getNodeName())) {
+    // if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+    // NodeList jsonNodes = ((Element) propertiesNode)
+    // .getElementsByTagName("uengine:json");
+    // for (int l = 0; l < jsonNodes.getLength(); l++) {
+    // Node jsonNode = jsonNodes.item(l);
+    // if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+    // || jsonNode.getNodeType() == Node.TEXT_NODE
+    // || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+    // String jsonText = jsonNode.getTextContent();
+
+    // Class castingClass = clazz;
+    // if (jsonText.contains("_type")) {
+    // castingClass = Activity.class;
+    // }
+
+    // Object jsonObject = objectMapper.readValue(jsonText, castingClass);
+    // // Use the JSON object to set properties on the Activity object
+    // // BeanUtils.copyProperties(task, jsonObject)d;
+
+    // if (className.equals("BoundaryEvent")) {
+    // task = (Event) jsonObject;
+    // ((Event) task)
+    // .setAttachedToRef(
+    // element.getAttribute("attachedToRef"));
+    // } else {
+
+    // task = (Activity) jsonObject;
+    // }
+
+    // }
+    // }
+    // }
+    // } else {
+    // // subProcess의 childActivity에 넣기
+    // // parseActivities(propertiesNode, (SubProcess) task);
+    // Node subNode = propertiesNode.getParentNode().getParentNode();
+    // String subId = subNode.getAttributes().getNamedItem("id").getTextContent();
+    // String subName =
+    // subNode.getAttributes().getNamedItem("name").getTextContent();
+    // String subNodeName = subNode.getNodeName();
+    // if (subNodeName.contains(":")) {
+    // subNodeName = subNodeName.substring(subNodeName.indexOf(":") + 1);
+    // }
+    // String subClassName = subNodeName.substring(0, 1).toUpperCase()
+    // + subNodeName.substring(1);
+
+    // String fullSubClassName = null;
+    // if (subClassName.equals("Task")) {
+    // fullSubClassName = "org.uengine.kernel.DefaultActivity";
+    // } else if (subClassName.equals("UserTask")
+    // || subClassName.equals("ManualTask")) {
+    // fullSubClassName = "org.uengine.kernel.HumanActivity";
+    // } else if (subClassName.equals("ScriptTask")) {
+    // fullSubClassName = "org.uengine.kernel.ScriptActivity";
+    // } else if (subClassName.equals("BoundaryEvent")) {
+
+    // List<String> eventTypes = Arrays.asList("timer", "signal");
+
+    // fullSubClassName = eventTypes.stream()
+    // .filter(eventType -> element
+    // .getElementsByTagName(eventType + "EventDefinition")
+    // .getLength() > 0
+    // || element
+    // .getElementsByTagName(
+    // "bpmn:" + eventType + "EventDefinition")
+    // .getLength() > 0)
+    // .findFirst()
+    // .map(eventType -> "org.uengine.kernel.bpmn."
+    // + Character.toUpperCase(eventType.charAt(0))
+    // + eventType.substring(1)
+    // + "Event")
+    // .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+
+    // } else {
+    // fullSubClassName = "org.uengine.kernel.bpmn." + subClassName;
+    // }
+    // Class<?> subClazz = Class.forName(fullSubClassName);
+    // Object subInstance = subClazz.getDeclaredConstructor().newInstance();
+    // Activity subTask = (Activity) subInstance;
+    // NodeList jsonNodes = ((Element) propertiesNode)
+    // .getElementsByTagName("uengine:json");
+    // for (int l = 0; l < jsonNodes.getLength(); l++) {
+    // Node jsonNode = jsonNodes.item(l);
+    // if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+    // || jsonNode.getNodeType() == Node.TEXT_NODE
+    // || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+    // String jsonText = jsonNode.getTextContent();
+
+    // Class castingClass = subClazz;
+    // if (jsonText.contains("_type")) {
+    // castingClass = Activity.class;
+    // }
+
+    // Object jsonObject = objectMapper.readValue(jsonText, castingClass);
+    // // Use the JSON object to set properties on the Activity object
+    // // BeanUtils.copyProperties(task, jsonObject)d;
+
+    // if (subClassName.equals("BoundaryEvent")) {
+    // subTask = (Event) jsonObject;
+    // ((Event) subTask)
+    // .setAttachedToRef(
+    // element.getAttribute("attachedToRef"));
+    // } else {
+    // subTask = (Activity) jsonObject;
+    // }
+
+    // }
+    // }
+    // subTask.setTracingTag(subId);
+    // subTask.setName(subName);
+    // // subTask.setName
+    // ((SubProcess) task).addChildActivity(subTask);
+
+    // }
+
+    // }
+
+    // if (task instanceof HumanActivity) {
+    // Role role = createRoleInLane(taskToLaneMap, id);
+    // ((HumanActivity) task).setRole(role);
+    // }
+    // task.setTracingTag(id);
+    // task.setName(name);
+
+    // // if ("SubProcess".equals(className)) {
+    // // parseActivities(node, (SubProcess) task);
+    // // }
+
+    // processDefinition.addChildActivity(task);
+
+    // } catch (ClassNotFoundException | IllegalAccessException |
+    // InstantiationException
+    // | NoSuchMethodException | InvocationTargetException e) {
+    // throw new RuntimeException("Error parsing task JSON:" + e.getMessage(), e);
+    // }
+
+    // }
+    // }
+    // }
+    // }
+    // }
+    // }
 
     public Role createRoleInLane(Map<String, String> taskToLaneMap, String id) {
         Role role = new Role();
