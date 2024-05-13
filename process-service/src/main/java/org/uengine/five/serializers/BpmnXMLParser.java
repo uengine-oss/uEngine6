@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.uengine.contexts.HtmlFormContext;
 import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
@@ -32,6 +33,7 @@ import org.xml.sax.InputSource;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class BpmnXMLParser {
 
@@ -67,6 +69,29 @@ public class BpmnXMLParser {
                                                                                  // or boolean
 
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
+
+        return objectMapper;
+    }
+
+    public static ObjectMapper createTypedJsonArrayObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        objectMapper.setVisibilityChecker(objectMapper.getSerializationConfig()
+                .getDefaultVisibilityChecker()
+                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // ignore null
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int
+                                                                                 // or boolean
+
+        objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
+
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(HtmlFormContext.class, new HtmlFormContextDeserializer());
+        objectMapper.registerModule(module);
 
         return objectMapper;
     }
@@ -270,9 +295,7 @@ public class BpmnXMLParser {
                             } else if (className.equals("ScriptTask")) {
                                 fullClassName = "org.uengine.kernel.ScriptActivity";
                             } else if (className.equals("BoundaryEvent")) {
-
-                                List<String> eventTypes = Arrays.asList("timer", "signal");
-
+                                List<String> eventTypes = Arrays.asList("timer", "signal", "error", "message");
                                 fullClassName = eventTypes.stream()
                                         .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
                                                 .getLength() > 0
@@ -340,6 +363,7 @@ public class BpmnXMLParser {
                                         // parseActivities(propertiesNode, (SubProcess) task);
                                         Node subNode = propertiesNode.getParentNode().getParentNode();
                                         String subId = subNode.getAttributes().getNamedItem("id").getTextContent();
+                                        String subName = subNode.getAttributes().getNamedItem("name").getTextContent();
                                         String subNodeName = subNode.getNodeName();
                                         if (subNodeName.contains(":")) {
                                             subNodeName = subNodeName.substring(subNodeName.indexOf(":") + 1);
@@ -350,7 +374,8 @@ public class BpmnXMLParser {
                                         String fullSubClassName = null;
                                         if (subClassName.equals("Task")) {
                                             fullSubClassName = "org.uengine.kernel.DefaultActivity";
-                                        } else if (subClassName.equals("UserTask") || subClassName.equals("ManualTask")) {
+                                        } else if (subClassName.equals("UserTask")
+                                                || subClassName.equals("ManualTask")) {
                                             fullSubClassName = "org.uengine.kernel.HumanActivity";
                                         } else if (subClassName.equals("ScriptTask")) {
                                             fullSubClassName = "org.uengine.kernel.ScriptActivity";
@@ -375,7 +400,7 @@ public class BpmnXMLParser {
 
                                         } else {
                                             fullSubClassName = "org.uengine.kernel.bpmn." + subClassName;
-                                        }   
+                                        }
                                         Class<?> subClazz = Class.forName(fullSubClassName);
                                         Object subInstance = subClazz.getDeclaredConstructor().newInstance();
                                         Activity subTask = (Activity) subInstance;
@@ -409,9 +434,9 @@ public class BpmnXMLParser {
                                             }
                                         }
                                         subTask.setTracingTag(subId);
+                                        subTask.setName(subName);
                                         // subTask.setName
                                         ((SubProcess) task).addChildActivity(subTask);
-                                        
 
                                     }
 

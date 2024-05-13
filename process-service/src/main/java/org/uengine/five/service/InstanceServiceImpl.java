@@ -88,7 +88,8 @@ public class InstanceServiceImpl implements InstanceService {
     WorklistRepository worklistRepository;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
-    static ObjectMapper defaultObjectMapper = new ObjectMapper();
+    static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
+
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -275,7 +276,7 @@ public class InstanceServiceImpl implements InstanceService {
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
             @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        Serializable value = defaultObjectMapper.readValue(json, Serializable.class);
+        Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
     }
 
@@ -635,9 +636,8 @@ public class InstanceServiceImpl implements InstanceService {
     public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
             throws Exception {
 
-        // execution scope
         // instance.setExecutionScope(esc.getExecutionScope());
-        
+
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
         String instanceId = worklistEntity.getInstId().toString();
