@@ -1,5 +1,7 @@
 package org.uengine.five.overriding;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -388,4 +390,84 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             getProcessInstanceEntity().setInfo(value);
     }
 
+    public String getExt1() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getExt1();
+        else
+            return null;
+    }
+
+    public void setExt1(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setExt1(value);
+    }
+
+    public String getExt2() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getExt2();
+        else
+            return null;
+    }
+
+    public void setExt2(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setExt2(value);
+    }
+
+    public String getExt3() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getExt3();
+        else
+            return null;
+    }
+
+    public void setExt3(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setExt3(value);
+    }
+
+    public String getExt4() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getExt4();
+        else
+            return null;
+    }
+
+    public void setExt4(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setExt4(value);
+    }
+
+    public String getExt5() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getExt5();
+        else
+            return null;
+    }
+
+    public void setExt5(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setExt5(value);
+    }
+
+    public Date getDueDate2() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getDueDate();
+        else
+            return null;
+    }
+
+    public void setDueDate(String value) {
+        if (getProcessInstanceEntity() != null) {
+            try {
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                Date dueDate;
+                dueDate = formatter.parse(value);
+                getProcessInstanceEntity().setDueDate(dueDate);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 }

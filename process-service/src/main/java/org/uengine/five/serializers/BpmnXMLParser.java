@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.uengine.contexts.HtmlFormContext;
 import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
@@ -32,6 +33,7 @@ import org.xml.sax.InputSource;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class BpmnXMLParser {
 
@@ -67,6 +69,29 @@ public class BpmnXMLParser {
                                                                                  // or boolean
 
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
+
+        return objectMapper;
+    }
+
+    public static ObjectMapper createTypedJsonArrayObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        objectMapper.setVisibilityChecker(objectMapper.getSerializationConfig()
+                .getDefaultVisibilityChecker()
+                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // ignore null
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int
+                                                                                 // or boolean
+
+        objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
+
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(HtmlFormContext.class, new HtmlFormContextDeserializer());
+        objectMapper.registerModule(module);
 
         return objectMapper;
     }

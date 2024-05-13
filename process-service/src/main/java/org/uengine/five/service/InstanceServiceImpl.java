@@ -52,12 +52,10 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
-import org.uengine.kernel.bpmn.EndEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
-import org.uengine.kernel.bpmn.StartEvent;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -90,6 +88,8 @@ public class InstanceServiceImpl implements InstanceService {
     WorklistRepository worklistRepository;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
+    static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
+
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -208,20 +208,13 @@ public class InstanceServiceImpl implements InstanceService {
         return new InstanceResource(instance);
     }
 
-    @RequestMapping(value="/instance/{instanceId}/eventList")
+    @RequestMapping(value = "/instance/{instanceId}/eventList")
     @ProcessTransactional(readOnly = true)
-    public ArrayList<String> getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
+    public Vector getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         Vector messageListener = (Vector) instance.getMessageListeners("event");
-        ArrayList<String> result = new ArrayList<>();
-        for(int i = 0; i < messageListener.size(); i++) {
-            String eventName = (String) messageListener.get(i);
-            if(!(instance.getProcessDefinition().getActivity(eventName) instanceof StartEvent) && !(instance.getProcessDefinition().getActivity(eventName) instanceof EndEvent))
-                result.add(eventName);
-            
-        }
 
-        return result;
+        return messageListener;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -283,7 +276,7 @@ public class InstanceServiceImpl implements InstanceService {
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
             @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        Serializable value = objectMapper.readValue(json, Serializable.class);
+        Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
     }
 
@@ -643,9 +636,8 @@ public class InstanceServiceImpl implements InstanceService {
     public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
             throws Exception {
 
-        // execution scope
         // instance.setExecutionScope(esc.getExecutionScope());
-        
+
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
         String instanceId = worklistEntity.getInstId().toString();
@@ -705,7 +697,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/instance/{instanceId}/fire-message", method = RequestMethod.POST)
     @ProcessTransactional
-    public void fireMessage(@PathVariable("instanceId") String instanceId, @RequestBody Message message) throws Exception {
+    public void fireMessage(@PathVariable("instanceId") String instanceId, @RequestBody Message message)
+            throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         if (instance != null) {
             instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
