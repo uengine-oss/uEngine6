@@ -270,9 +270,7 @@ public class BpmnXMLParser {
                             } else if (className.equals("ScriptTask")) {
                                 fullClassName = "org.uengine.kernel.ScriptActivity";
                             } else if (className.equals("BoundaryEvent")) {
-
-                                List<String> eventTypes = Arrays.asList("timer", "signal");
-
+                                List<String> eventTypes = Arrays.asList("timer", "signal", "error", "message");
                                 fullClassName = eventTypes.stream()
                                         .filter(eventType -> element.getElementsByTagName(eventType + "EventDefinition")
                                                 .getLength() > 0
@@ -340,6 +338,7 @@ public class BpmnXMLParser {
                                         // parseActivities(propertiesNode, (SubProcess) task);
                                         Node subNode = propertiesNode.getParentNode().getParentNode();
                                         String subId = subNode.getAttributes().getNamedItem("id").getTextContent();
+                                        String subName = subNode.getAttributes().getNamedItem("name").getTextContent();
                                         String subNodeName = subNode.getNodeName();
                                         if (subNodeName.contains(":")) {
                                             subNodeName = subNodeName.substring(subNodeName.indexOf(":") + 1);
@@ -350,7 +349,8 @@ public class BpmnXMLParser {
                                         String fullSubClassName = null;
                                         if (subClassName.equals("Task")) {
                                             fullSubClassName = "org.uengine.kernel.DefaultActivity";
-                                        } else if (subClassName.equals("UserTask") || subClassName.equals("ManualTask")) {
+                                        } else if (subClassName.equals("UserTask")
+                                                || subClassName.equals("ManualTask")) {
                                             fullSubClassName = "org.uengine.kernel.HumanActivity";
                                         } else if (subClassName.equals("ScriptTask")) {
                                             fullSubClassName = "org.uengine.kernel.ScriptActivity";
@@ -375,7 +375,7 @@ public class BpmnXMLParser {
 
                                         } else {
                                             fullSubClassName = "org.uengine.kernel.bpmn." + subClassName;
-                                        }   
+                                        }
                                         Class<?> subClazz = Class.forName(fullSubClassName);
                                         Object subInstance = subClazz.getDeclaredConstructor().newInstance();
                                         Activity subTask = (Activity) subInstance;
@@ -409,9 +409,9 @@ public class BpmnXMLParser {
                                             }
                                         }
                                         subTask.setTracingTag(subId);
+                                        subTask.setName(subName);
                                         // subTask.setName
                                         ((SubProcess) task).addChildActivity(subTask);
-                                        
 
                                     }
 

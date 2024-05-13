@@ -52,10 +52,12 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
+import org.uengine.kernel.bpmn.EndEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
+import org.uengine.kernel.bpmn.StartEvent;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -208,11 +210,18 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value="/instance/{instanceId}/eventList")
     @ProcessTransactional(readOnly = true)
-    public Vector getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
+    public ArrayList<String> getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         Vector messageListener = (Vector) instance.getMessageListeners("event");
-        
-        return messageListener;
+        ArrayList<String> result = new ArrayList<>();
+        for(int i = 0; i < messageListener.size(); i++) {
+            String eventName = (String) messageListener.get(i);
+            if(!(instance.getProcessDefinition().getActivity(eventName) instanceof StartEvent) && !(instance.getProcessDefinition().getActivity(eventName) instanceof EndEvent))
+                result.add(eventName);
+            
+        }
+
+        return result;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
