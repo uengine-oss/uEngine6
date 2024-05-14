@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import org.uengine.kernel.ProcessDefinitionFactory;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ProcessVariablePartResolver;
+import org.uengine.kernel.ProcessVariableValue;
 import org.uengine.kernel.TransactionListener;
 import org.uengine.processmanager.TransactionContext;
 
@@ -138,9 +140,18 @@ public class HtmlFormContext
 
 	public Object getFieldValue(String fieldName) throws Exception {
 		// fieldName = fieldName.toLowerCase();
-		// Object value = null;
+		Object value = valueMap.get(fieldName);
+		if (value instanceof ArrayList) {
+			ProcessVariableValue pvv = new ProcessVariableValue();
+			pvv.setName(fieldName);
+			for (Object obj : (ArrayList) value) {
+				pvv.setValue(obj);
+				pvv.moveToAdd();
+			}
+			value = pvv;
+		}
 
-		return valueMap.get(fieldName);
+		return value;
 		// if (valueMap == null) {
 		// loadValueMap();
 		// }
@@ -347,7 +358,6 @@ public class HtmlFormContext
 		// formDefinitionVersionId = formDefID[1];
 
 		// HtmlFormContext newFormCtx = new HtmlFormContext();
-		// newFormCtx.setFilePath(filePath + "/" + fileName);
 		// newFormCtx.setFormDefId(formDefID[0] + "@" + formDefID[1]);
 		// newFormCtx.setValueMap(valueMap);
 
