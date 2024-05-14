@@ -447,6 +447,7 @@ public class BpmnXMLParser {
 
                             Object jsonObject = objectMapper.readValue(jsonText, clazz);
                             if (className.equals("SubProcess")) {
+                                task = (SubProcess) jsonObject;
                                 parseActivities(element, laneInfo, (SubProcess) task, processDefinition);
                             } else if (className.equals("BoundaryEvent")) {
                                 task = (Event) jsonObject;
