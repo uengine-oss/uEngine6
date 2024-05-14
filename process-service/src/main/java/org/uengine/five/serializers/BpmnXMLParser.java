@@ -124,7 +124,7 @@ public class BpmnXMLParser {
     // }
     // }
     // }
-    void parseActivities(Node processNode, Map<String, String> taskToLaneMap, ScopeActivity processDefinition, ScopeActivity mainProcessDefinition)
+    void parseActivities(Node processNode, Map<String, String> taskToLaneMap, ScopeActivity processDefinition)
             throws Exception {
         if (processNode.getNodeType() != Node.ELEMENT_NODE) {
             return;
@@ -149,7 +149,7 @@ public class BpmnXMLParser {
                     parseExtensionElements(element, processDefinition);
                     break;
                 default:
-                    parseNode(element, taskToLaneMap, processDefinition, mainProcessDefinition);
+                    parseNode(element, taskToLaneMap, processDefinition);
                     break;
             }
         }
@@ -180,7 +180,7 @@ public class BpmnXMLParser {
                     parseExtensionElements(element, processDefinition);
                     break;
                 default:
-                    parseNode(element, taskToLaneMap, processDefinition, null);
+                    parseNode(element, taskToLaneMap, processDefinition);
                     break;
             }
         }
@@ -274,7 +274,7 @@ public class BpmnXMLParser {
         processDefinition.addProcessVariable(variable);
     }
 
-    private void parseNode(Element element, Map<String, String> taskToLaneMap, ScopeActivity processDefinition, ScopeActivity mainProcessDefinition)
+    private void parseNode(Element element, Map<String, String> taskToLaneMap, ScopeActivity processDefinition)
             throws Exception {
         String id = element.getAttribute("id");
         String name = element.getAttribute("name");
@@ -360,7 +360,7 @@ public class BpmnXMLParser {
 
                             Object jsonObject = objectMapper.readValue(jsonText, clazz);
                             if (className.equals("SubProcess")) {
-                                parseActivities(element, taskToLaneMap, (SubProcess) task, processDefinition);
+                                parseActivities(element, taskToLaneMap, (SubProcess) task);
                             } else if (className.equals("BoundaryEvent")) {
                                 task = (Event) jsonObject;
                                 ((Event) task)
