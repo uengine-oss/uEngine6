@@ -1826,7 +1826,8 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		Activity temp = this;
 		while (temp.getParentActivity() != null) {
 			temp = temp.getParentActivity();
-			if (temp == complexActivity)
+            // 임시 로직: 대표님께 물어보기
+			if (temp.getTracingTag().equals(complexActivity.getTracingTag()))
 				return true;
 		}
 

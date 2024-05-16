@@ -12,6 +12,7 @@ public class SubProcess extends ScopeActivity {
 
     protected final static String SUBPROCESS_INST_ID = "instanceIdOfSubProcess";
     protected final static String SUBPROCESS_INST_LABELS = "labelsOfSubProcess";
+    protected final static String SUBPROCESS_EXECUTION_SCOPE = "ExecutionScope";
     protected final static String SUBPROCESS_INST_ID_COMPLETED = "completedInstanceIdOfSPs";
     protected final static String EVENT_ONE_OF_PREV_SP_COMPLETED = "ONE_OF_PREV_SP_COMPLETED";
     public static final String SUB_PROCESS_IS_BEING_INSERTED = "_SubProcessIsBeingInserted";
@@ -539,7 +540,7 @@ public class SubProcess extends ScopeActivity {
             execScopesVector.add(execScope.getExecutionScope());
         }
         setSubprocessIds(instance, subprocessInstanceIds, SUBPROCESS_INST_ID);
-        setSubprocessIds(instance, execScopesVector, "ExecutionScope");
+        setSubprocessIds(instance, execScopesVector, SUBPROCESS_EXECUTION_SCOPE);
         setSubprocessIds(instance, subprocessLabels, SUBPROCESS_INST_LABELS);
 
         instance.getProcessTransactionContext().setSharedContext(SUB_PROCESS_IS_BEING_INSERTED, null);

@@ -73,7 +73,17 @@ public class FlowActivity extends ComplexActivity {
 				Activity sourceActivity = null;
 
 				if (source != null) {
-					sourceActivity = getProcessDefinition().getActivity(source);
+                    if(this instanceof SubProcess){
+                        for(Activity activity : this.getChildActivities()){
+                            if(activity.getTracingTag().equals(source)){
+                                sourceActivity = activity;
+                                break;
+                            }
+                        }
+                    } else {
+                        sourceActivity = getProcessDefinition().getActivity(source);
+
+                    }
 				} else if (sequenceFlow.getSourceActivity() != null) {
 					sourceActivity = sequenceFlow.getSourceActivity();
 				}
@@ -92,7 +102,16 @@ public class FlowActivity extends ComplexActivity {
 				Activity targetActivity = null;
 
 				if (target != null) {
-					targetActivity = getProcessDefinition().getActivity(target);
+                    if(this instanceof SubProcess){
+                        for(Activity activity : this.getChildActivities()){
+                            if(activity.getTracingTag().equals(target)){
+                                targetActivity = activity;
+                                break;
+                            }
+                        }
+                    } else {
+                        targetActivity = getProcessDefinition().getActivity(target);
+                    }
 				} else if (sequenceFlow.getTargetActivity() != null) {
 					targetActivity = sequenceFlow.getTargetActivity();
 				}
