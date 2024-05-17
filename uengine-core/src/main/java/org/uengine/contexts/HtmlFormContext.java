@@ -141,6 +141,9 @@ public class HtmlFormContext
 	public Object getFieldValue(String fieldName) throws Exception {
 		// fieldName = fieldName.toLowerCase();
 		Object value = valueMap.get(fieldName);
+		if (value == null) {
+			value = valueMap.get(fieldName.replace(formDefId + ".", ""));
+		}
 		if (value instanceof ArrayList) {
 			ProcessVariableValue pvv = new ProcessVariableValue();
 			pvv.setName(fieldName);
