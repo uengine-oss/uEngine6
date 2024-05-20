@@ -107,6 +107,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         boolean simulation = command.isSimulation();
         String filePath = command.getProcessDefinitionId();
+        String corrKey = command.getCorrelationKey();
 
         Object definition;
         try {
@@ -131,6 +132,10 @@ public class InstanceServiceImpl implements InstanceService {
                     for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
                         instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
                     }
+                }
+
+                if(corrKey != null){
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKey);
                 }
 
                 instance.execute();

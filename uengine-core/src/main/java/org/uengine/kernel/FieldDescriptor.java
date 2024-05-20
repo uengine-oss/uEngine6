@@ -12,6 +12,7 @@ public class FieldDescriptor {
     String name;
     String className;
     Boolean isKey;
+    Boolean isCorrKey;
 
     
     public String getName() {
@@ -36,5 +37,13 @@ public class FieldDescriptor {
 
     public void setIsKey(Boolean isKey) {
         this.isKey = isKey;
+    }
+
+    public Boolean getIsCorrKey(){
+        return isCorrKey;
+    }
+
+    public void setIsCorrKey(Boolean isCorrKey){
+        this.isCorrKey = isCorrKey;
     }
 }

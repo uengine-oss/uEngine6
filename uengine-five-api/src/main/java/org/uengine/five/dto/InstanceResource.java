@@ -24,6 +24,8 @@ public class InstanceResource extends RepresentationModel {
 
         String status;
 
+        String corrKey;
+
         public String getInstanceId() {
                 return instanceId;
         }
@@ -40,6 +42,13 @@ public class InstanceResource extends RepresentationModel {
                 this.status = status;
         }
 
+        public String getCorrkey() {
+                return corrKey;
+        }
+
+        public void setCorrKey(String corrKey) {
+                this.corrKey = corrKey;
+        }
         public InstanceResource() {
         }
 
@@ -47,6 +56,7 @@ public class InstanceResource extends RepresentationModel {
                 setName(processInstance.getName());
                 setInstanceId(processInstance.getInstanceId());
                 setStatus(processInstance.getStatus());
+                setCorrKey(processInstance.getInstanceId());
 
                 add(
                                 linkTo(

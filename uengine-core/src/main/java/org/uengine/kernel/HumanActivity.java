@@ -726,7 +726,9 @@ public class HumanActivity extends ReceiveActivity {
 			instance.putRoleMapping(getRole().getName(), roleMapping);
 			// roleMapping.setResourceName((String) principal.get("user"));
 
-			kpv.put("resourceName", roleMapping.getResourceName());
+			if(roleMapping.getResourceName() != null){
+				kpv.put("resourceName", roleMapping.getResourceName());
+			}
 			// kpv.put(KeyedParameter.DISPATCHINGOPTION, ""+Role.DISPATCHINGOPTION_RACING);
 		}
 
