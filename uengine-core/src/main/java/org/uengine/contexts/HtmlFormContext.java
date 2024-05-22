@@ -141,16 +141,15 @@ public class HtmlFormContext
 	public Object getFieldValue(String fieldName) throws Exception {
 		// fieldName = fieldName.toLowerCase();
 		Object value = valueMap.get(fieldName);
-		if (value == null) {
-			value = valueMap.get(fieldName.replace(formDefId + ".", ""));
-		}
 		if (value instanceof ArrayList) {
 			ProcessVariableValue pvv = new ProcessVariableValue();
 			pvv.setName(fieldName);
-			for (Object obj : (ArrayList) value) {
+			for (int valueIndex = 0; valueIndex < ((ArrayList) value).size(); valueIndex++) {
+				Object obj = ((ArrayList) value).get(valueIndex);
 				pvv.setValue(obj);
 				pvv.moveToAdd();
 			}
+			pvv.setCursor(0);
 			value = pvv;
 		}
 
@@ -260,6 +259,7 @@ public class HtmlFormContext
 		// return null;
 		// }
 		// }
+		this.instance = instance;
 
 		Serializable rtnValue = (Serializable) getFieldValue(fieldName);
 

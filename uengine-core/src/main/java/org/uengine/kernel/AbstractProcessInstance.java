@@ -25,7 +25,7 @@ import org.uengine.webservices.worklist.WorkList;
 
 public abstract class AbstractProcessInstance implements ProcessInstance, java.io.Serializable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
-	public final String PVKEY_EXECUTION_SCOPES = "_executionScopes";
+	public final static String PVKEY_EXECUTION_SCOPES = "_executionScopes";
 
 	static Logger logger = Logger.getLogger(AbstractProcessInstance.class);
 
