@@ -92,8 +92,7 @@ public class InstanceServiceImpl implements InstanceService {
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
 
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
-            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource start(
