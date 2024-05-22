@@ -6,12 +6,12 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.uengine.five.entity.EventMappingEntity;
 
 @RepositoryRestResource(collectionResourceRel = "event-mapping", path = "event-mapping")
-public interface EventMappingRepository extends JpaRepository<EventMappingEntity, Long> {
+public interface EventMappingRepository extends JpaRepository<EventMappingEntity, String> {
 
-    // @Query("SELECT e.definitionId FROM EventMappingEntity e WHERE e.eventType = :eventType")
+    // @Query("SELECT e.definitionId FROM EventMappingEntity e WHERE e.eventType =
+    // :eventType")
     // public String findDefinitionIdByEventType(String eventType);
 
     @Query("SELECT e FROM EventMappingEntity e WHERE e.eventType = :eventType")
     public EventMappingEntity findEventMappingByEventType(String eventType);
 }
-
