@@ -30,7 +30,7 @@ import org.uengine.kernel.RoleMapping;
 @FeignClient(name = "bpm", url = "http://process-service:9094")
 public interface InstanceService {
 
-        @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = { RequestMethod.POST,
+        @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
                         RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
         public RepresentationModel start(@RequestBody ProcessExecutionCommand command) throws Exception;
 
@@ -66,9 +66,20 @@ public interface InstanceService {
         public Serializable getVariable(@PathVariable("instId") String instId, @PathVariable("varName") String varName)
                         throws Exception;
 
+        @RequestMapping(value = "/instance/{instId}/task/{taskId}/variable/{varName}", method = RequestMethod.GET)
+        public Serializable getVariableWithTaskId(@PathVariable("instId") String instId,
+                        @PathVariable("taskId") String taskId,
+                        @PathVariable("varName") String varName)
+                        throws Exception;
+
         @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
         public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
                         @RequestBody String varValue) throws Exception;
+
+        @RequestMapping(value = "/instance/{instanceId}/task/{taskId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
+        public void setVariableWithTaskId(@PathVariable("instanceId") String instanceId,
+                        @PathVariable("taskId") String taskId, @PathVariable("varName") String varName,
+                        @RequestBody String json) throws Exception;
 
         @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
         public RoleMapping getRoleMapping(@PathVariable("instId") String instId,
@@ -87,11 +98,11 @@ public interface InstanceService {
         public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
-        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+        public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+                        throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
-
-                        
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+                        throws Exception;
 
 }
