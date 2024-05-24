@@ -403,8 +403,8 @@ public class HtmlFormContext
 
 	@Override
 	public void setBeanProperty(String key, Object value) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'setBeanProperty'");
+		if(valueMap == null) valueMap = new HashMap();
+		valueMap.put(key, (Serializable) value);
 	}
 
 	@Override

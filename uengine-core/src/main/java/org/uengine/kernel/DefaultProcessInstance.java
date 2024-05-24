@@ -250,6 +250,20 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 	public void set(String scopeByTracingTag, String key, Serializable val) throws Exception {
 
 		Serializable existingValue = getSourceValue(scopeByTracingTag, key);
+		boolean resolvePartNeeded = key.indexOf('.') > 0;
+		if (resolvePartNeeded) {
+
+			String firstPart = resolvePartNeeded ? key.substring(0, key.indexOf('.')) : key;
+			Serializable sourceValue = this.get(firstPart);
+			if (sourceValue instanceof BeanPropertyResolver) {
+				((BeanPropertyResolver) sourceValue).setBeanProperty(key.substring(key.indexOf('.') + 1), val);
+				val = sourceValue;
+			}
+
+			setSourceValue(scopeByTracingTag, firstPart, sourceValue);
+			return;
+		}
+
 		if (existingValue instanceof VariablePointer) {
 			((VariablePointer) existingValue).setValue(this, val);
 
