@@ -224,6 +224,7 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
         }
 
         if (executionScope != null) {
+            instance = ptc.getProcessInstanceInTransaction(instanceId);
             instance.setExecutionScope(executionScope);
         }
 

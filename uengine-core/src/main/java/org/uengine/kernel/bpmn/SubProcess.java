@@ -598,9 +598,9 @@ public class SubProcess extends ScopeActivity {
                     boolean isConnectedMultipleSubProcesses = false;
                     SubProcessActivity connectedNextSubProcessActivity = null;
                     try {
-                        int whereIAm = ((ComplexActivity) getParentActivity()).getChildActivities().indexOf(this);
-                        Activity nextActivity = (Activity) ((ComplexActivity) getParentActivity()).getChildActivities()
-                                .get(whereIAm + 1);
+                        // int whereIAm = ((ComplexActivity)
+                        // getParentActivity()).getChildActivities().indexOf(this);
+                        Activity nextActivity = (Activity) getOutgoingSequenceFlows().get(0).getTargetElement();
                         if (nextActivity instanceof SubProcessActivity) {
                             connectedNextSubProcessActivity = (SubProcessActivity) nextActivity;
                             if (connectedNextSubProcessActivity.getForEachRole() == getForEachRole()
@@ -641,7 +641,11 @@ public class SubProcess extends ScopeActivity {
         Set spIdSet = new HashSet();
         for (int i = 0; i < spIds.size(); i++) {
             for (int j = 0; j < execScopes.size(); j++) {
-                spIdSet.add(spIds.elementAt(i) + "@" + execScopes.elementAt(j));
+                if (spIds.elementAt(i).toString().contains("@")) {
+                    spIdSet.add(spIds.elementAt(i));
+                } else {
+                    spIdSet.add(spIds.elementAt(i) + "@" + execScopes.elementAt(j));
+                }
             }
         }
 
