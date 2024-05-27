@@ -1,26 +1,20 @@
 package org.uengine.five.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
 import org.uengine.contexts.EventSynchronization;
 import org.uengine.five.config.kafka.KafkaProcessor;
 import org.uengine.five.dto.ProcessExecutionCommand;
-import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.five.dto.RoleMapping;
 import org.uengine.five.repository.EventMappingRepository;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.serializers.BpmnXMLParser;
-import org.uengine.five.dto.RoleMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// import javax.transaction.Transactional;
-
-// @Service
-@Configuration
+@Service
 public class AsyncEventListener {
  
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
