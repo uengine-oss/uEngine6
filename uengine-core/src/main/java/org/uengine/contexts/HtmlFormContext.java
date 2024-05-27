@@ -140,7 +140,23 @@ public class HtmlFormContext
 
 	public Object getFieldValue(String fieldName) throws Exception {
 		// fieldName = fieldName.toLowerCase();
+
+		boolean resolvePartNeeded = false;
+		String variableKey = fieldName;
+		if (variableKey.indexOf('.') > 0) {
+			resolvePartNeeded = true;
+		}
+
 		Object value = valueMap.get(fieldName);
+
+		if (resolvePartNeeded) {
+			String firstPart = resolvePartNeeded ? variableKey.substring(0, variableKey.indexOf('.')) : variableKey;
+			Serializable first = valueMap.get(firstPart);
+			if (first instanceof ArrayList) {
+				HashMap firstHashMap = (HashMap) ((ArrayList) first).get(0);
+				value = firstHashMap.get(variableKey.substring(variableKey.indexOf('.') + 1));
+			}
+		}
 		if (value instanceof ArrayList) {
 			ProcessVariableValue pvv = new ProcessVariableValue();
 			pvv.setName(fieldName);
@@ -403,7 +419,8 @@ public class HtmlFormContext
 
 	@Override
 	public void setBeanProperty(String key, Object value) {
-		if(valueMap == null) valueMap = new HashMap();
+		if (valueMap == null)
+			valueMap = new HashMap();
 		valueMap.put(key, (Serializable) value);
 	}
 
