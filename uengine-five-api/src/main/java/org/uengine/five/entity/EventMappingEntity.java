@@ -13,6 +13,28 @@ public class EventMappingEntity {
     @Column(name = "definition_id")
     private String definitionId;
 
+    @Column(name = "correlation_key")
+    private String correlationKey;
+
+    @Column(name = "is_start_event")
+    private Boolean isStartEvent;
+
+    public String getCorrelationKey() {
+        return correlationKey;
+    }
+
+    public void setCorrelationKey(String correlationKey) {
+        this.correlationKey = correlationKey;
+    }
+
+    public Boolean isStartEvent() {
+        return isStartEvent;
+    }
+
+    public void setIsStartEvent(Boolean isStartEvent) {
+        this.isStartEvent = isStartEvent;
+    }
+
     public String getEventType() {
         return eventType;
     }

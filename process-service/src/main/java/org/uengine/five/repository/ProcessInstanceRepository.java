@@ -8,12 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.five.framework.ProcessTransactional;
 
 import java.util.List;
 
 /**
  * Created by uengine on 2017. 6. 19..
  */
+@ProcessTransactional
 @RepositoryRestResource(collectionResourceRel = "instances", path = "instances")
 public interface ProcessInstanceRepository extends JpaRepository<ProcessInstanceEntity, Long> {
 
@@ -49,7 +51,11 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     @Query("select pi from ProcessInstanceEntity pi where pi.rootInstId = :instId")
     List<ProcessInstanceEntity> findChild(@Param("instId") Long instId);
 
-    // @Query("select pi from ProcessInstanceEntity pi where pi.corrKey = :corrKey and pi.status = :status")
-    List<ProcessInstanceEntity> findByCorrKeyAndStatus(String corrKey, String status);
+    @Query("select pi from ProcessInstanceEntity pi where (pi.corrKey = :corrKey and pi.status = :status)")
+    List<ProcessInstanceEntity> findByCorrKeyAndStatus(@Param("corrKey") String corrKey, @Param("status") String status);
+
+    // TEST
+    @Query("select pi from ProcessInstanceEntity pi")
+    List<ProcessInstanceEntity> findAll();
 }
 

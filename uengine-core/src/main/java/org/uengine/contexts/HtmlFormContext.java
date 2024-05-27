@@ -144,10 +144,12 @@ public class HtmlFormContext
 		if (value instanceof ArrayList) {
 			ProcessVariableValue pvv = new ProcessVariableValue();
 			pvv.setName(fieldName);
-			for (Object obj : (ArrayList) value) {
+			for (int valueIndex = 0; valueIndex < ((ArrayList) value).size(); valueIndex++) {
+				Object obj = ((ArrayList) value).get(valueIndex);
 				pvv.setValue(obj);
 				pvv.moveToAdd();
 			}
+			pvv.setCursor(0);
 			value = pvv;
 		}
 
@@ -257,6 +259,7 @@ public class HtmlFormContext
 		// return null;
 		// }
 		// }
+		this.instance = instance;
 
 		Serializable rtnValue = (Serializable) getFieldValue(fieldName);
 
@@ -400,8 +403,8 @@ public class HtmlFormContext
 
 	@Override
 	public void setBeanProperty(String key, Object value) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'setBeanProperty'");
+		if(valueMap == null) valueMap = new HashMap();
+		valueMap.put(key, (Serializable) value);
 	}
 
 	@Override

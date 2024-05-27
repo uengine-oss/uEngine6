@@ -44,6 +44,7 @@ import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.ExecutionScopeContext;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
@@ -90,10 +91,8 @@ public class InstanceServiceImpl implements InstanceService {
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
 
-
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
-            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource start(
@@ -107,6 +106,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         boolean simulation = command.isSimulation();
         String filePath = command.getProcessDefinitionId();
+        String corrKey = command.getCorrelationKey();
 
         Object definition;
         try {
@@ -131,6 +131,10 @@ public class InstanceServiceImpl implements InstanceService {
                     for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
                         instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
                     }
+                }
+
+                if (corrKey != null) {
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKey);
                 }
 
                 instance.execute();
@@ -271,6 +275,29 @@ public class InstanceServiceImpl implements InstanceService {
         return instance.get("", varName);
     }
 
+    @RequestMapping(value = "/instance/{instId}/task/{taskId}/variable/{varName}", method = RequestMethod.GET)
+    @ProcessTransactional(readOnly = true)
+    public Serializable getVariableWithTaskId(@PathVariable("instId") String instId,
+            @PathVariable("taskId") String taskId,
+            @PathVariable("varName") String varName)
+            throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instId);
+        Serializable result = null;
+        WorkItemResource workItem = getWorkItem(taskId);
+        ExecutionScopeContext oldExecutionScopeContext = instance.getExecutionScopeContext();
+
+        if (workItem.getWorklist().getExecScope() != null) {
+            if (instance.getExecutionScopeContext() == null) {
+                ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
+                executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
+                instance.setExecutionScopeContext(executionScopeContext);
+            }
+        }
+        result = instance.get("", varName);
+        instance.setExecutionScopeContext(oldExecutionScopeContext);
+        return result;
+    }
+
     @RequestMapping(value = "/instance/{instanceId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     @ProcessTransactional
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
@@ -278,6 +305,29 @@ public class InstanceServiceImpl implements InstanceService {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
+    }
+
+    @RequestMapping(value = "/instance/{instanceId}/task/{taskId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
+    @ProcessTransactional
+    public void setVariableWithTaskId(@PathVariable("instanceId") String instanceId,
+            @PathVariable("taskId") String taskId, @PathVariable("varName") String varName,
+            @RequestBody String json) throws Exception {
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        WorkItemResource workItem = getWorkItem(taskId);
+        ExecutionScopeContext oldExecutionScopeContext = instance.getExecutionScopeContext();
+
+        if (workItem.getWorklist().getExecScope() != null) {
+            if (instance.getExecutionScopeContext() == null) {
+                ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
+                executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
+                instance.setExecutionScopeContext(executionScopeContext);
+            }
+        }
+
+        Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
+        instance.set("", varName, value);
+
+        instance.setExecutionScopeContext(oldExecutionScopeContext);
     }
 
     @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
