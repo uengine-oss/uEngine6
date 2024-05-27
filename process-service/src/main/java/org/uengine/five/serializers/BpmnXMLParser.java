@@ -501,6 +501,22 @@ public class BpmnXMLParser {
                             + "Event")
                     .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
 
+        } else if (className.equals("IntermediateCatchEvent")) {
+            fullClassName = "org.uengine.kernel.IntermediateCatchEvent";
+        } else if (className.equals("IntermediateThrowEvent")) {
+            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+                    "message");
+            fullClassName = eventTypes.stream()
+                    .filter(eventType -> element.getElementsByTagName(eventType +
+                            "EventDefinition")
+                            .getLength() > 0
+                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                    .getLength() > 0)
+                    .findFirst()
+                    .map(eventType -> "org.uengine.kernel.bpmn."
+                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+                            + className)
+                    .orElse(null);
         } else {
             fullClassName = "org.uengine.kernel.bpmn." + className;
         }
