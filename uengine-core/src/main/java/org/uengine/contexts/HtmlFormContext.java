@@ -421,7 +421,33 @@ public class HtmlFormContext
 	public void setBeanProperty(String key, Object value) {
 		if (valueMap == null)
 			valueMap = new HashMap();
-		valueMap.put(key, (Serializable) value);
+
+		boolean resolvePartNeeded = false;
+		String variableKey = key;
+		if (variableKey.indexOf('.') > 0) {
+			resolvePartNeeded = true;
+		}
+
+		if (resolvePartNeeded) {
+			String firstPart = resolvePartNeeded ? variableKey.substring(0, variableKey.indexOf('.')) : variableKey;
+			Serializable first = valueMap.get(firstPart);
+			if (first == null) {
+				first = new ArrayList();
+			}
+			if (first instanceof ArrayList) {
+				HashMap firstHashMap = null;
+				if (((ArrayList) first).size() == 0) {
+					firstHashMap = new HashMap();
+					((ArrayList) first).add(firstHashMap);
+				} else {
+					firstHashMap = (HashMap) ((ArrayList) first).get(0);
+				}
+				firstHashMap.put(variableKey.substring(variableKey.indexOf('.') + 1), value);
+				valueMap.put(firstPart, first);
+			}
+		} else {
+			valueMap.put(key, (Serializable) value);
+		}
 	}
 
 	@Override
