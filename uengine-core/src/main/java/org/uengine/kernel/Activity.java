@@ -106,7 +106,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public static final String STATUS_RESERVED = "Reserved";
 	static ObjectMapper objectMapper = new ObjectMapper();
-
+    
 	public int getLoopBackCount(ProcessInstance instance) throws Exception {
 		if (instance == null) {
 			return 0;
@@ -1827,7 +1827,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		while (temp.getParentActivity() != null) {
 			temp = temp.getParentActivity();
             // 임시 로직: 대표님께 물어보기
-			if (temp.getTracingTag().equals(complexActivity.getTracingTag()))
+			if (temp.equals(complexActivity))
 				return true;
 		}
 

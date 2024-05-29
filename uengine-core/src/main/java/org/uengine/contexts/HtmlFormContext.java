@@ -140,17 +140,32 @@ public class HtmlFormContext
 
 	public Object getFieldValue(String fieldName) throws Exception {
 		// fieldName = fieldName.toLowerCase();
+
+		boolean resolvePartNeeded = false;
+		String variableKey = fieldName;
+		if (variableKey.indexOf('.') > 0) {
+			resolvePartNeeded = true;
+		}
+
 		Object value = valueMap.get(fieldName);
-		if (value == null) {
-			value = valueMap.get(fieldName.replace(formDefId + ".", ""));
+
+		if (resolvePartNeeded) {
+			String firstPart = resolvePartNeeded ? variableKey.substring(0, variableKey.indexOf('.')) : variableKey;
+			Serializable first = valueMap.get(firstPart);
+			if (first instanceof ArrayList) {
+				HashMap firstHashMap = (HashMap) ((ArrayList) first).get(0);
+				value = firstHashMap.get(variableKey.substring(variableKey.indexOf('.') + 1));
+			}
 		}
 		if (value instanceof ArrayList) {
 			ProcessVariableValue pvv = new ProcessVariableValue();
 			pvv.setName(fieldName);
-			for (Object obj : (ArrayList) value) {
+			for (int valueIndex = 0; valueIndex < ((ArrayList) value).size(); valueIndex++) {
+				Object obj = ((ArrayList) value).get(valueIndex);
 				pvv.setValue(obj);
 				pvv.moveToAdd();
 			}
+			pvv.setCursor(0);
 			value = pvv;
 		}
 
@@ -260,6 +275,7 @@ public class HtmlFormContext
 		// return null;
 		// }
 		// }
+		this.instance = instance;
 
 		Serializable rtnValue = (Serializable) getFieldValue(fieldName);
 
@@ -403,8 +419,35 @@ public class HtmlFormContext
 
 	@Override
 	public void setBeanProperty(String key, Object value) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'setBeanProperty'");
+		if (valueMap == null)
+			valueMap = new HashMap();
+
+		boolean resolvePartNeeded = false;
+		String variableKey = key;
+		if (variableKey.indexOf('.') > 0) {
+			resolvePartNeeded = true;
+		}
+
+		if (resolvePartNeeded) {
+			String firstPart = resolvePartNeeded ? variableKey.substring(0, variableKey.indexOf('.')) : variableKey;
+			Serializable first = valueMap.get(firstPart);
+			if (first == null) {
+				first = new ArrayList();
+			}
+			if (first instanceof ArrayList) {
+				HashMap firstHashMap = null;
+				if (((ArrayList) first).size() == 0) {
+					firstHashMap = new HashMap();
+					((ArrayList) first).add(firstHashMap);
+				} else {
+					firstHashMap = (HashMap) ((ArrayList) first).get(0);
+				}
+				firstHashMap.put(variableKey.substring(variableKey.indexOf('.') + 1), value);
+				valueMap.put(firstPart, first);
+			}
+		} else {
+			valueMap.put(key, (Serializable) value);
+		}
 	}
 
 	@Override

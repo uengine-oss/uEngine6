@@ -14,6 +14,7 @@ import java.util.Vector;
 import org.uengine.contexts.TextContext;
 import org.uengine.contexts.UserContext;
 import org.uengine.kernel.bpmn.StartEvent;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.util.ActivityForLoop;
 import org.uengine.util.UEngineUtil;
 import org.uengine.webservices.worklist.DefaultWorkList;
@@ -42,6 +43,7 @@ public class HumanActivity extends ReceiveActivity {
 
 	protected Role role;
 
+	// Todo: CheckPoin
 	public Role getRole() {
 
 		if (role != null && role.getName() != null && getProcessDefinition() != null) {
@@ -75,7 +77,7 @@ public class HumanActivity extends ReceiveActivity {
 		return getTool();
 	}
 
-	public String getTool( ) {
+	public String getTool() {
 		return tool;
 	}
 
@@ -631,7 +633,6 @@ public class HumanActivity extends ReceiveActivity {
 	}
 
 	protected void executeActivity(ProcessInstance instance) throws Exception {
-
 		addLoopBackCount(instance);
 
 		addWorkitem(instance, null);
@@ -726,7 +727,7 @@ public class HumanActivity extends ReceiveActivity {
 			instance.putRoleMapping(getRole().getName(), roleMapping);
 			// roleMapping.setResourceName((String) principal.get("user"));
 
-			if(roleMapping.getResourceName() != null){
+			if (roleMapping.getResourceName() != null) {
 				kpv.put("resourceName", roleMapping.getResourceName());
 			}
 			// kpv.put(KeyedParameter.DISPATCHINGOPTION, ""+Role.DISPATCHINGOPTION_RACING);
@@ -1156,6 +1157,8 @@ public class HumanActivity extends ReceiveActivity {
 	}
 
 	public void setDueDate(ProcessInstance instance, String theTime) throws Exception {
+		if (theTime == null || "".equals(theTime))
+			return;
 		String[] yearMonthDate = theTime.split("-");
 
 		Calendar theCalendar = Calendar.getInstance();

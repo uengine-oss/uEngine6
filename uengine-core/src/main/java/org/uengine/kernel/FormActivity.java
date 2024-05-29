@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,9 +20,6 @@ import org.uengine.contexts.MappingContext;
 import org.uengine.processdesigner.mapper.Transformer;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 import org.uengine.util.UEngineUtil;
-
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * TODO Insert type comment for FormActivity.
@@ -170,7 +168,51 @@ public class FormActivity extends HumanActivity {
 						ProcessVariable pv = getProcessDefinition().getProcessVariable(srcVariableName);
 						if (getVariableForHtmlFormContext().equals(pv)) { // maps only the child fields of the form
 																			// activity's target html form
+							if (instance.getExecutionScopeContext() == null) {
+								if (value instanceof ProcessVariableValue) {
 
+									ProcessVariableValue pvv = (ProcessVariableValue) value;
+									ExecutionScopeContext oldEsc = instance.getExecutionScopeContext();
+									Serializable _oleExecScope = instance.getProperty("",
+											AbstractProcessInstance.PVKEY_EXECUTION_SCOPES);
+									do {
+										Serializable theValue = pvv.getValue();
+
+										ExecutionScopeContext esc = instance.issueNewExecutionScope(this, this,
+												theValue != null ? theValue.toString() : "<No Name>");
+										instance.setExecutionScopeContext(esc);
+
+										boolean resolvePartNeeded = false;
+										String variableKey = srcVariableName;
+										if (variableKey.indexOf('.') > 0) {
+											resolvePartNeeded = true;
+										}
+
+										if (resolvePartNeeded) {
+											int indexOfDot = variableKey.indexOf(".");
+											if (indexOfDot > 0) {
+												variableKey = variableKey.substring(indexOfDot + 1);
+											}
+										}
+
+										HtmlFormContext formContext = (HtmlFormContext) new HtmlFormContext();
+										HashMap<String, Serializable> map = new HashMap<String, Serializable>();
+										ArrayList<Serializable> list = new ArrayList<Serializable>();
+										list.add(theValue);
+										map.put(variableKey, list);
+										formContext.setValueMap(map);
+										instance.set(pv.name, formContext);
+
+										instance.setExecutionScopeContext(oldEsc);
+
+									} while (pvv.next());
+
+									pvv.setCursor(0);
+
+									instance.setProperty("", AbstractProcessInstance.PVKEY_EXECUTION_SCOPES,
+											_oleExecScope);
+								}
+							}
 							instance.setBeanProperty(targetFieldName, (Serializable) value);
 
 						}
@@ -598,7 +640,8 @@ public class FormActivity extends HumanActivity {
 			for (ProcessVariable v : instance.getProcessDefinition().getProcessVariables()) {
 				if (v.getDefaultValue() instanceof HtmlFormContext) {
 					HtmlFormContext defaultValue = (HtmlFormContext) v.getDefaultValue();
-					if(defaultValue.getFormDefId() != null && v.name.equals(getVariableForHtmlFormContext().getName())){
+					if (defaultValue.getFormDefId() != null
+							&& v.name.equals(getVariableForHtmlFormContext().getName())) {
 						formContext = defaultValue;
 					}
 				}
@@ -617,8 +660,16 @@ public class FormActivity extends HumanActivity {
 		// onReceive(instance, null);
 		// return;
 		// }
+		mappingIn(instance);
 
 		super.executeActivity(instance);
+	}
+
+	protected void mappingIn(ProcessInstance instance) throws Exception {
+		if (instance instanceof DefaultProcessInstance) {
+			Map variables = ((DefaultProcessInstance) instance).getVariables();
+			Map test = variables;
+		}
 	}
 
 	public ValidationContext validate(Map options) {

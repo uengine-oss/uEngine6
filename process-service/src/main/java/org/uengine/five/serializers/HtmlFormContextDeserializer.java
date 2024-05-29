@@ -1,19 +1,19 @@
 package org.uengine.five.serializers;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.uengine.contexts.HtmlFormContext;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import org.uengine.contexts.HtmlFormContext;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class HtmlFormContextDeserializer extends JsonDeserializer<HtmlFormContext> {
 
@@ -34,19 +34,19 @@ public class HtmlFormContextDeserializer extends JsonDeserializer<HtmlFormContex
             while (fieldNames.hasNext()) {
                 String fieldName = fieldNames.next();
                 if (fieldName.equals("_type"))
-                    continue; // _type 필드는 무시
+                    continue;
 
                 JsonNode fieldValueNode = valueMapNode.get(fieldName);
                 if (fieldValueNode.isArray()) {
-                    // 배열인 경우
-                    List<HashMap<String, Serializable>> list = new ArrayList<>();
+                    List<Serializable> list = new ArrayList<>();
                     fieldValueNode.forEach(item -> {
-                        list.add(parseNodeToMap(item));
+                        list.add(parseNode(item, mapper));
                     });
                     valueMap.put(fieldName, (Serializable) list);
                 } else if (fieldValueNode.isObject()) {
-                    // 단일 객체인 경우
-                    valueMap.put(fieldName, parseNodeToMap(fieldValueNode));
+                    valueMap.put(fieldName, parseNode(fieldValueNode, mapper));
+                } else if (fieldValueNode.isTextual()) {
+                    valueMap.put(fieldName, fieldValueNode.asText());
                 }
             }
         }
@@ -58,11 +58,36 @@ public class HtmlFormContextDeserializer extends JsonDeserializer<HtmlFormContex
         return formContext;
     }
 
+    private Serializable parseNode(JsonNode node, ObjectMapper mapper) {
+        if (node.has("_type")) {
+            String type = node.get("_type").asText();
+            try {
+                Class<?> clazz = Class.forName(type);
+                return (Serializable) mapper.treeToValue(node, clazz);
+            } catch (ClassNotFoundException | JsonProcessingException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Failed to deserialize node with _type: " + type, e);
+            }
+        } else {
+            return parseNodeToMap(node);
+        }
+    }
+
     private HashMap<String, Serializable> parseNodeToMap(JsonNode node) {
         HashMap<String, Serializable> map = new HashMap<>();
         node.fieldNames().forEachRemaining(fieldName -> {
             JsonNode fieldValue = node.get(fieldName);
-            map.put(fieldName, fieldValue.asText()); // 간단한 문자열 값으로 가정
+            if (fieldValue.isTextual()) {
+                map.put(fieldName, fieldValue.asText());
+            } else if (fieldValue.isObject()) {
+                map.put(fieldName, parseNode(fieldValue, new ObjectMapper()));
+            } else if (fieldValue.isArray()) {
+                List<HashMap<String, Serializable>> list = new ArrayList<>();
+                fieldValue.forEach(item -> {
+                    list.add(parseNodeToMap(item));
+                });
+                map.put(fieldName, (Serializable) list);
+            }
         });
         return map;
     }

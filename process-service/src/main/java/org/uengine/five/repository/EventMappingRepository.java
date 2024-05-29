@@ -8,10 +8,10 @@ import org.uengine.five.entity.EventMappingEntity;
 @RepositoryRestResource(collectionResourceRel = "event-mappings", path = "event-mappings")
 public interface EventMappingRepository extends JpaRepository<EventMappingEntity, Long> {
 
-    // @Query("SELECT e.definitionId FROM EventMappingEntity e WHERE e.eventType = :eventType")
+    // @Query("SELECT e.definitionId FROM EventMappingEntity e WHERE e.eventType =
+    // :eventType")
     // public String findDefinitionIdByEventType(String eventType);
 
     @Query("SELECT e FROM EventMappingEntity e WHERE e.eventType = :eventType")
     public EventMappingEntity findEventMappingByEventType(String eventType);
 }
-
