@@ -92,7 +92,8 @@ public class InstanceServiceImpl implements InstanceService {
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
 
     // ----------------- execution services -------------------- //
-    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
+            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource start(
@@ -469,7 +470,7 @@ public class InstanceServiceImpl implements InstanceService {
                 correlatedProcessInstanceEntities = processInstanceRepository
                         .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
         }
-        // Callback url -> 
+
         ProcessInstanceEntity processInstanceEntity;
         if (correlatedProcessInstanceEntities == null || correlatedProcessInstanceEntities.size() == 0)
             processInstanceEntity = null;
