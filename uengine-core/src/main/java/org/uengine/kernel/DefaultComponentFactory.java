@@ -1,7 +1,9 @@
 package org.uengine.kernel;
 
 import java.lang.reflect.Constructor;
+import java.util.Map;
 public class DefaultComponentFactory implements IComponentFactory {
+
     @Override
     public <T> T getComponent(Class<T> clazz, Object[] constructorParameters) {
         try {
@@ -55,4 +57,12 @@ public class DefaultComponentFactory implements IComponentFactory {
             throw new RuntimeException("Failed to get component for class: " + clazz.getName(), e);
         }
     }
+
+    @Override
+    public <T> Map<String, T> getComponents(Class<T> clazz, Object[] constructorParameters) throws Exception {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getComponents'");
+    }
+
+
 }
