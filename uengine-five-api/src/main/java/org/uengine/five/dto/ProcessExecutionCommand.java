@@ -14,14 +14,15 @@ public class ProcessExecutionCommand implements Serializable {
     private RoleMapping[] roleMappings;
     private ProcessVariableValue[] processVariableValues;
 
-    private String correlationKey;
+    private String correlationKeyValue;
 
-    public String getCorrelationKey() {
-        return correlationKey;
+  
+    public String getCorrelationKeyValue() {
+        return correlationKeyValue;
     }
 
-    public void setCorrelationKey(String correlationKey) {
-        this.correlationKey = correlationKey;
+    public void setCorrelationKeyValue(String correlationKeyValue) {
+        this.correlationKeyValue = correlationKeyValue;
     }
 
     public String getProcessDefinitionId() {

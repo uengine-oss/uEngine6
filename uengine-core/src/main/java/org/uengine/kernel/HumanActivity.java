@@ -14,6 +14,7 @@ import java.util.Vector;
 import org.uengine.contexts.TextContext;
 import org.uengine.contexts.UserContext;
 import org.uengine.kernel.bpmn.StartEvent;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.util.ActivityForLoop;
 import org.uengine.util.UEngineUtil;
 import org.uengine.webservices.worklist.DefaultWorkList;
@@ -26,323 +27,323 @@ import org.uengine.webservices.worklist.WorkList;
 
 // @Face(ejsPath="dwr/metaworks/genericfaces/FormFace.ejs")
 public class HumanActivity extends ReceiveActivity {
-    private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
-    public static final String GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING = "currentLoggedRoleMapping";
+	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
+	public static final String GENERICCONTEXT_CURR_LOGGED_ROLEMAPPING = "currentLoggedRoleMapping";
 
-    public static String PVKEY_DUEDATE = "_due date";
-    public static String PVKEY_DURATION = "_duration";
-    public static String PVKEY_TASKID = "_task id";
-    public static String PVKEY_OPENTIME = "_openTime";
-    public static String WORKLIST_SERVICE = "Worklist Service";
-    public static String PAYLOADKEY_TASKID = "TASKID";
-    public static String PVKEY_PREVIOUS_ACTIVITY_TRACINGTAG = "_previous";
-    public static String COMPLETED_ROLEMAPPING = "_completed rolemapping";
-    public static final String SNAPSHOT_DIRECTORY = GlobalContext.getPropertyString("filesystem.path",
-            ProcessDefinitionFactory.DEFINITION_ROOT) + "history" + File.separatorChar;
+	public static String PVKEY_DUEDATE = "_due date";
+	public static String PVKEY_DURATION = "_duration";
+	public static String PVKEY_TASKID = "_task id";
+	public static String PVKEY_OPENTIME = "_openTime";
+	public static String WORKLIST_SERVICE = "Worklist Service";
+	public static String PAYLOADKEY_TASKID = "TASKID";
+	public static String PVKEY_PREVIOUS_ACTIVITY_TRACINGTAG = "_previous";
+	public static String COMPLETED_ROLEMAPPING = "_completed rolemapping";
+	public static final String SNAPSHOT_DIRECTORY = GlobalContext.getPropertyString("filesystem.path",
+			ProcessDefinitionFactory.DEFINITION_ROOT) + "history" + File.separatorChar;
 
-    protected Role role;
+	protected Role role;
 
-        // Todo: CheckPoin
-    public Role getRole() {
+	// Todo: CheckPoin
+	public Role getRole() {
 
-        if (role != null && role.getName() != null && getProcessDefinition() != null) {
-            // TODO: sometimes object reference can't reflect the definition's change
-            Role roleInDefinition = getProcessDefinition().getRole(role.getName());
-            if (roleInDefinition != null && roleInDefinition != role) {
-                role = roleInDefinition;
-            }
-        }
+		if (role != null && role.getName() != null && getProcessDefinition() != null) {
+			// TODO: sometimes object reference can't reflect the definition's change
+			Role roleInDefinition = getProcessDefinition().getRole(role.getName());
+			if (roleInDefinition != null && roleInDefinition != role) {
+				role = roleInDefinition;
+			}
+		}
 
-        return role;
-    }
+		return role;
+	}
 
-    public void setRole(Role value) {
-        role = value;
-    }
+	public void setRole(Role value) {
+		role = value;
+	}
 
-    Role referenceRole;
+	Role referenceRole;
 
-    public Role getReferenceRole() {
-        return referenceRole;
-    }
+	public Role getReferenceRole() {
+		return referenceRole;
+	}
 
-    public void setReferenceRole(Role referenceRole) {
-        this.referenceRole = referenceRole;
-    }
+	public void setReferenceRole(Role referenceRole) {
+		this.referenceRole = referenceRole;
+	}
 
-    String tool;
+	String tool;
 
-    public String getTool(ProcessInstance processInstance) {
-        return getTool();
-    }
+	public String getTool(ProcessInstance processInstance) {
+		return getTool();
+	}
 
-    public String getTool() {
-        return tool;
-    }
+	public String getTool() {
+		return tool;
+	}
 
-    public void setTool(String value) {
-        tool = value;
-    }
+	public void setTool(String value) {
+		tool = value;
+	}
 
-    boolean isSendEmailWorkitem = true;
+	boolean isSendEmailWorkitem = true;
 
-    public boolean isSendEmailWorkitem() {
-        return isSendEmailWorkitem;
-    }
+	public boolean isSendEmailWorkitem() {
+		return isSendEmailWorkitem;
+	}
 
-    public void setSendEmailWorkitem(boolean isSendEmailWorkitem) {
-        this.isSendEmailWorkitem = isSendEmailWorkitem;
-    }
+	public void setSendEmailWorkitem(boolean isSendEmailWorkitem) {
+		this.isSendEmailWorkitem = isSendEmailWorkitem;
+	}
 
-    boolean isNotificationWorkitem = false;
+	boolean isNotificationWorkitem = false;
 
-    public boolean isNotificationWorkitem() {
-        return isNotificationWorkitem;
-    }
+	public boolean isNotificationWorkitem() {
+		return isNotificationWorkitem;
+	}
 
-    public void setNotificationWorkitem(boolean isNotificationWorkitem) {
-        this.isNotificationWorkitem = isNotificationWorkitem;
-    }
+	public void setNotificationWorkitem(boolean isNotificationWorkitem) {
+		this.isNotificationWorkitem = isNotificationWorkitem;
+	}
 
-    boolean isAllowAnonymous = true;
+	boolean isAllowAnonymous = true;
 
-    public boolean isAllowAnonymous() {
-        return isAllowAnonymous;
-    }
+	public boolean isAllowAnonymous() {
+		return isAllowAnonymous;
+	}
 
-    public void setAllowAnonymous(boolean isAllowAnonymous) {
-        this.isAllowAnonymous = isAllowAnonymous;
-    }
+	public void setAllowAnonymous(boolean isAllowAnonymous) {
+		this.isAllowAnonymous = isAllowAnonymous;
+	}
 
-    String id;
+	String id;
 
-    public String getId() {
-        return id;
-    }
+	public String getId() {
+		return id;
+	}
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	public void setId(String id) {
+		this.id = id;
+	}
 
-    int duration;
+	int duration;
 
-    public int getDuration() {
-        return duration;
-    }
+	public int getDuration() {
+		return duration;
+	}
 
-    public int getDuration(ProcessInstance instance) throws Exception {
-        Integer durationInt = null;
-        if (instance != null) {
-            durationInt = (Integer) (instance.getProperty(getTracingTag(), PVKEY_DURATION));
-        }
+	public int getDuration(ProcessInstance instance) throws Exception {
+		Integer durationInt = null;
+		if (instance != null) {
+			durationInt = (Integer) (instance.getProperty(getTracingTag(), PVKEY_DURATION));
+		}
 
-        if (durationInt == null) {
-            return getDuration();
-        }
+		if (durationInt == null) {
+			return getDuration();
+		}
 
-        return durationInt.intValue();
-    }
+		return durationInt.intValue();
+	}
 
-    public void setDuration(int i) {
-        duration = i;
-    }
+	public void setDuration(int i) {
+		duration = i;
+	}
 
-    public void setDuration(ProcessInstance instance, Integer i) throws Exception {
-        setDuration(instance, i.intValue());
-    }
+	public void setDuration(ProcessInstance instance, Integer i) throws Exception {
+		setDuration(instance, i.intValue());
+	}
 
-    public void setDuration(ProcessInstance instance, int duration) throws Exception {
-        if (instance != null) {
-            instance.setProperty(getTracingTag(), PVKEY_DURATION, new Integer(duration));
+	public void setDuration(ProcessInstance instance, int duration) throws Exception {
+		if (instance != null) {
+			instance.setProperty(getTracingTag(), PVKEY_DURATION, new Integer(duration));
 
-            String[] taskIds = getTaskIds(instance);
+			String[] taskIds = getTaskIds(instance);
 
-            setDueDate(instance,
-                    instance.calculateDueDate(GlobalContext.getNow(instance.getProcessTransactionContext()), duration),
-                    true, false);
+			setDueDate(instance,
+					instance.calculateDueDate(GlobalContext.getNow(instance.getProcessTransactionContext()), duration),
+					true, false);
 
-        } else {
-            setDuration(duration);
-        }
-    }
+		} else {
+			setDuration(duration);
+		}
+	}
 
-    public Calendar getDueDate(ProcessInstance instance) throws Exception {
-        Calendar dueDate = (Calendar) instance.getProperty(getTracingTag(), PVKEY_DUEDATE);
+	public Calendar getDueDate(ProcessInstance instance) throws Exception {
+		Calendar dueDate = (Calendar) instance.getProperty(getTracingTag(), PVKEY_DUEDATE);
 
-        return dueDate;
-    }
+		return dueDate;
+	}
 
-    public void setDueDate(ProcessInstance instance, Calendar dueDate, boolean updateWorkList) throws Exception {
-        setDueDate(instance, dueDate, updateWorkList, true);
-    }
+	public void setDueDate(ProcessInstance instance, Calendar dueDate, boolean updateWorkList) throws Exception {
+		setDueDate(instance, dueDate, updateWorkList, true);
+	}
 
-    public void setDueDate(ProcessInstance instance, Calendar dueDate, boolean updateWorkList, boolean refreshDuration)
-            throws Exception {
-        instance.setProperty(getTracingTag(), PVKEY_DUEDATE, dueDate);
+	public void setDueDate(ProcessInstance instance, Calendar dueDate, boolean updateWorkList, boolean refreshDuration)
+			throws Exception {
+		instance.setProperty(getTracingTag(), PVKEY_DUEDATE, dueDate);
 
-        if (refreshDuration)
-            refreshDuration(instance);
+		if (refreshDuration)
+			refreshDuration(instance);
 
-        if (updateWorkList) {
-            // reflect the duedate changes to the worklist where the taskid matches.
-            String[] taskIds = getTaskIds(instance);
+		if (updateWorkList) {
+			// reflect the duedate changes to the worklist where the taskid matches.
+			String[] taskIds = getTaskIds(instance);
 
-            Date dueDateInDate = (dueDate == null ? null : dueDate.getTime());
+			Date dueDateInDate = (dueDate == null ? null : dueDate.getTime());
 
-            WorkList workList = instance.getWorkList();
-            if (taskIds != null) {
-                workList.updateWorkItem(taskIds[0], null,
-                        new KeyedParameter[] { new KeyedParameter(KeyedParameter.DUEDATE, dueDateInDate) },
-                        instance.getProcessTransactionContext());
-            }
-        }
+			WorkList workList = instance.getWorkList();
+			if (taskIds != null) {
+				workList.updateWorkItem(taskIds[0], null,
+						new KeyedParameter[] { new KeyedParameter(KeyedParameter.DUEDATE, dueDateInDate) },
+						instance.getProcessTransactionContext());
+			}
+		}
 
-        firePropertyChangeEventToActivityFilters(instance, PVKEY_DUEDATE, dueDate);
-    }
+		firePropertyChangeEventToActivityFilters(instance, PVKEY_DUEDATE, dueDate);
+	}
 
-    public void setDueDate(ProcessInstance instance, Calendar dueDate) throws Exception {
-        setDueDate(instance, dueDate, true);
-    }
+	public void setDueDate(ProcessInstance instance, Calendar dueDate) throws Exception {
+		setDueDate(instance, dueDate, true);
+	}
 
-    public void setDueDate(ProcessInstance instance, Date dueDate) throws Exception {
+	public void setDueDate(ProcessInstance instance, Date dueDate) throws Exception {
 
-        Calendar calDate = Calendar.getInstance();
-        calDate.setTime(dueDate);
+		Calendar calDate = Calendar.getInstance();
+		calDate.setTime(dueDate);
 
-        setDueDate(instance, calDate);
-    }
+		setDueDate(instance, calDate);
+	}
 
-    public void setDueDate(ProcessInstance instance, GregorianCalendar dueDate) throws Exception {
-        setDueDate(instance, (Calendar) dueDate);
-    }
+	public void setDueDate(ProcessInstance instance, GregorianCalendar dueDate) throws Exception {
+		setDueDate(instance, (Calendar) dueDate);
+	}
 
-    private void setCompletedRoleMapping(ProcessInstance instance, RoleMapping completedRoleMapping) throws Exception {
-        instance.setProperty(getTracingTag(), COMPLETED_ROLEMAPPING, completedRoleMapping);
-    }
+	private void setCompletedRoleMapping(ProcessInstance instance, RoleMapping completedRoleMapping) throws Exception {
+		instance.setProperty(getTracingTag(), COMPLETED_ROLEMAPPING, completedRoleMapping);
+	}
 
-    private RoleMapping getCompletedRoleMapping(ProcessInstance instance) throws Exception {
-        return (RoleMapping) instance.getProperty(getTracingTag(), COMPLETED_ROLEMAPPING);
-    }
+	private RoleMapping getCompletedRoleMapping(ProcessInstance instance) throws Exception {
+		return (RoleMapping) instance.getProperty(getTracingTag(), COMPLETED_ROLEMAPPING);
+	}
 
-    int co2Emission;
+	int co2Emission;
 
-    public int getCo2Emission() {
-        return co2Emission;
-    }
+	public int getCo2Emission() {
+		return co2Emission;
+	}
 
-    public void setCo2Emission(int co2Emission) {
-        this.co2Emission = co2Emission;
-    }
+	public void setCo2Emission(int co2Emission) {
+		this.co2Emission = co2Emission;
+	}
 
-    int workload;
+	int workload;
 
-    public int getWorkload() {
-        return workload;
-    }
+	public int getWorkload() {
+		return workload;
+	}
 
-    public void setWorkload(int i) {
-        workload = i;
-    }
+	public void setWorkload(int i) {
+		workload = i;
+	}
 
-    int priority;
+	int priority;
 
-    public int getPriority() {
-        return priority;
-    }
+	public int getPriority() {
+		return priority;
+	}
 
-    public void setPriority(int i) {
-        priority = i;
-    }
+	public void setPriority(int i) {
+		priority = i;
+	}
 
-    ProcessVariable input;
+	ProcessVariable input;
 
-    public ProcessVariable getInput() {
-        return input;
-    }
+	public ProcessVariable getInput() {
+		return input;
+	}
 
-    public void setInput(ProcessVariable value) {
-        input = value;
-    }
+	public void setInput(ProcessVariable value) {
+		input = value;
+	}
 
-    String extValue1;
+	String extValue1;
 
-    public String getExtValue1() {
-        return extValue1;
-    }
+	public String getExtValue1() {
+		return extValue1;
+	}
 
-    public void setExtValue1(String extValue1) {
-        this.extValue1 = extValue1;
-    }
+	public void setExtValue1(String extValue1) {
+		this.extValue1 = extValue1;
+	}
 
-    String extValue2;
+	String extValue2;
 
-    public String getExtValue2() {
-        return extValue2;
-    }
+	public String getExtValue2() {
+		return extValue2;
+	}
 
-    public void setExtValue2(String extValue2) {
-        this.extValue2 = extValue2;
-    }
+	public void setExtValue2(String extValue2) {
+		this.extValue2 = extValue2;
+	}
 
-    String extValue3;
+	String extValue3;
 
-    public String getExtValue3() {
-        return extValue3;
-    }
+	public String getExtValue3() {
+		return extValue3;
+	}
 
-    public void setExtValue3(String extValue3) {
-        this.extValue3 = extValue3;
-    }
+	public void setExtValue3(String extValue3) {
+		this.extValue3 = extValue3;
+	}
 
-    String extValue4;
+	String extValue4;
 
-    public String getExtValue4() {
-        return extValue4;
-    }
+	public String getExtValue4() {
+		return extValue4;
+	}
 
-    public void setExtValue4(String extValue4) {
-        this.extValue4 = extValue4;
-    }
+	public void setExtValue4(String extValue4) {
+		this.extValue4 = extValue4;
+	}
 
-    String extValue5;
+	String extValue5;
 
-    public String getExtValue5() {
-        return extValue5;
-    }
+	public String getExtValue5() {
+		return extValue5;
+	}
 
-    public void setExtValue5(String extValue5) {
-        this.extValue5 = extValue5;
-    }
+	public void setExtValue5(String extValue5) {
+		this.extValue5 = extValue5;
+	}
 
-    String extValue6;
+	String extValue6;
 
-    public String getExtValue6() {
-        return extValue6;
-    }
+	public String getExtValue6() {
+		return extValue6;
+	}
 
-    public void setExtValue6(String extValue6) {
-        this.extValue6 = extValue6;
-    }
+	public void setExtValue6(String extValue6) {
+		this.extValue6 = extValue6;
+	}
 
-    String extValue7;
+	String extValue7;
 
-    public String getExtValue7() {
-        return extValue7;
-    }
+	public String getExtValue7() {
+		return extValue7;
+	}
 
-    public void setExtValue7(String extValue7) {
-        this.extValue7 = extValue7;
-    }
+	public void setExtValue7(String extValue7) {
+		this.extValue7 = extValue7;
+	}
 
-    String extValue8;
+	String extValue8;
 
-    public String getExtValue8() {
-        return extValue8;
-    }
+	public String getExtValue8() {
+		return extValue8;
+	}
 
-    public void setExtValue8(String extValue8) {
-        this.extValue8 = extValue8;
-    }
+	public void setExtValue8(String extValue8) {
+		this.extValue8 = extValue8;
+	}
 
 	String extValue9;
 
@@ -632,7 +633,6 @@ public class HumanActivity extends ReceiveActivity {
 	}
 
 	protected void executeActivity(ProcessInstance instance) throws Exception {
-
 		addLoopBackCount(instance);
 
 		addWorkitem(instance, null);
@@ -727,7 +727,7 @@ public class HumanActivity extends ReceiveActivity {
 			instance.putRoleMapping(getRole().getName(), roleMapping);
 			// roleMapping.setResourceName((String) principal.get("user"));
 
-			if(roleMapping.getResourceName() != null){
+			if (roleMapping.getResourceName() != null) {
 				kpv.put("resourceName", roleMapping.getResourceName());
 			}
 			// kpv.put(KeyedParameter.DISPATCHINGOPTION, ""+Role.DISPATCHINGOPTION_RACING);
@@ -1157,273 +1157,275 @@ public class HumanActivity extends ReceiveActivity {
 	}
 
 	public void setDueDate(ProcessInstance instance, String theTime) throws Exception {
+		if (theTime == null || "".equals(theTime))
+			return;
 		String[] yearMonthDate = theTime.split("-");
 
-        Calendar theCalendar = Calendar.getInstance();
+		Calendar theCalendar = Calendar.getInstance();
 
-        int year = Integer.parseInt(yearMonthDate[0]);
-        int month = Integer.parseInt(yearMonthDate[1]) - 1;
-        int date = Integer.parseInt(yearMonthDate[2]);
+		int year = Integer.parseInt(yearMonthDate[0]);
+		int month = Integer.parseInt(yearMonthDate[1]) - 1;
+		int date = Integer.parseInt(yearMonthDate[2]);
 
-        theCalendar.set(year, month, date);
+		theCalendar.set(year, month, date);
 
-        setDueDate(instance, theCalendar);
+		setDueDate(instance, theCalendar);
 
-    }
+	}
 
-    protected void refreshDuration(ProcessInstance instance) throws Exception {
-    }
+	protected void refreshDuration(ProcessInstance instance) throws Exception {
+	}
 
-    public void stop(ProcessInstance instance) throws Exception {
-        super.stop(instance);
-        cancelWorkItem(instance);
-    }
+	public void stop(ProcessInstance instance) throws Exception {
+		super.stop(instance);
+		cancelWorkItem(instance);
+	}
 
-    public void stop(ProcessInstance instance, String status) throws Exception {
-        super.stop(instance, status);
-        cancelWorkItem(instance, status);
-    }
+	public void stop(ProcessInstance instance, String status) throws Exception {
+		super.stop(instance, status);
+		cancelWorkItem(instance, status);
+	}
 
-    public void delegate(ProcessInstance instance, RoleMapping roleMapping) throws Exception {
-        delegate(instance, roleMapping, false);
-    }
+	public void delegate(ProcessInstance instance, RoleMapping roleMapping) throws Exception {
+		delegate(instance, roleMapping, false);
+	}
 
-    public void delegate(ProcessInstance instance, RoleMapping roleMapping, boolean delegateOnlyForWorkitem)
-            throws Exception {
+	public void delegate(ProcessInstance instance, RoleMapping roleMapping, boolean delegateOnlyForWorkitem)
+			throws Exception {
 
-        if (!delegateOnlyForWorkitem) {
-            Role role = getRole();
+		if (!delegateOnlyForWorkitem) {
+			Role role = getRole();
 
-            roleMapping.setName(role.getName());
-            instance.putRoleMapping(roleMapping);
-        }
+			roleMapping.setName(role.getName());
+			instance.putRoleMapping(roleMapping);
+		}
 
-        saveSnapshotHTML(instance);
+		saveSnapshotHTML(instance);
 
-        String[] taskIds = getTaskIds(instance);
+		String[] taskIds = getTaskIds(instance);
 
-        WorkList wl = instance.getWorkList();
+		WorkList wl = instance.getWorkList();
 
-        ResultPayload rp = new ResultPayload();
-        rp.setExtendedValue(
-                new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DELEGATED));
-        rp.setExtendedValue(new KeyedParameter("endDate", new Date()));
-        rp.setExtendedValue(new KeyedParameter(KeyedParameter.DISPATCHINGOPTION, "" + Role.DISPATCHINGOPTION_ALL));
-        rp.setExtendedValue(new KeyedParameter("dispatchParam1", ""));
+		ResultPayload rp = new ResultPayload();
+		rp.setExtendedValue(
+				new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DELEGATED));
+		rp.setExtendedValue(new KeyedParameter("endDate", new Date()));
+		rp.setExtendedValue(new KeyedParameter(KeyedParameter.DISPATCHINGOPTION, "" + Role.DISPATCHINGOPTION_ALL));
+		rp.setExtendedValue(new KeyedParameter("dispatchParam1", ""));
 
-        wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
+		wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
 
-        setTaskIds(instance, null);
-        executeActivity(instance);
+		setTaskIds(instance, null);
+		executeActivity(instance);
 
-        firePropertyChangeEventToActivityFilters(instance, "roleMapping", roleMapping);
-    }
+		firePropertyChangeEventToActivityFilters(instance, "roleMapping", roleMapping);
+	}
 
-    /**
-     *
-     * @param instance
-     * @param payload
-     * @throws Exception
-     * @deprecated
-     */
-    public void saveWorkItem(ProcessInstance instance, ResultPayload payload) throws Exception {
+	/**
+	 *
+	 * @param instance
+	 * @param payload
+	 * @throws Exception
+	 * @deprecated
+	 */
+	public void saveWorkItem(ProcessInstance instance, ResultPayload payload) throws Exception {
 
-        savePayload(instance, payload);
-        Date now = new Date();// TODO: R.
-                              // DAOFactory.getInstance(instance.getProcessTransactionContext()).getNow().getTime();
+		savePayload(instance, payload);
+		Date now = new Date();// TODO: R.
+								// DAOFactory.getInstance(instance.getProcessTransactionContext()).getNow().getTime();
 
-        String[] taskIds = getTaskIds(instance);
-        if (taskIds == null || taskIds.length == 0) {
-            addWorkitem(instance, DefaultWorkList.WORKITEM_STATUS_DRAFT);
-        } else { // wl update : flag 'DRAFT'
-            WorkList wl = instance.getWorkList();
+		String[] taskIds = getTaskIds(instance);
+		if (taskIds == null || taskIds.length == 0) {
+			addWorkitem(instance, DefaultWorkList.WORKITEM_STATUS_DRAFT);
+		} else { // wl update : flag 'DRAFT'
+			WorkList wl = instance.getWorkList();
 
-            ResultPayload rp = new ResultPayload();
-            rp.setExtendedValue(
-                    new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DRAFT));
+			ResultPayload rp = new ResultPayload();
+			rp.setExtendedValue(
+					new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DRAFT));
 
-            rp.setExtendedValue(new KeyedParameter("saveDate", now));
+			rp.setExtendedValue(new KeyedParameter("saveDate", now));
 
-            wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
-        }
+			wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
+		}
 
-        firePropertyChangeEventToActivityFilters(instance, "saveDate", now);
-        firePropertyChangeEventToActivityFilters(instance, "saveEndpoint", payload);
-        fireEventToActivityFilters(instance, "saveWorkitem", payload);
-        fireEventToActivityFilters(instance, "saveAnyway", payload);
+		firePropertyChangeEventToActivityFilters(instance, "saveDate", now);
+		firePropertyChangeEventToActivityFilters(instance, "saveEndpoint", payload);
+		fireEventToActivityFilters(instance, "saveWorkitem", payload);
+		fireEventToActivityFilters(instance, "saveAnyway", payload);
 
-    }
+	}
 
-    public void saveWorkItem(ProcessInstance instance, Map payload) throws Exception {
+	public void saveWorkItem(ProcessInstance instance, Map payload) throws Exception {
 
-        savePayload(instance, payload);
-        Date now = new Date(); // TODO get date from database?
+		savePayload(instance, payload);
+		Date now = new Date(); // TODO get date from database?
 
-        String[] taskIds = getTaskIds(instance);
-        if (taskIds == null || taskIds.length == 0) {
-            addWorkitem(instance, DefaultWorkList.WORKITEM_STATUS_DRAFT);
-        } else { // wl update : flag 'DRAFT'
-            WorkList wl = instance.getWorkList();
+		String[] taskIds = getTaskIds(instance);
+		if (taskIds == null || taskIds.length == 0) {
+			addWorkitem(instance, DefaultWorkList.WORKITEM_STATUS_DRAFT);
+		} else { // wl update : flag 'DRAFT'
+			WorkList wl = instance.getWorkList();
 
-            ResultPayload rp = new ResultPayload();
-            rp.setExtendedValue(
-                    new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DRAFT));
+			ResultPayload rp = new ResultPayload();
+			rp.setExtendedValue(
+					new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DRAFT));
 
-            rp.setExtendedValue(new KeyedParameter("saveDate", now));
+			rp.setExtendedValue(new KeyedParameter("saveDate", now));
 
-            wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
-        }
+			wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
+		}
 
-        firePropertyChangeEventToActivityFilters(instance, "saveDate", now);
-        firePropertyChangeEventToActivityFilters(instance, "saveEndpoint", payload);
-        fireEventToActivityFilters(instance, "saveWorkitem", payload);
-        fireEventToActivityFilters(instance, "saveAnyway", payload);
+		firePropertyChangeEventToActivityFilters(instance, "saveDate", now);
+		firePropertyChangeEventToActivityFilters(instance, "saveEndpoint", payload);
+		fireEventToActivityFilters(instance, "saveWorkitem", payload);
+		fireEventToActivityFilters(instance, "saveAnyway", payload);
 
-    }
+	}
 
-    public HumanActivity getPreviousHumanActivity(ProcessInstance instance) throws Exception {
-        Vector actList = getPreviousActivities();
-        if (actList == null)
-            return null;
-        final ProcessInstance instanceTemp = instance;
+	public HumanActivity getPreviousHumanActivity(ProcessInstance instance) throws Exception {
+		Vector actList = getPreviousActivities();
+		if (actList == null)
+			return null;
+		final ProcessInstance instanceTemp = instance;
 
-        for (int i = 0; i < actList.size(); i++) {
-            Activity actTemp = (Activity) actList.get(i);
+		for (int i = 0; i < actList.size(); i++) {
+			Activity actTemp = (Activity) actList.get(i);
 
-            ActivityForLoop findingLoop = new ActivityForLoop() {
-                public void logic(Activity activity) {
-                    try {
-                        if (activity instanceof HumanActivity &&
-                                activity.STATUS_COMPLETED.equals(activity.getStatus(instanceTemp))) {
-                            setReturnValue(activity);
-                        }
-                    } catch (Exception e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            };
+			ActivityForLoop findingLoop = new ActivityForLoop() {
+				public void logic(Activity activity) {
+					try {
+						if (activity instanceof HumanActivity &&
+								activity.STATUS_COMPLETED.equals(activity.getStatus(instanceTemp))) {
+							setReturnValue(activity);
+						}
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
 
-            findingLoop.runBackward(actTemp);
-            HumanActivity preAct = (HumanActivity) findingLoop.getReturnValue();
-            if (preAct != null)
-                return preAct;
-        }
+			findingLoop.runBackward(actTemp);
+			HumanActivity preAct = (HumanActivity) findingLoop.getReturnValue();
+			if (preAct != null)
+				return preAct;
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    public void afterExecute(ProcessInstance instance) throws Exception {
+	public void afterExecute(ProcessInstance instance) throws Exception {
 
-        if (isNotificationWorkitem()) {
-            onComplete(instance, new org.uengine.kernel.ResultPayload());
-            fireComplete(instance);
-        }
+		if (isNotificationWorkitem()) {
+			onComplete(instance, new org.uengine.kernel.ResultPayload());
+			fireComplete(instance);
+		}
 
-        dataMapping(instance, getMappingContextsIn());
+		dataMapping(instance, getMappingContextsIn());
 
-        super.afterExecute(instance);
-    }
+		super.afterExecute(instance);
+	}
 
-    protected String createSnapshotHtmlFilePath(ProcessInstance instance, HumanActivity humanActivity)
-            throws Exception {
-        ProcessInstance rootInstance = instance.getRootProcessInstance();
-        int year = rootInstance.getProcessDefinition().getStartedTime(rootInstance).get(Calendar.YEAR);
+	protected String createSnapshotHtmlFilePath(ProcessInstance instance, HumanActivity humanActivity)
+			throws Exception {
+		ProcessInstance rootInstance = instance.getRootProcessInstance();
+		int year = rootInstance.getProcessDefinition().getStartedTime(rootInstance).get(Calendar.YEAR);
 
-        String filePath = SNAPSHOT_DIRECTORY + year
-                + File.separatorChar + rootInstance.getInstanceId()
-                + File.separatorChar + getTaskIds(instance)[0] + ".html";
+		String filePath = SNAPSHOT_DIRECTORY + year
+				+ File.separatorChar + rootInstance.getInstanceId()
+				+ File.separatorChar + getTaskIds(instance)[0] + ".html";
 
-        return filePath;
-    }
+		return filePath;
+	}
 
-    protected void saveSnapshotHTML(ProcessInstance instance) throws Exception {
+	protected void saveSnapshotHTML(ProcessInstance instance) throws Exception {
 
-        // if(!"true".equals(GlobalContext.getPropertyString("humanactivity.save.snapshot.html",
-        // "false"))) return;
+		// if(!"true".equals(GlobalContext.getPropertyString("humanactivity.save.snapshot.html",
+		// "false"))) return;
 
-        // if("defaultHandler".equals(getTool()) ||
-        // "codiReplyHandler".equals(getTool())) {
+		// if("defaultHandler".equals(getTool()) ||
+		// "codiReplyHandler".equals(getTool())) {
 
-        // boolean wasIsJBoss =
-        // "JBOSS".equals(GlobalContext.getPropertyString("was.type", "TOMCAT"));
-        // HttpServletRequest request =
-        // (HttpServletRequest)instance.getProcessTransactionContext().getServletRequest();
-        // HttpServletResponse response =
-        // (HttpServletResponse)instance.getProcessTransactionContext().getServletResponse();
+		// boolean wasIsJBoss =
+		// "JBOSS".equals(GlobalContext.getPropertyString("was.type", "TOMCAT"));
+		// HttpServletRequest request =
+		// (HttpServletRequest)instance.getProcessTransactionContext().getServletRequest();
+		// HttpServletResponse response =
+		// (HttpServletResponse)instance.getProcessTransactionContext().getServletResponse();
 
-        // /***********************
-        // * Save Snapshot File
-        // **********************/
-        // request.setAttribute("instanceForSnapshot", instance);
-        // request.setAttribute("currActivityForSnapshot", this);
+		// /***********************
+		// * Save Snapshot File
+		// **********************/
+		// request.setAttribute("instanceForSnapshot", instance);
+		// request.setAttribute("currActivityForSnapshot", this);
 
-        // RequestDispatcher dis = request.getRequestDispatcher(
-        // (wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "")
-        // + "/wih/wihDefaultTemplate/snapshot_showInputForm.jsp");
+		// RequestDispatcher dis = request.getRequestDispatcher(
+		// (wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "")
+		// + "/wih/wihDefaultTemplate/snapshot_showInputForm.jsp");
 
-        // if("codiReplyHandler".equals(getTool())){
-        // dis = request.getRequestDispatcher(
-        // (wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "")
-        // + "/wih/codiReplyHandler/snapshot_showInputForm.jsp?isReply=true");
-        // }
+		// if("codiReplyHandler".equals(getTool())){
+		// dis = request.getRequestDispatcher(
+		// (wasIsJBoss ? GlobalContext.WEB_CONTEXT_ROOT : "")
+		// + "/wih/codiReplyHandler/snapshot_showInputForm.jsp?isReply=true");
+		// }
 
-        // final StringWriter sw = new StringWriter();
-        // OutputStreamWriter osw = null;
+		// final StringWriter sw = new StringWriter();
+		// OutputStreamWriter osw = null;
 
-        // try {
-        // dis.include(request, new HttpServletResponseWrapper(response){
-        // public PrintWriter getWriter() throws IOException {
-        // return new PrintWriter(sw);
-        // }
-        // });
+		// try {
+		// dis.include(request, new HttpServletResponseWrapper(response){
+		// public PrintWriter getWriter() throws IOException {
+		// return new PrintWriter(sw);
+		// }
+		// });
 
-        // /**************************
-        // * Append Tag Div
-        // **************************/
-        // String Tags = request.getParameter("tags");
-        // if(UEngineUtil.isNotEmpty(Tags)){
-        // StringBuffer buff = sw.getBuffer();
+		// /**************************
+		// * Append Tag Div
+		// **************************/
+		// String Tags = request.getParameter("tags");
+		// if(UEngineUtil.isNotEmpty(Tags)){
+		// StringBuffer buff = sw.getBuffer();
 
-        // buff.append("<div id='tags'>");
-        // buff.append(Tags.replaceAll(";", ",").substring(0,Tags.length()-1));
-        // buff.append("</div>");
-        // }
-        // sw.flush();
+		// buff.append("<div id='tags'>");
+		// buff.append(Tags.replaceAll(";", ",").substring(0,Tags.length()-1));
+		// buff.append("</div>");
+		// }
+		// sw.flush();
 
-        // request.removeAttribute("instanceForSnapshot");
-        // request.removeAttribute("currActivityForSnapshot");
+		// request.removeAttribute("instanceForSnapshot");
+		// request.removeAttribute("currActivityForSnapshot");
 
-        // File newFile = new File(createSnapshotHtmlFilePath(instance , this));
-        // File dir = newFile.getParentFile();
-        // if (!dir.exists()) {
-        // dir.mkdirs();
-        // }
+		// File newFile = new File(createSnapshotHtmlFilePath(instance , this));
+		// File dir = newFile.getParentFile();
+		// if (!dir.exists()) {
+		// dir.mkdirs();
+		// }
 
-        // osw = new OutputStreamWriter(new FileOutputStream(newFile),
-        // GlobalContext.ENCODING);
-        // osw.write(sw.toString());
-        // } catch (Exception e) {
-        // throw e;
-        // } finally {
-        // if (osw != null) {
-        // osw.close();
-        // }
-        // if (sw != null) {
-        // sw.close();
-        // }
-        // }
-        // }
-    }
+		// osw = new OutputStreamWriter(new FileOutputStream(newFile),
+		// GlobalContext.ENCODING);
+		// osw.write(sw.toString());
+		// } catch (Exception e) {
+		// throw e;
+		// } finally {
+		// if (osw != null) {
+		// osw.close();
+		// }
+		// if (sw != null) {
+		// sw.close();
+		// }
+		// }
+		// }
+	}
 
-    // transient String parentEditorId;
-    // @Hidden
-    // public String getParentEditorId() {
-    // return parentEditorId;
-    // }
-    // public void setParentEditorId(String parentEditorId) {
-    // this.parentEditorId = parentEditorId;
-    // }
-    //
+	// transient String parentEditorId;
+	// @Hidden
+	// public String getParentEditorId() {
+	// return parentEditorId;
+	// }
+	// public void setParentEditorId(String parentEditorId) {
+	// this.parentEditorId = parentEditorId;
+	// }
+	//
 
 }

@@ -36,6 +36,9 @@ public class EventListener {
     @Autowired
     Streams streams;
 
+    // @Autowired
+    // KafkaProcessor streams;
+
     @Autowired
     ActivityQueue activityQueue;
 
@@ -43,6 +46,9 @@ public class EventListener {
     public void handleDone(@Payload ActivityDone activityDone) {
 
         if (!activityDone.checkMyEvent())
+            return;
+
+        if (activityDone.getActivityInfo() == null)
             return;
 
         System.out.println("Received: ");
@@ -127,6 +133,9 @@ public class EventListener {
             return;
 
         try {
+            if(activityFailed.getActivityInfo() == null) {
+                return;
+            }
             ProcessInstance instance = instanceService
                     .getProcessInstanceLocal(activityFailed.getActivityInfo().getInstanceId());
 
@@ -142,6 +151,9 @@ public class EventListener {
     public void handleQueued(@Payload ActivityQueued activityQueued) throws Exception {
 
         if (!activityQueued.checkMyEvent())
+            return;
+
+        if (activityQueued.getActivityInfo() == null)
             return;
 
         ProcessInstance instance = instanceService
@@ -215,7 +227,7 @@ public class EventListener {
         if (definitionPath != null)
             try {
                 Object definition = definitionServiceUtil.getDefinition(definitionPath);
-                serviceRegisterDeployFilter.beforeDeploy((ProcessDefinition) definition, null, definitionPath, true);
+                // serviceRegisterDeployFilter.beforeDeploy((ProcessDefinition) definition, null, definitionPath, true);
             } catch (Exception e) {
                 throw new RuntimeException("failed to register a service for :" + definitionDeployed.getDefintionId(),
                         e);
@@ -223,8 +235,8 @@ public class EventListener {
 
     }
 
-    @Autowired
-    ServiceRegisterDeployFilter serviceRegisterDeployFilter;
+    // @Autowired
+    // ServiceRegisterDeployFilter serviceRegisterDeployFilter;
 
     @Autowired
     DefinitionServiceUtil definitionServiceUtil;

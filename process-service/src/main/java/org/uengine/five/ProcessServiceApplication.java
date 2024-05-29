@@ -6,9 +6,11 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.uengine.five.overriding.ActivityQueue;
+import org.uengine.five.overriding.EventMappingDeployFilter;
 import org.uengine.five.overriding.InstanceNameFilter;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.overriding.SpringComponentFactory;
+import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -18,10 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.uengine.five.config.kafka.KafkaProcessor;
+// import org.uengine.five.config.kafka.KafkaProcessor;
 
 @SpringBootApplication
-@EnableBinding(KafkaProcessor.class)
+@EnableBinding(Streams.class)
 @EnableFeignClients
 public class ProcessServiceApplication {
 
@@ -38,9 +40,19 @@ public class ProcessServiceApplication {
         GlobalContext.setComponentFactory(new SpringComponentFactory());
     }
 
+    // @Bean
+    // public ServiceRegisterDeployFilter serviceRegisterDeployFilter() {
+    //     return new ServiceRegisterDeployFilter();
+    // }
+
     @Bean
-    public ServiceRegisterDeployFilter serviceRegisterDeployFilter() {
+    public DeployFilter serviceRegisterDeployFilter() {
         return new ServiceRegisterDeployFilter();
+    }
+
+    @Bean
+    public DeployFilter eventMappingDeployFilter() {
+        return new EventMappingDeployFilter();
     }
 
     @Bean

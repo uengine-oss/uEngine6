@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
+import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.kernel.RoleMapping;
 
 /**
@@ -30,7 +31,7 @@ import org.uengine.kernel.RoleMapping;
 @FeignClient(name = "bpm", url = "http://process-service:9094")
 public interface InstanceService {
 
-        @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
         public RepresentationModel start(@RequestBody ProcessExecutionCommand command) throws Exception;
 
         // @RequestMapping(value = "/instance/{instanceId}/start", method =
@@ -101,7 +102,10 @@ public interface InstanceService {
                         throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
-                        throws Exception;
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+
+        @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
+        public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
+                        
 
 }

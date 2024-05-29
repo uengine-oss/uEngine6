@@ -16,8 +16,36 @@ public class EventMappingEntity {
     @Column(name = "correlation_key")
     private String correlationKey;
 
+    @Column(name = "tracing_tag")
+    private String tracingTag;
+    
     @Column(name = "is_start_event")
     private Boolean isStartEvent;
+
+   
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(String definitionId) {
+        this.definitionId = definitionId;
+    }
+
+    public String getTracingTag() {
+        return tracingTag;
+    }
+
+    public void setTracingTag(String tracingTag) {
+        this.tracingTag = tracingTag;
+    }
 
     public String getCorrelationKey() {
         return correlationKey;
@@ -35,19 +63,4 @@ public class EventMappingEntity {
         this.isStartEvent = isStartEvent;
     }
 
-    public String getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
-    public String getDefinitionId() {
-        return definitionId;
-    }
-
-    public void setDefinitionId(String definitionId) {
-        this.definitionId = definitionId;
-    }
 }

@@ -14,7 +14,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.uengine.contexts.EventSynchronization;
-import org.uengine.five.config.kafka.KafkaProcessor;
+// import org.uengine.five.config.kafka.KafkaProcessor;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.entity.EventMappingEntity;
@@ -31,6 +31,7 @@ import org.uengine.kernel.ReceiveActivity;
 import org.uengine.five.dto.RoleMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.uengine.five.Streams;
 
 // import javax.transaction.Transactional;
 
@@ -54,58 +55,47 @@ public class AsyncEventListener {
     @Autowired
     EventMappingRepository eventMappingRepository;
 
-    @StreamListener(KafkaProcessor.INPUT)
+    @StreamListener(Streams.INPUT)
     public void whatever(@Payload String eventString) {
         System.out.println("\n\n##### listener whatever : " + eventString + "\n\n");
     }
 
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    @StreamListener(value = KafkaProcessor.INPUT, condition = "headers['type'] != null")
+    @StreamListener(
+        value = Streams.INPUT, 
+        condition = "headers['type'] != null"
+    )
     public void wheneverEvent(@Payload String eventBody, @Header("type") String typeHeader) {
         System.out.println("\n\n##### listener wheneverEvent : " + eventBody + "\n\n");
         try {
-            HashMap<String,Object> eventContent = objectMapper.readValue(eventBody, HashMap.class);
-            EventMappingEntity eventMappingEntity = eventMappingRepository.findEventMappingByEventType(typeHeader);
-            String startDefId = eventMappingEntity.getDefinitionId();
-            String corrKey = eventMappingEntity.getCorrelationKey();
 
-            if(eventMappingEntity.isStartEvent()){
-                // START
-                ProcessDefinition definition = (ProcessDefinition)definitionService.getDefinition(startDefId);
-                String coorKeyValue = null;
+            if(typeHeader.equals("DefinitionCreated")){
 
-                for (Activity act : definition.getStartActivities()){
-                    if(act.getEventSynchronization() != null){
-                        FieldDescriptor[] attributes = act.getEventSynchronization().getAttributes();
-                        FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey).toArray(FieldDescriptor[]::new);
-                        if (corrKeyFields.length > 0) {
-                            String corrKeyName = corrKeyFields[0].getName();
-                            coorKeyValue = (String) eventContent.get(corrKeyName);
-                        }
-                    }
-                }
-               
-                ProcessExecutionCommand processExecutionCommand = new ProcessExecutionCommand();
-                processExecutionCommand.setProcessDefinitionId(startDefId);
-                processExecutionCommand.setCorrelationKey(coorKeyValue);
-            
-                // RoleMapping roleMapping = new RoleMapping();
-                // roleMapping.setName("initiator");
-                // roleMapping.setEndpoints(new String[] { "initiator@uengine.org" });
-                // roleMapping.setResourceNames(new String[] { "Initiator" });
-                // processExecutionCommand.setRoleMappings(new RoleMapping[] { roleMapping });
-                
-                instanceService.start(processExecutionCommand);
             } else {
-                // NEXT
-                List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(corrKey, "Running");
-
-                if(processInstanceList == null || processInstanceList.size() == 0) {
-                    System.out.println("No running process instance found for correlation key: " + corrKey);
+                HashMap<String,Object> eventContent = objectMapper.readValue(eventBody, HashMap.class);
+                EventMappingEntity eventMappingEntity = eventMappingRepository.findEventMappingByEventType(typeHeader);
+                
+                if(eventMappingEntity == null ) 
                     return;
-                }
+    
+                String corrKey = eventMappingEntity.getCorrelationKey();
+                String coorKeyValue = (String) eventContent.get(corrKey);
+                
+                List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(coorKeyValue, "Running");
+                
+                if(eventMappingEntity.isStartEvent() && processInstanceList.size() == 0){
+                    // START
+                    String startDefId = eventMappingEntity.getDefinitionId();
+                    ProcessExecutionCommand processExecutionCommand = new ProcessExecutionCommand();
+                    processExecutionCommand.setProcessDefinitionId(startDefId);
+                    processExecutionCommand.setCorrelationKeyValue(coorKeyValue);
+            
+                    instanceService.start(processExecutionCommand);
+                } 
 
+                // NEXT
+                // String tracingTag = eventMappingEntity.getTracingTag();
                 for(ProcessInstanceEntity processInstanceEntity : processInstanceList){
                     ProcessInstance instance = instanceServiceImpl.getProcessInstanceLocal(processInstanceEntity.getInstId().toString());
                     for (Activity activity: instance.getCurrentRunningActivities()){
@@ -116,10 +106,10 @@ public class AsyncEventListener {
                         }
                     } 
                 }
+                
             }
         } catch (Exception e) {
             throw new RuntimeException("Error wheneverEvent :" + e.getMessage(), e); 
-            // e.printStackTrace();
         }
        
     }

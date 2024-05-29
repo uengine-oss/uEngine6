@@ -28,6 +28,7 @@ import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
+import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.entity.WorklistEntity;
@@ -44,12 +45,14 @@ import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.ExecutionScopeContext;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
@@ -88,9 +91,9 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     WorklistRepository worklistRepository;
 
+    
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
-
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
@@ -107,7 +110,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         boolean simulation = command.isSimulation();
         String filePath = command.getProcessDefinitionId();
-        String corrKey = command.getCorrelationKey();
+        String corrKeyValue = command.getCorrelationKeyValue();
 
         Object definition;
         try {
@@ -134,8 +137,8 @@ public class InstanceServiceImpl implements InstanceService {
                     }
                 }
 
-                if (corrKey != null) {
-                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKey);
+                if(corrKeyValue != null){
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKeyValue);
                 }
 
                 instance.execute();
@@ -766,6 +769,40 @@ public class InstanceServiceImpl implements InstanceService {
             instance.getProcessDefinition().fireMessage(message.getEvent(), instance, message.getPayload());
         } else {
             throw new ResourceNotFoundException("Instance not found for ID: " + instanceId);
+        }
+    }
+    // "RESTFUl API PRINCIPLES"
+    // "defintion-chages" > POST > "definition-changes/${defPath}"
+
+    @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
+    public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
+        try {
+
+            ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
+            definition.setId(defPath);
+
+            if(definition != null && definition instanceof ProcessDefinition){
+                invokeDeployFilters(definition, defPath);
+            }
+            
+        } catch (Exception e) {
+            throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
+        }
+        
+    }
+
+    private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
+
+        Map<String, DeployFilter> filters = GlobalContext.getComponents(DeployFilter.class);
+        if (filters != null && filters.size() > 0) {
+            for (DeployFilter theFilter : filters.values()) {
+                try {
+                    theFilter.beforeDeploy(definitionDeployed, null, path, true);
+                } catch (Exception e) {
+                    throw new UEngineException("Error when to invoke DeployFilter: " + theFilter.getClass().getName(),
+                            e);
+                }
+            }
         }
     }
 

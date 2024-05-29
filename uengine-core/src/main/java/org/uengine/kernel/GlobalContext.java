@@ -692,10 +692,18 @@ public class GlobalContext {
 
 	}
 
-	public static <T> Map<String, T> getComponents(Class<T> clazz) {
-
+	public static <T> Map<String, T> getComponents(Class<T> clazz, Object[] objects) {
+		try {
+			return (Map<String, T>) componentFactory.getComponents(clazz, objects);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to get component for class: " + clazz.getName(), e);
+		}
 		// getInstance().getBeanFactory().getBeansOfType
-		return null;
+		// return null;
+	}
+
+	public static <T> Map<String, T> getComponents(Class<T> clazz) {
+		return getComponents(clazz, null);
 	}
 
 }
