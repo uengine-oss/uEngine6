@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
+// import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.NeedArrangementToSerialize;
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 /**
  * Created by uengine on 2017. 8. 9..
@@ -72,6 +74,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @Autowired
     ApplicationContext applicationContext;
+    
+    @Autowired
+    InstanceService instanceService;
+    // static BpmnXMLParser bpmnXMLParser = new BpmnXMLParser();
 
     static ObjectMapper objectMapper = createTypedJsonObjectMapper();
 
@@ -348,11 +354,11 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         Object definitionDeployed = null;
 
         resourceManager.save(resource, definition);
-
+        instanceService.postCreatedRawDefinition(resource.getPath());
+       
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
-            invokeDeployFilters((ProcessDefinition) definitionDeployed,
-                    resource.getPath().substring(RESOURCE_ROOT.length() + 2));
+            invokeDeployFilters((ProcessDefinition) definitionDeployed, resource.getPath());
         }
 
         return new DefinitionResource(resource);
@@ -444,7 +450,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                 }
             }
         }
-
     }
 
     @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
