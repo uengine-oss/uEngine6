@@ -6,12 +6,13 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.SubscribableChannel;
 
 public interface Streams {
-    String INPUT = "bpm-topic";
+    String INPUT = "bpm-in";
+    String OUTPUT = "bpm-out";
 
     @Input(INPUT)
     SubscribableChannel inboundGreetings();
 
-    @Output("bpm-topic")
+    @Output(OUTPUT)
     MessageChannel outboundChannel();
 
 }

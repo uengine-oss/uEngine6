@@ -30,8 +30,12 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-        bpm-topic:
-          destination: bpm.topic
+        bpm-in:
+          group: definition
+          destination: bpm-topic
+          contentType: application/json
+        bpm-out:
+          destination: bpm-topic
           contentType: application/json
           
 
@@ -62,7 +66,7 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-        bpm-topic:
+        bpm-in:
           destination: bpm.topic
           contentType: application/json
           
