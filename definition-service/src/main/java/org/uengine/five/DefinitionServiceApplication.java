@@ -3,6 +3,7 @@ package org.uengine.five;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 //import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 //import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
@@ -19,7 +20,7 @@ import org.uengine.modeling.resource.VersionManager;
 
 @SpringBootApplication
 // @EnableBinding(KafkaProcessor.class)
-// @EnableFeignClients
+@EnableFeignClients
 public class DefinitionServiceApplication {
 
     public static ApplicationContext applicationContext;
