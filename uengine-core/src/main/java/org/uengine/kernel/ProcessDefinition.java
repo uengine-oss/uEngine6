@@ -16,6 +16,7 @@ import java.util.Vector;
 // import org.metaworks.annotation.Name;
 // import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.contexts.TextContext;
+import org.uengine.kernel.bpmn.SequenceFlow;
 //import org.uengine.modeling.HasThumbnail;
 //import org.uengine.modeling.resource.Describable;
 //import org.uengine.processmanager.ProcessManagerFactoryBean;
@@ -1278,5 +1279,40 @@ System.out.println("ProcessDefinition::addMessageListener.message = " + message)
 	public void gatherPropagatedActivitiesOf(ProcessInstance instance, Activity child, List list) throws Exception {
 		super.gatherPropagatedActivitiesOf(instance, child, list);
 	}
+
+	// public Activity getFirstHumanActivity() throws Exception {
+
+    //     List<Activity> startActivities = getStartActivities();
+    //     if(startActivities != null){
+    //         for(Activity activity : startActivities){
+    //             Activity startActivity = findStartActivityWithEventSynchronization(activity);
+    //             if(startActivity != null){
+	// 				return startActivity;
+    //             }
+    //         }
+    //     }
+	// 	return null;
+	// }
+
+	// private Activity findStartActivityWithEventSynchronization(Activity activity) throws Exception {
+    //     try {
+    //         if (activity instanceof ReceiveActivity && activity.getEventSynchronization() != null) {
+    //             return activity;
+    //         }
+        
+    //         for (SequenceFlow sequenceFlow : activity.getOutgoingSequenceFlows()) {
+    //             if (sequenceFlow.getTargetActivity() != null) {
+    //                 Activity result = findStartActivityWithEventSynchronization(sequenceFlow.getTargetActivity());
+    //                 if (result != null) {
+    //                     return result;
+    //                 }
+    //             }
+    //         }
+    //         return null;
+    //     } catch (Exception e){
+    //         throw new UEngineException("Error when to find StartActivityWith EventSynchronization: " + activity.getName(), e);
+    //     }
+       
+    // }
 }
 

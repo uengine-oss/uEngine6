@@ -57,8 +57,16 @@ public class URLActivity extends HumanActivity {
 	public URLActivity(){
 		super();
 		setName("url");
+		setTool("urlHandler");
 	}
 	
+	public String getTool(ProcessInstance instance) {
+		if(getUrl() == null){
+			return "urlHandler";
+		}
+		return "urlHandler:" + evaluateContent(instance, getUrl());
+	}
+
 	protected String createURL(ProcessInstance inst){
 		return evaluateContent(inst, getUrl()).toString();
 	}

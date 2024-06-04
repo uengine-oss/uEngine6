@@ -39,25 +39,28 @@ public class EventSendingDeployFilter implements DeployFilter {
 
         List<Activity> startActivities = definition.getStartActivities();
 
-        for(Activity activity : startActivities){
+        if(startActivities != null){
+            for(Activity activity : startActivities){
 
-            if(activity instanceof CatchingRestMessageEvent){
-
-                CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
-
-//                ServiceEndpointRepository serviceEndpointRepository = MetaworksRemoteService.getComponent(ServiceEndpointRepository.class);
-//
-//                ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
-//
-//                serviceEndpointEntity.setPath(catchingMessageEvent.getServicePath());
-//                serviceEndpointEntity.setCorrelationKey(catchingMessageEvent.getCorrelationKey());
-//                serviceEndpointEntity.setDefId(folder);
-//
-//                serviceEndpointRepository.save(serviceEndpointEntity);
-
+                if(activity instanceof CatchingRestMessageEvent){
+    
+                    CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
+    
+    //                ServiceEndpointRepository serviceEndpointRepository = MetaworksRemoteService.getComponent(ServiceEndpointRepository.class);
+    //
+    //                ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
+    //
+    //                serviceEndpointEntity.setPath(catchingMessageEvent.getServicePath());
+    //                serviceEndpointEntity.setCorrelationKey(catchingMessageEvent.getCorrelationKey());
+    //                serviceEndpointEntity.setDefId(folder);
+    //
+    //                serviceEndpointRepository.save(serviceEndpointEntity);
+    
+                }
+    
             }
-
         }
+    
 
     }
 }

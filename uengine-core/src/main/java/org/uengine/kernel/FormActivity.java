@@ -53,6 +53,7 @@ public class FormActivity extends HumanActivity {
 	public FormActivity() {
 		super();
 		setName("form");// test
+		setTool("formHandler");
 	}
 
 	MappingContext mappingContext;

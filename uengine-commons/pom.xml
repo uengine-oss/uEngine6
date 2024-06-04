@@ -9,6 +9,16 @@
 	<artifactId>uengine-commons</artifactId>
 
 	<dependencies>
+		<!-- <dependency>
+			<groupId>org.uengine</groupId>
+			<artifactId>uengine-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+            <groupId>org.uengine</groupId>
+            <artifactId>uengine-five-api</artifactId>
+            <version>${project.version}</version>
+        </dependency> -->
 		<dependency>
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
