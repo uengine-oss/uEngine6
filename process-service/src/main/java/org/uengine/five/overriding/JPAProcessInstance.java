@@ -231,6 +231,10 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
         return instanceService.getProcessInstanceLocal(instanceId);
     }
 
+    public String getCorrKey() {
+        return String.valueOf(getProcessInstanceEntity().getCorrKey());
+    }
+
     @Override
     public String getRootProcessInstanceId() {
         return String.valueOf(getProcessInstanceEntity().getRootInstId());
