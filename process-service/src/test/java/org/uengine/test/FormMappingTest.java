@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Replace;
 import org.uengine.contexts.MappingContext;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.AbstractProcessInstance;
@@ -227,7 +228,11 @@ public class FormMappingTest extends UEngineTest {
                 assertTrue(result.toString().equals("11.522.533.5"));
                 break;
             case "ReplaceTransformer":
-                assertTrue(result.toString().equals("aa.5"));
+                if (((ReplaceTransformer) transformer).isRegularExp()) {
+                    assertTrue(result.toString().equals("**.*"));
+                } else {
+                    assertTrue(result.toString().equals("11.5"));
+                }
                 break;
             case "NumberFormatTransformer":
                 assertTrue(result.toString().equals("11"));

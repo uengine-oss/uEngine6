@@ -1,3 +1,1 @@
-<section><div class="row">
-        <div class="col-sm-12"><text-field name="SelectWorker" alias="SelectWorker" type="text" disabled="false" v-model="formValues['SelectWorker']"></text-field></div>
-    </div></section>
+<section><row-layout name="SelectWorker" alias="SelectWorker" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12"><text-field name="Worker1" alias="Worker1" type="email" disabled="false" v-model="slotProps.modelValue['Worker1']"></text-field><text-field name="Worker2" alias="Worker2" type="email" disabled="false" v-model="slotProps.modelValue['Worker2']"></text-field><text-field name="Worker3" alias="Worker3" type="email" disabled="false" v-model="slotProps.modelValue['Worker3']"></text-field></div></div></row-layout></section>

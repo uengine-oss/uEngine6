@@ -1,54 +1,25 @@
 {
   "mappingElements": [
     {
-      "_type": "org.uengine.kernel.MappingElement",
       "argument": {
-        "text": "Variables"
+        "text": "test11"
       },
       "transformerMapping": {
         "transformer": {
-          "_type": "org.uengine.processdesigner.mapper.transformers.MinTransformer",
-          "name": "Min 2",
+          "_type": "org.uengine.processdesigner.mapper.transformers.ReplaceTransformer",
+          "name": "Replace",
           "location": {
-            "x": 803.5,
-            "y": 276.09375
+            "x": 335.4545593261719,
+            "y": 120.81533813476562
           },
           "argumentSourceMap": {
-            "value1": {
-              "_type": "java.lang.Object",
-              "transformer": {
-                "_type": "org.uengine.processdesigner.mapper.transformers.MaxTransformer",
-                "name": "Max",
-                "location": {
-                  "x": 400.5,
-                  "y": 189.09375
-                },
-                "argumentSourceMap": {
-                  "value1": "Variables",
-                  "value2": "test1"
-                }
-              },
-              "linkedArgumentName": "out"
-            },
-            "value2": {
-              "_type": "java.lang.Object",
-              "transformer": {
-                "_type": "org.uengine.processdesigner.mapper.transformers.MinTransformer",
-                "name": "Min",
-                "location": {
-                  "x": 395.5,
-                  "y": 318.09375
-                },
-                "argumentSourceMap": {
-                  "value1": "test2",
-                  "value2": "test3"
-                }
-              },
-              "linkedArgumentName": "out"
-            }
-          }
+            "input": "test11"
+          },
+          "isRegularExp": true,
+          "oldString": "\\d",
+          "newString": "*"
         },
-        "linkedArgumentName": "Variables"
+        "linkedArgumentName": "test11"
       },
       "isKey": false
     }
