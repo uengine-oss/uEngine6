@@ -2,7 +2,9 @@ package org.uengine.five.overriding;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -10,6 +12,7 @@ import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
@@ -17,11 +20,13 @@ import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.ExecutionScopeContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.TransactionListener;
 import org.uengine.kernel.UEngineException;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
@@ -474,5 +479,42 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             }
         }
 
+    }
+
+    @Override
+    public void execute(String tracingTag, boolean forceToQueue) throws Exception {
+        final Activity activity = getProcessDefinition().getActivity(tracingTag);
+
+        if (activity.getParentActivity() != null) {
+            if (!(activity.getParentActivity() instanceof SubProcess)) {
+                setExecutionScopeContext(null);
+            } else {
+                if (getExecutionScopeContextTree() != null && getExecutionScopeContextTree().getChilds() != null) {
+                    ExecutionScopeContext parentExecutionScopeContext = getParentExecutionScopeContext(
+                            getExecutionScopeContextTree(), activity.getParentActivity());
+                    if (parentExecutionScopeContext != null) {
+                        setExecutionScopeContext(parentExecutionScopeContext);
+                    }
+                }
+            }
+        }
+        super.execute(activity, tracingTag, forceToQueue);
+    }
+
+    ExecutionScopeContext getParentExecutionScopeContext(ExecutionScopeContext executionScopeContext,
+            Activity activity) {
+        ExecutionScopeContext result = null;
+        for (ExecutionScopeContext child : executionScopeContext.getChilds()) {
+            if (child.getRootActivityTracingTag().equals(activity.getTracingTag())) {
+                if (getExecutionScopeContext().getExecutionScope().equals(child.getExecutionScope())) {
+                    return child;
+                }
+            } else {
+                if (child.getChilds() != null) {
+                    return getParentExecutionScopeContext(child, activity);
+                }
+            }
+        }
+        return result;
     }
 }

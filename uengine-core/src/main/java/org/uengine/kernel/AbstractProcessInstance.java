@@ -13,6 +13,7 @@ import java.util.Vector;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.util.ActivityForLoop;
@@ -211,6 +212,10 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 
 	public void execute(String tracingTag, boolean forceToQueue) throws Exception {
 		final Activity activity = getProcessDefinition().getActivity(tracingTag);
+		execute(activity, tracingTag, forceToQueue);
+	}
+
+	public void execute(Activity activity, String tracingTag, boolean forceToQueue) throws Exception {
 
 		if (isSimulation() && activity.isBreakpoint()) { // if this activity is a breakpoint, just suspend the step and
 															// don't run it.
