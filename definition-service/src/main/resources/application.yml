@@ -7,7 +7,7 @@ spring:
 
 uengine:
   definition:
-    basePath: /Users/heon/Documents/workspace/uEngine6-bpm/definitions
+    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions
         
 spring:
   profiles: default

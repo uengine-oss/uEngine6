@@ -428,38 +428,53 @@ public class BpmnXMLParser {
         Class<?> clazz = Class.forName(fullClassName);
         Activity task = (Activity) clazz.getDeclaredConstructor().newInstance();
 
-        // JSON 파싱 및 속성 설정
+        int targetDepth = -1;
+
         NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
         for (int k = 0; k < propertiesNodes.getLength(); k++) {
             Node propertiesNode = propertiesNodes.item(k);
-            if (propertiesNode.getParentNode().getParentNode().getNodeName().equals(element.getNodeName())) {
-                if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
-                    NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
-                    for (int l = 0; l < jsonNodes.getLength(); l++) {
-                        Node jsonNode = jsonNodes.item(l);
-                        if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                || jsonNode.getNodeType() == Node.TEXT_NODE
-                                || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                            String jsonText = jsonNode.getTextContent();
-                            if (jsonText.contains("_type")) {
-                                clazz = Activity.class;
-                            }
+            // if
+            // (propertiesNode.getParentNode().getParentNode().getNodeName().equals(element.getNodeName()))
+            // {
 
-                            Object jsonObject = objectMapper.readValue(jsonText, clazz);
-                            if (className.equals("SubProcess")) {
-                                task = (SubProcess) jsonObject;
-                                parseActivities(element, laneInfo, (SubProcess) task, processDefinition);
-                            } else if (className.equals("BoundaryEvent")) {
-                                task = (Event) jsonObject;
-                                ((Event) task)
-                                        .setAttachedToRef(
-                                                element.getAttribute("attachedToRef"));
-                            } else {
-                                task = (Activity) jsonObject;
-                            }
+            int currentDepth = 0;
+            Node parent = propertiesNode.getParentNode();
+            while (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
+                currentDepth++;
+                parent = parent.getParentNode();
+            }
+
+            if (targetDepth == -1) {
+                targetDepth = currentDepth;
+            }
+
+            if (currentDepth == targetDepth) {
+                NodeList jsonNodes = ((Element) propertiesNode).getElementsByTagName("uengine:json");
+                for (int l = 0; l < jsonNodes.getLength(); l++) {
+                    Node jsonNode = jsonNodes.item(l);
+                    if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                            || jsonNode.getNodeType() == Node.TEXT_NODE
+                            || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                        String jsonText = jsonNode.getTextContent();
+                        if (jsonText.contains("_type")) {
+                            clazz = Activity.class;
+                        }
+
+                        Object jsonObject = objectMapper.readValue(jsonText, clazz);
+                        if (className.equals("SubProcess") && jsonObject instanceof SubProcess) {
+                            task = (SubProcess) jsonObject;
+                            parseActivities(element, laneInfo, (SubProcess) task, processDefinition);
+                        } else if (className.equals("BoundaryEvent")) {
+                            task = (Event) jsonObject;
+                            ((Event) task)
+                                    .setAttachedToRef(
+                                            element.getAttribute("attachedToRef"));
+                        } else {
+                            task = (Activity) jsonObject;
                         }
                     }
                 }
+                // }
             }
 
         }
@@ -502,7 +517,19 @@ public class BpmnXMLParser {
                     .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
 
         } else if (className.equals("IntermediateCatchEvent")) {
-            fullClassName = "org.uengine.kernel.IntermediateCatchEvent";
+            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+                    "message");
+            fullClassName = eventTypes.stream()
+                    .filter(eventType -> element.getElementsByTagName(eventType +
+                            "EventDefinition")
+                            .getLength() > 0
+                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                    .getLength() > 0)
+                    .findFirst()
+                    .map(eventType -> "org.uengine.kernel.bpmn."
+                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+                            + className)
+                    .orElse(null);
         } else if (className.equals("IntermediateThrowEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
                     "message");
@@ -916,7 +943,10 @@ public class BpmnXMLParser {
 
         for (int i = 0; i < processNodes.getLength(); i++) {
             Node processNode = processNodes.item(i);
-            parseActivities(processNode, processDefinition);
+            boolean isExecutable = Boolean.parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
+            if(isExecutable){
+                parseActivities(processNode, processDefinition);
+            }
         }
 
         processDefinition.afterDeserialization();
