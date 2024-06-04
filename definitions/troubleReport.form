@@ -1,0 +1,6 @@
+<section><row-layout name="TroubleReport" alias="TroubleReport" is_multidata_mode="true" v-model="formValues" v-slot="slotProps"><div v-for="(item, index) in slotProps.modelValue" :key="index">
+    <row-layout-item-head :index="index" @on_delete_item="slotProps.deleteItem(index)"></row-layout-item-head>
+    <div class="row">
+    <div class="col-sm-12"><text-field name="TroubleName" alias="TroubleName" type="text" disabled="false" v-model="item['TroubleName']"></text-field><text-field name="TroubleContent" alias="TroubleContent" type="text" disabled="false" v-model="item['TroubleContent']"></text-field><text-field name="TroubleReporter" alias="TroubleReporter" type="text" disabled="false" v-model="item['TroubleReporter']"></text-field><radio-field name="TroubleType" alias="TroubleType" disabled="false" items="[{'trouble':'고장'},{'complaints':'민원'}]" is_dynamic_load="false" dynamic_load_url="" dynamic_load_key_json_path="" dynamic_load_value_json_path="" v-model="item['TroubleType']"></radio-field><file-field name="file" alias="file" disabled="false" v-model="item['file']"></file-field></div>
+    </div>
+</div></row-layout></section>
