@@ -73,17 +73,17 @@ public class FlowActivity extends ComplexActivity {
 				Activity sourceActivity = null;
 
 				if (source != null) {
-                    if(this instanceof SubProcess){
-                        for(Activity activity : this.getChildActivities()){
-                            if(activity.getTracingTag().equals(source)){
-                                sourceActivity = activity;
-                                break;
-                            }
-                        }
-                    } else {
-                        sourceActivity = getProcessDefinition().getActivity(source);
+					if (this instanceof SubProcess) {
+						for (Activity activity : this.getChildActivities()) {
+							if (activity.getTracingTag().equals(source)) {
+								sourceActivity = activity;
+								break;
+							}
+						}
+					} else {
+						sourceActivity = getProcessDefinition().getActivity(source);
 
-                    }
+					}
 				} else if (sequenceFlow.getSourceActivity() != null) {
 					sourceActivity = sequenceFlow.getSourceActivity();
 				}
@@ -102,16 +102,16 @@ public class FlowActivity extends ComplexActivity {
 				Activity targetActivity = null;
 
 				if (target != null) {
-                    if(this instanceof SubProcess){
-                        for(Activity activity : this.getChildActivities()){
-                            if(activity.getTracingTag().equals(target)){
-                                targetActivity = activity;
-                                break;
-                            }
-                        }
-                    } else {
-                        targetActivity = getProcessDefinition().getActivity(target);
-                    }
+					if (this instanceof SubProcess) {
+						for (Activity activity : this.getChildActivities()) {
+							if (activity.getTracingTag().equals(target)) {
+								targetActivity = activity;
+								break;
+							}
+						}
+					} else {
+						targetActivity = getProcessDefinition().getActivity(target);
+					}
 				} else if (sequenceFlow.getTargetActivity() != null) {
 					targetActivity = sequenceFlow.getTargetActivity();
 				}
@@ -338,10 +338,14 @@ public class FlowActivity extends ComplexActivity {
 
 			for (int i = 0; i < possibleNextActivities.size(); i++) {
 				Activity activity = possibleNextActivities.get(i);
+				boolean hasToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
+				if (activity instanceof Gateway) {
+					hasToken = ((Gateway) activity).isCompletedAllOfPreviousActivities(instance);
+				}
 
 				// if there are no gateway but if it look like a join, apply inclusive gateway.
 				if (activity.getIncomingSequenceFlows().size() == 1
-						|| !Gateway.hasTokenInPreviousActivities(instance, activity))
+						|| hasToken)
 					queueActivity(activity, instance);
 			}
 
