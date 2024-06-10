@@ -1,8 +1,8 @@
 package org.uengine.kernel;
 
-import java.util.*;
+import java.util.Map;
 
-import org.uengine.util.UEngineUtil;
+import java.io.Serializable;
 
 /**
  * @author Jinyoung Jang
@@ -145,6 +145,68 @@ public class URLActivity extends HumanActivity {
 		}
 		
 		return super.onComplete(instance, payload);
+	}
+
+	protected void mappingOut(ProcessInstance instance) throws Exception {		
+		ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
+		mappingOut(instance, params);
+
+		// String eventType = getEventSynchronization().getEventType();
+		// if(params == null ) return;
+
+		// for (int i = 0; i < params.length; i++) {
+		// 	try {
+		// 		ParameterContext param = params[i];
+		// 		Object value = null;
+
+		// 		String targetFieldName = param.getArgument().getText();
+		// 		if (param.getTransformerMapping() == null) {
+		// 			// payload : {"eventType":"TroubleIssued","timestamp":1717730286122,"id":20,"troubleType":"sw","description":"1234"}
+		// 			String srcVariableName = param.getVariable().getName(); // [TroubleIssued].troubleType
+					
+		// 			if( eventType != null && srcVariableName.contains("["+eventType+"]")){
+		// 				String[] parts = srcVariableName.split("\\].");
+		// 				srcVariableName = parts[parts.length - 1];
+		// 			}
+		// 			value = ((DefaultProcessInstance)instance).get(getTracingTag(), "eventData."+srcVariableName); // sw
+
+		// 			((DefaultProcessInstance)instance).set("", targetFieldName, (Serializable) value);
+		// 			// ((DefaultProcessInstance)instance).setProperty(getTracingTag(), targetFieldName, (Serializable) value);
+		// 		} 
+		// 	} catch (Exception e) {
+		// 		e.printStackTrace();
+		// 		// if (!(instance instanceof SimulatorProcessInstance)) {
+		// 		throw e;
+		// 		// }
+		// 	}
+		// }	
+	}
+
+	protected void mappingOut(ProcessInstance instance, ParameterContext[] params) throws Exception {
+		if(params == null) return;
+
+		String eventType = getEventSynchronization().getEventType();
+		for (ParameterContext param : params) {
+			try {
+				if(param.getTransformerMapping() != null) continue;
+
+				String srcVariableName = param.getVariable().getName(); // [TroubleIssued].troubleType
+				String targetFieldName = param.getArgument().getText();
+
+				
+				if( eventType != null && srcVariableName.contains("["+eventType+"]")){
+					String[] parts = srcVariableName.split("\\].");
+					srcVariableName = parts[parts.length - 1];
+				}
+				Object value = ((DefaultProcessInstance)instance).get(getTracingTag(), "eventData."+srcVariableName); // sw
+
+				((DefaultProcessInstance)instance).set("", targetFieldName, (Serializable) value);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}	
+		super.mappingOut(instance, params);
 	}
 
 }

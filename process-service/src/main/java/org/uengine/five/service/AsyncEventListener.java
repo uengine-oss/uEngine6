@@ -1,5 +1,6 @@
 package org.uengine.five.service;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.uengine.five.repository.EventMappingRepository;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.FieldDescriptor;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
@@ -95,8 +97,13 @@ public class AsyncEventListener {
             List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(coorKeyValue, "Running");
             for(ProcessInstanceEntity processInstanceEntity : processInstanceList){
                 ProcessInstance instance = instanceServiceImpl.getProcessInstanceLocal(processInstanceEntity.getInstId().toString());
+            
                 for (Activity activity: instance.getCurrentRunningActivities()){
                     if(activity.getEventSynchronization() != null && activity.getEventSynchronization().getEventType().equals(typeHeader)){
+                        // set eventData.
+                        // ((DefaultProcessInstance)instance).setProperty(activity.getTracingTag(), "eventJson", (Serializable) eventContent);
+                        ((DefaultProcessInstance)instance).set(activity.getTracingTag(), "eventData", (Serializable) eventContent);
+
                         ReceiveActivity receiveActivity = (ReceiveActivity) activity;
                         receiveActivity.fireReceived(instance, eventContent);
                         break;

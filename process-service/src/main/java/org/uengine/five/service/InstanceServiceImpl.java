@@ -778,13 +778,14 @@ public class InstanceServiceImpl implements InstanceService {
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
 
+            if (defPath.endsWith("form")) return;
+
             ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
             definition.setId(defPath);
 
             if(definition != null && definition instanceof ProcessDefinition){
                 invokeDeployFilters(definition, defPath);
             }
-            
         } catch (Exception e) {
             throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
         }
