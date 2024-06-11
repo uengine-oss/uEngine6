@@ -16,11 +16,11 @@ public class ExclusiveGateway extends Gateway {
 	protected boolean isCompletedAllOfPreviousActivities(ProcessInstance instance) throws Exception {
 		// XOR Gateway case,
 		// complete this activity, when one previous activity is completed
-		Activity nextActivity = (Activity) getOutgoingSequenceFlows().get(0).getTargetElement();
-		String statusOfNextActivity = nextActivity.getStatus(instance);
 
-		if (!statusOfNextActivity.equals(Activity.STATUS_READY)) {
-			return false;
+		for (Activity activity : BlockFinder.getBlockMembers(this)) {
+			if (activity.getStatus(instance).equals(Activity.STATUS_COMPLETED))
+				continue;
+			activity.stop(instance);
 		}
 		return true;
 	}
