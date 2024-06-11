@@ -47,6 +47,8 @@ public class HtmlFormContextDeserializer extends JsonDeserializer<HtmlFormContex
                     valueMap.put(fieldName, parseNode(fieldValueNode, mapper));
                 } else if (fieldValueNode.isTextual()) {
                     valueMap.put(fieldName, fieldValueNode.asText());
+                } else if (fieldValueNode.isBoolean()) {
+                    valueMap.put(fieldName, fieldValueNode.asBoolean());
                 } else {
                     valueMap.put(fieldName, fieldValueNode.asText());
                 }
