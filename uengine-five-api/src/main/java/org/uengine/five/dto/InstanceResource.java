@@ -56,7 +56,7 @@ public class InstanceResource extends RepresentationModel {
                 setName(processInstance.getName());
                 setInstanceId(processInstance.getInstanceId());
                 setStatus(processInstance.getStatus());
-                setCorrKey(processInstance.getInstanceId());
+                // setCorrKey(processInstance.getInstanceId());
 
                 add(
                                 linkTo(

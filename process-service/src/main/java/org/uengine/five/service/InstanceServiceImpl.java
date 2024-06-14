@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.dto.DryRunExecutionCommand;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -99,9 +100,7 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource start(
-            @RequestBody ProcessExecutionCommand command)
-            throws Exception {
+    public InstanceResource start(@RequestBody ProcessExecutionCommand command) throws Exception {
 
         // FIXME: remove me
         String userId = SecurityAwareServletFilter.getUserId();
@@ -326,7 +325,6 @@ public class InstanceServiceImpl implements InstanceService {
                 instance.setExecutionScopeContext(executionScopeContext);
             }
         }
-
         Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
 
@@ -809,8 +807,7 @@ public class InstanceServiceImpl implements InstanceService {
 
     @ProcessTransactional(readOnly = true)
     @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Object dryRunInstance(@PathVariable("defId") String defId) throws Exception {
-
+    public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         command.setProcessDefinitionId(defId);
 
@@ -844,21 +841,62 @@ public class InstanceServiceImpl implements InstanceService {
                 }
 
                 instance.execute();
-                new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
+                // new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
         
                 WorkItemResource workItem = new WorkItemResource();
-                workItem.setActivity(instance.getCurrentRunningActivity().getActivity()); 
-                // workItem.setWorklist(worklistEntity); 
-                return workItem;
+                if(instance.getCurrentRunningActivity() != null){
+                    Activity activity = instance.getCurrentRunningActivity().getActivity();
+                    
+                    if( activity instanceof org.uengine.kernel.FormActivity ){
+                       String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
+                       ((org.uengine.kernel.FormActivity) activity).setTool(tool);
+                    } else if( activity instanceof org.uengine.kernel.URLActivity ){
+                        String urlTool = ((org.uengine.kernel.URLActivity) activity).getTool(instance);
+                        ((org.uengine.kernel.URLActivity) activity).setTool(urlTool);
+                    }
 
+                    workItem.setActivity(activity); 
+                }
+
+                return workItem;
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance: " + e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error get dry-run process instance: " + e.getMessage(), e);
             }
 
         }
 
         return null;
+    }
+
+    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST, RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @Transactional(rollbackFor = { Exception.class })
+    @ProcessTransactional
+    public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception {
+        try {
+            ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
+            InstanceResource instance = start(processExecutionCommand);
+            if(instance == null) return null;
+            String instId = instance.getInstanceId();
+            WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
+
+            if(worklistEntity == null) return null;
+            String taskId = worklistEntity.getTaskId().toString();
+
+            if(command.getVariables() != null){
+                for(String varName : command.getVariables().keySet()){
+                    String json = command.getVariables().get(varName);
+                    setVariableWithTaskId(instId, taskId, varName, json);
+                }
+            }
+          
+            putWorkItemComplete(taskId, command.getWorkItem());
+            return instance;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing dry-run process instance: " + e.getMessage(), e);
+        }
+
     }
 
 }

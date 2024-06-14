@@ -22,6 +22,7 @@ public class ServiceRegisterDeployFilter implements DeployFilter {
         if(!definition.isInitiateByFirstWorkitem()) return;
 
         List<Activity> startActivities = definition.getStartActivities();
+        if(startActivities == null) return;
 
         for(Activity activity : startActivities){
 
