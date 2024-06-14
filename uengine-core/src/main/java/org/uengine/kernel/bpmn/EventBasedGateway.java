@@ -1,10 +1,9 @@
 package org.uengine.kernel.bpmn;
 
-
-public class EventBasedGateway extends Gateway {
+public class EventBasedGateway extends ParallelGateway {
 
 	public EventBasedGateway() {
-		super("Event-based");
+		setName("Event-based");
 	}
 
 }
