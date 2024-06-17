@@ -339,7 +339,22 @@ public class FlowActivity extends ComplexActivity {
                     }
                 };
 
-			for (int i = 0; i < possibleNextActivities.size(); i++) {
+                instance.getProcessTransactionContext().addTransactionListener(tl);
+            }
+
+            // register token before queueActivity()
+            for (int i = 0; i < possibleNextActivities.size(); i++) {
+                Activity child = possibleNextActivities.get(i);
+			
+
+                child.reset(instance);
+                child.setStartedTime(instance, (Calendar) null);
+
+                int tokenCount = child.getTokenCount(instance);
+                child.setTokenCount(instance, ++tokenCount);
+            }
+
+            for (int i = 0; i < possibleNextActivities.size(); i++) {
 				Activity activity = possibleNextActivities.get(i);
 				boolean hasToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
 				if (activity instanceof Gateway) {
@@ -351,22 +366,6 @@ public class FlowActivity extends ComplexActivity {
 						|| hasToken)
 					queueActivity(activity, instance);
 			}
-
-                child.reset(instance);
-                child.setStartedTime(instance, (Calendar) null);
-
-                int tokenCount = child.getTokenCount(instance);
-                child.setTokenCount(instance, ++tokenCount);
-            }
-
-            for (int i = 0; i < possibleNextActivities.size(); i++) {
-                Activity activity = possibleNextActivities.get(i);
-
-                // if there are no gateway but if it look like a join, apply inclusive gateway.
-                if (activity.getIncomingSequenceFlows().size() == 1
-                        || !Gateway.hasTokenInPreviousActivities(instance, activity))
-                    queueActivity(activity, instance);
-            }
 
         } else if (command.equals(ACTIVITY_DONE)) {
 
