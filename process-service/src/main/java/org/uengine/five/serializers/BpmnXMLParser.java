@@ -558,7 +558,7 @@ public class BpmnXMLParser {
                     .map(eventType -> "org.uengine.kernel.bpmn."
                             + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
                             + className)
-                    .orElse(null);
+                    .orElse("org.uengine.kernel.bpmn." + className);
         } else {
             fullClassName = "org.uengine.kernel.bpmn." + className;
         }
