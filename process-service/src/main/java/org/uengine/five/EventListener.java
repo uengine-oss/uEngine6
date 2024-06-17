@@ -36,9 +36,6 @@ public class EventListener {
     @Autowired
     Streams streams;
 
-    // @Autowired
-    // KafkaProcessor streams;
-
     @Autowired
     ActivityQueue activityQueue;
 

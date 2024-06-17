@@ -389,9 +389,6 @@ public class BpmnXMLParser {
         String sourceRef = element.getAttribute("sourceRef");
         String targetRef = element.getAttribute("targetRef");
         SequenceFlow sequenceFlow = new SequenceFlow();
-        sequenceFlow.setTracingTag(id);
-        sequenceFlow.setSourceRef(sourceRef);
-        sequenceFlow.setTargetRef(targetRef);
 
         NodeList propertiesNodes = element.getElementsByTagName("uengine:properties");
         for (int k = 0; k < propertiesNodes.getLength(); k++) {
@@ -409,6 +406,10 @@ public class BpmnXMLParser {
                 }
             }
         }
+
+        sequenceFlow.setTracingTag(id);
+        sequenceFlow.setSourceRef(sourceRef);
+        sequenceFlow.setTargetRef(targetRef);
 
         processDefinition.addSequenceFlow(sequenceFlow);
     }
@@ -957,8 +958,9 @@ public class BpmnXMLParser {
 
         for (int i = 0; i < processNodes.getLength(); i++) {
             Node processNode = processNodes.item(i);
-            boolean isExecutable = Boolean.parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
-            if(isExecutable){
+            boolean isExecutable = Boolean
+                    .parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
+            if (isExecutable) {
                 parseActivities(processNode, processDefinition);
             }
         }

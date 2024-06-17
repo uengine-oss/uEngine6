@@ -7,8 +7,11 @@ package org.uengine.kernel;
 import java.io.Serializable;
 import java.util.*;
 
+import org.uengine.contexts.HtmlFormContext;
 //import com.sun.org.apache.regexp.internal.RE;
 import org.uengine.contexts.MappingContext;
+import org.uengine.processdesigner.mapper.Transformer;
+import org.uengine.processdesigner.mapper.TransformerMapping;
 import org.uengine.util.UEngineUtil;
 
 
@@ -116,6 +119,38 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
         fireComplete(instance);
     }
 
+    // ADDED 
+    protected void afterComplete(ProcessInstance instance) throws Exception {
+		mappingOut(instance);
+		super.afterComplete(instance);
+	}
+   
+    protected void mappingOut(ProcessInstance instance) throws Exception {}
+    protected void mappingOut(ProcessInstance instance, ParameterContext[] params) throws Exception {
+        if(params == null) return;
+
+        for (ParameterContext param : params) {
+            try {
+                if(param.getTransformerMapping() == null) continue;
+
+                String targetFieldName = param.getArgument().getText();
+                Map options = new HashMap();
+                options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
+                        param.getTransformerMapping().getLinkedArgumentName());
+                options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_FORM_FIELD_NAME,
+                        targetFieldName);
+
+                TransformerMapping tm = param.getTransformerMapping();
+                Transformer transformer = tm.getTransformer();
+                Object value = param.getTransformerMapping().getTransformer().letTransform(instance, options);
+                // System.out.println(value);
+                instance.setBeanProperty(targetFieldName, (Serializable) value);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw e;
+            }
+        }
+	}
     public void savePayload(ProcessInstance instance, ResultPayload resultPayload) throws Exception {
 
 

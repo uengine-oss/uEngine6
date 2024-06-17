@@ -53,6 +53,7 @@ public class FormActivity extends HumanActivity {
 	public FormActivity() {
 		super();
 		setName("form");// test
+		setTool("formHandler");
 	}
 
 	MappingContext mappingContext;
@@ -127,105 +128,176 @@ public class FormActivity extends HumanActivity {
 
 	protected void afterComplete(ProcessInstance instance) throws Exception {
 		onSave(instance, null);
-		mappingOut(instance);
 		super.afterComplete(instance);
 	}
 
+	
 	protected void mappingOut(ProcessInstance instance) throws Exception {
 		// load up the HtmlFormContext
 		// HtmlFormContext formContext = (HtmlFormContext)
 		// getVariableForHtmlFormContext().get(instance, "");
 
 		ParameterContext[] params = getMappingContext().getMappingElements();
-		if (params != null) {
-			for (int i = 0; i < params.length; i++) {
-				try {
-					ParameterContext param = params[i];
+		mappingOut(instance, params);
+		// if (params != null) {
+		// 	for (int i = 0; i < params.length; i++) {
+		// 		try {
+		// 			ParameterContext param = params[i];
 
-					Object value = null;
-					String targetFieldName = param.getArgument().getText();
+		// 			Object value = null;
+		// 			String targetFieldName = param.getArgument().getText();
 
-					if (param.getTransformerMapping() != null) {
+		// 			if (param.getTransformerMapping() != null) {
 
-						Map options = new HashMap();
-						options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
-								param.getTransformerMapping().getLinkedArgumentName());
-						options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_FORM_FIELD_NAME,
-								targetFieldName);
+		// 				Map options = new HashMap();
+		// 				options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
+		// 						param.getTransformerMapping().getLinkedArgumentName());
+		// 				options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_FORM_FIELD_NAME,
+		// 						targetFieldName);
 
-						TransformerMapping tm = param.getTransformerMapping();
-						Transformer transformer = tm.getTransformer();
+		// 				TransformerMapping tm = param.getTransformerMapping();
+		// 				Transformer transformer = tm.getTransformer();
 
-						value = param.getTransformerMapping().getTransformer().letTransform(instance, options);
-						System.out.println(value);
-						instance.setBeanProperty(targetFieldName, (Serializable) value);
+		// 				value = param.getTransformerMapping().getTransformer().letTransform(instance, options);
+		// 				System.out.println(value);
+		// 				instance.setBeanProperty(targetFieldName, (Serializable) value);
+		// 			} else {
+		// 				String srcVariableName = param.getVariable().getName();
 
-					} else {
-						String srcVariableName = param.getVariable().getName();
+		// 				value = instance.getBeanProperty(srcVariableName);
 
-						value = instance.getBeanProperty(srcVariableName);
+		// 				ProcessVariable pv = getProcessDefinition().getProcessVariable(srcVariableName);
+		// 				if (getVariableForHtmlFormContext().equals(pv)) { // maps only the child fields of the form
+		// 																	// activity's target html form
+		// 					if (instance.getExecutionScopeContext() == null) {
+		// 						if (value instanceof ProcessVariableValue) {
 
-						ProcessVariable pv = getProcessDefinition().getProcessVariable(srcVariableName);
-						if (getVariableForHtmlFormContext().equals(pv)) { // maps only the child fields of the form
-																			// activity's target html form
-							if (instance.getExecutionScopeContext() == null) {
-								if (value instanceof ProcessVariableValue) {
+		// 							ProcessVariableValue pvv = (ProcessVariableValue) value;
+		// 							ExecutionScopeContext oldEsc = instance.getExecutionScopeContext();
+		// 							Serializable _oleExecScope = instance.getProperty("",
+		// 									AbstractProcessInstance.PVKEY_EXECUTION_SCOPES);
+		// 							do {
+		// 								Serializable theValue = pvv.getValue();
 
-									ProcessVariableValue pvv = (ProcessVariableValue) value;
-									ExecutionScopeContext oldEsc = instance.getExecutionScopeContext();
-									Serializable _oleExecScope = instance.getProperty("",
-											AbstractProcessInstance.PVKEY_EXECUTION_SCOPES);
-									do {
-										Serializable theValue = pvv.getValue();
+		// 								ExecutionScopeContext esc = instance.issueNewExecutionScope(this, this,
+		// 										theValue != null ? theValue.toString() : "<No Name>");
+		// 								instance.setExecutionScopeContext(esc);
 
-										ExecutionScopeContext esc = instance.issueNewExecutionScope(this, this,
-												theValue != null ? theValue.toString() : "<No Name>");
-										instance.setExecutionScopeContext(esc);
+		// 								boolean resolvePartNeeded = false;
+		// 								String variableKey = srcVariableName;
+		// 								if (variableKey.indexOf('.') > 0) {
+		// 									resolvePartNeeded = true;
+		// 								}
 
-										boolean resolvePartNeeded = false;
-										String variableKey = srcVariableName;
-										if (variableKey.indexOf('.') > 0) {
-											resolvePartNeeded = true;
-										}
+		// 								if (resolvePartNeeded) {
+		// 									int indexOfDot = variableKey.indexOf(".");
+		// 									if (indexOfDot > 0) {
+		// 										variableKey = variableKey.substring(indexOfDot + 1);
+		// 									}
+		// 								}
 
-										if (resolvePartNeeded) {
-											int indexOfDot = variableKey.indexOf(".");
-											if (indexOfDot > 0) {
-												variableKey = variableKey.substring(indexOfDot + 1);
-											}
-										}
+		// 								HtmlFormContext formContext = (HtmlFormContext) new HtmlFormContext();
+		// 								HashMap<String, Serializable> map = new HashMap<String, Serializable>();
+		// 								ArrayList<Serializable> list = new ArrayList<Serializable>();
+		// 								list.add(theValue);
+		// 								map.put(variableKey, list);
+		// 								formContext.setValueMap(map);
+		// 								instance.set(pv.name, formContext);
 
-										HtmlFormContext formContext = (HtmlFormContext) new HtmlFormContext();
-										HashMap<String, Serializable> map = new HashMap<String, Serializable>();
-										ArrayList<Serializable> list = new ArrayList<Serializable>();
-										list.add(theValue);
-										map.put(variableKey, list);
-										formContext.setValueMap(map);
-										instance.set(pv.name, formContext);
+		// 								instance.setExecutionScopeContext(oldEsc);
 
-										instance.setExecutionScopeContext(oldEsc);
+		// 							} while (pvv.next());
 
-									} while (pvv.next());
+		// 							pvv.setCursor(0);
 
-									pvv.setCursor(0);
+		// 							instance.setProperty("", AbstractProcessInstance.PVKEY_EXECUTION_SCOPES,
+		// 									_oleExecScope);
+		// 						}
+		// 					}
+		// 					instance.setBeanProperty(targetFieldName, (Serializable) value);
 
-									instance.setProperty("", AbstractProcessInstance.PVKEY_EXECUTION_SCOPES,
-											_oleExecScope);
+		// 				}
+		// 			}
+		// 		} catch (Exception e) {
+		// 			e.printStackTrace();
+		// 			// if (!(instance instanceof SimulatorProcessInstance)) {
+		// 			throw e;
+		// 			// }
+		// 		}
+		// 	}
+		// }
+	}
+
+	protected void mappingOut(ProcessInstance instance, ParameterContext[] params) throws Exception {
+		if(params == null ) return;
+
+		for (ParameterContext param : params) {
+			try {
+				if(param.getTransformerMapping() != null) continue;
+
+				String targetFieldName = param.getArgument().getText();
+				String srcVariableName = param.getVariable().getName();
+				Object value = instance.getBeanProperty(srcVariableName);
+
+				ProcessVariable pv = getProcessDefinition().getProcessVariable(srcVariableName);
+				if (getVariableForHtmlFormContext().equals(pv)) { // maps only the child fields of the form
+																	// activity's target html form
+					if (instance.getExecutionScopeContext() == null) {
+						if (value instanceof ProcessVariableValue) {
+
+							ProcessVariableValue pvv = (ProcessVariableValue) value;
+							ExecutionScopeContext oldEsc = instance.getExecutionScopeContext();
+							Serializable _oleExecScope = instance.getProperty("",
+									AbstractProcessInstance.PVKEY_EXECUTION_SCOPES);
+							do {
+								Serializable theValue = pvv.getValue();
+
+								ExecutionScopeContext esc = instance.issueNewExecutionScope(this, this,
+										theValue != null ? theValue.toString() : "<No Name>");
+								instance.setExecutionScopeContext(esc);
+
+								boolean resolvePartNeeded = false;
+								String variableKey = srcVariableName;
+								if (variableKey.indexOf('.') > 0) {
+									resolvePartNeeded = true;
 								}
-							}
-							instance.setBeanProperty(targetFieldName, (Serializable) value);
 
+								if (resolvePartNeeded) {
+									int indexOfDot = variableKey.indexOf(".");
+									if (indexOfDot > 0) {
+										variableKey = variableKey.substring(indexOfDot + 1);
+									}
+								}
+
+								HtmlFormContext formContext = (HtmlFormContext) new HtmlFormContext();
+								HashMap<String, Serializable> map = new HashMap<String, Serializable>();
+								ArrayList<Serializable> list = new ArrayList<Serializable>();
+								list.add(theValue);
+								map.put(variableKey, list);
+								formContext.setValueMap(map);
+								instance.set(pv.name, formContext);
+
+								instance.setExecutionScopeContext(oldEsc);
+
+							} while (pvv.next());
+
+							pvv.setCursor(0);
+
+							instance.setProperty("", AbstractProcessInstance.PVKEY_EXECUTION_SCOPES,
+									_oleExecScope);
 						}
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-					// if (!(instance instanceof SimulatorProcessInstance)) {
-					throw e;
-					// }
+					instance.setBeanProperty(targetFieldName, (Serializable) value);
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
 			}
 		}
+		
+		super.mappingOut(instance, params);
 	}
+
 
 	public void saveWorkItem(ProcessInstance instance, ResultPayload payload) throws Exception {
 		onSave(instance, null);

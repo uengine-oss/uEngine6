@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.uengine.five.dto.DryRunExecutionCommand;
+import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
@@ -107,5 +109,10 @@ public interface InstanceService {
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
                         
+        @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+        public Object getDryRun(@PathVariable("defId") String defId) throws Exception;
 
+        @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception;
+                        
 }

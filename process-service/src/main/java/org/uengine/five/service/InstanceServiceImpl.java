@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.dto.DryRunExecutionCommand;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -100,9 +101,7 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource start(
-            @RequestBody ProcessExecutionCommand command)
-            throws Exception {
+    public InstanceResource start(@RequestBody ProcessExecutionCommand command) throws Exception {
 
         // FIXME: remove me
         String userId = SecurityAwareServletFilter.getUserId();
@@ -145,9 +144,8 @@ public class InstanceServiceImpl implements InstanceService {
                 instance.execute();
                 return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Error executing process instance: " + e.getMessage(),
-                        e);
+                e.printStackTrace();
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance: " + e.getMessage(), e);
             }
 
         }
@@ -328,7 +326,6 @@ public class InstanceServiceImpl implements InstanceService {
                 instance.setExecutionScopeContext(executionScopeContext);
             }
         }
-
         Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
 
@@ -754,8 +751,8 @@ public class InstanceServiceImpl implements InstanceService {
         HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
 
         WorkItemResource workItem = new WorkItemResource();
-        workItem.setActivity(activity);
-        workItem.setWorklist(worklistEntity);
+        workItem.setActivity(activity); // defaultHandler
+        workItem.setWorklist(worklistEntity); // handler:http/
 
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
@@ -941,10 +938,12 @@ public class InstanceServiceImpl implements InstanceService {
     // "RESTFUl API PRINCIPLES"
     // "defintion-chages" > POST > "definition-changes/${defPath}"
 
-    @Transactional
+    @ProcessTransactional
     @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
+
+            if (defPath.endsWith("form")) return;
 
             ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
             definition.setId(defPath);
@@ -952,7 +951,6 @@ public class InstanceServiceImpl implements InstanceService {
             if (definition != null && definition instanceof ProcessDefinition) {
                 invokeDeployFilters(definition, defPath);
             }
-
         } catch (Exception e) {
             throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
         }
@@ -972,6 +970,100 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
         }
+    }
+
+    @ProcessTransactional(readOnly = true)
+    @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
+        ProcessExecutionCommand command = new ProcessExecutionCommand();
+        command.setProcessDefinitionId(defId);
+
+        Object definition;
+        try {
+            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation time, use the version
+                                                                                 // under construction
+        } catch (ClassNotFoundException cnfe) {
+            // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+
+        if (definition instanceof ProcessDefinition) {
+            ProcessDefinition processDefinition = (ProcessDefinition) definition;
+            // return processDefinition.getFirstHumanActivity();
+
+            try {
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, command.getInstanceName(), null);
+
+                org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
+                if (roleMappings != null) {
+                    for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
+                        instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
+                    }
+                }
+
+                if(command.getCorrelationKeyValue() != null){
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(command.getCorrelationKeyValue());
+                }
+
+                instance.execute();
+                // new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
+        
+                WorkItemResource workItem = new WorkItemResource();
+                if(instance.getCurrentRunningActivity() != null){
+                    Activity activity = instance.getCurrentRunningActivity().getActivity();
+                    
+                    if( activity instanceof org.uengine.kernel.FormActivity ){
+                       String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
+                       ((org.uengine.kernel.FormActivity) activity).setTool(tool);
+                    } else if( activity instanceof org.uengine.kernel.URLActivity ){
+                        String urlTool = ((org.uengine.kernel.URLActivity) activity).getTool(instance);
+                        ((org.uengine.kernel.URLActivity) activity).setTool(urlTool);
+                    }
+
+                    workItem.setActivity(activity); 
+                }
+
+                return workItem;
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error get dry-run process instance: " + e.getMessage(), e);
+            }
+
+        }
+
+        return null;
+    }
+
+    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST, RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @Transactional(rollbackFor = { Exception.class })
+    @ProcessTransactional
+    public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception {
+        try {
+            ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
+            InstanceResource instance = start(processExecutionCommand);
+            if(instance == null) return null;
+            String instId = instance.getInstanceId();
+            WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
+
+            if(worklistEntity == null) return null;
+            String taskId = worklistEntity.getTaskId().toString();
+
+            if(command.getVariables() != null){
+                for(String varName : command.getVariables().keySet()){
+                    String json = command.getVariables().get(varName);
+                    setVariableWithTaskId(instId, taskId, varName, json);
+                }
+            }
+          
+            putWorkItemComplete(taskId, command.getWorkItem());
+            return instance;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing dry-run process instance: " + e.getMessage(), e);
+        }
+
     }
 
 }

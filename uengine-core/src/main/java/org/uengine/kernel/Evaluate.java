@@ -162,6 +162,13 @@ public class Evaluate extends Condition {
 					// }
 					// }
 				}
+			} else if (returnVal instanceof Boolean) {
+				// use default comparator
+				if (condition.equals("=="))
+					return returnVal.toString().equals(compareVal);
+
+				if (condition.equals("!="))
+					return !returnVal.toString().equals(compareVal);
 			}
 			// compare with ComplexType
 			// if(returnVal instanceof ITool){
