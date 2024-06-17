@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.QueryParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -91,9 +92,9 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     WorklistRepository worklistRepository;
 
-    
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
+
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
@@ -137,7 +138,7 @@ public class InstanceServiceImpl implements InstanceService {
                     }
                 }
 
-                if(corrKeyValue != null){
+                if (corrKeyValue != null) {
                     ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKeyValue);
                 }
 
@@ -421,10 +422,173 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
+    // @ProcessTransactional
+    // @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
+    // RequestMethod.POST }, produces = "application/json;charset=UTF-8")
+    // public Object serviceMessage(HttpServletRequest request) throws Exception {
+
+    // String path = (String)
+    // request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+    // if (path == null || path.length() == 0)
+    // throw new ResourceNotFoundException();
+
+    // ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository
+    // .findById(path.substring(SERVICES_ROOT.length() + 2)).get();
+
+    // if (serviceEndpointEntity == null)
+    // throw new ResourceNotFoundException();
+
+    // // find the correlated instance:
+    // List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
+    // Object correlationData = null;
+    // // ObjectInstance objectInstance = new ObjectInstance();
+
+    // if ("POST".equals(request.getMethod())) {
+
+    // ByteArrayOutputStream bao = new ByteArrayOutputStream();
+    // UEngineUtil.copyStream(request.getInputStream(), bao);
+
+    // JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
+
+    // // convert jsonNode to object instance.
+    // Iterator<String> fieldNames = jsonNode.fieldNames();
+    // while (fieldNames.hasNext()) {
+    // String fieldName = fieldNames.next();
+
+    // Object childNode = jsonNode.get(fieldName);
+    // Object converted = null;
+
+    // if (childNode instanceof TextNode) {
+    // converted = ((TextNode) childNode).textValue();
+    // } else if (childNode instanceof ValueNode) {
+    // converted = ((ValueNode) childNode).textValue();
+    // } else
+    // converted = childNode;
+
+    // // objectInstance.setBeanProperty(fieldName, converted);
+    // }
+
+    // correlationData =
+    // jsonNode.get(serviceEndpointEntity.getEvents().get(0).getCorrelationKey()).asText();
+
+    // if (correlationData != null)
+    // correlatedProcessInstanceEntities = processInstanceRepository
+    // .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
+    // }
+
+    // ProcessInstanceEntity processInstanceEntity;
+    // if (correlatedProcessInstanceEntities == null ||
+    // correlatedProcessInstanceEntities.size() == 0)
+    // processInstanceEntity = null;
+    // else {
+    // processInstanceEntity = correlatedProcessInstanceEntities.get(0);
+    // if (correlatedProcessInstanceEntities.size() > 1)
+    // System.err.println("More than one correlated process instance found!");
+    // }
+
+    // JPAProcessInstance instance = null;
+
+    // // case that correlation instance exists and is running:
+    // if (processInstanceEntity != null) {
+    // instance = (JPAProcessInstance)
+    // getProcessInstanceLocal(String.valueOf(processInstanceEntity.getInstId()));
+
+    // } else { // if no instances running, create new instance:
+    // Object definition =
+    // definitionService.getDefinition(serviceEndpointEntity.getEvents().get(0).getDefId(),
+    // true);
+
+    // ProcessDefinition processDefinition = (ProcessDefinition) definition;
+
+    // instance = (JPAProcessInstance) applicationContext.getBean(
+    // ProcessInstance.class,
+    // // new Object[]{
+    // processDefinition,
+    // null,
+    // null
+    // // }
+    // );
+
+    // instance.execute();
+    // }
+
+    // // trigger the start or intermediate message catch events:
+    // List<ActivityInstanceContext> runningActivities =
+    // instance.getCurrentRunningActivitiesDeeply();
+
+    // boolean neverTreated = true;
+
+    // if (runningActivities != null) {
+    // for (ActivityInstanceContext activityInstanceContext : runningActivities) {
+    // Activity activity = activityInstanceContext.getActivity();
+
+    // if (activity instanceof CatchingRestMessageEvent) {
+    // CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
+
+    // boolean treated =
+    // catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
+    // if (treated)
+    // neverTreated = false;
+    // }
+    // }
+    // }
+
+    // if (neverTreated) {
+    // instance.stop();
+
+    // return "문제가 발생하여 처음으로 돌아갑니다.";
+    // }
+
+    // // set correlation key so that this instance could be re-visited by the
+    // // recurring requester.
+    // if (instance.isNewInstance() && correlationData != null)
+    // instance.getProcessInstanceEntity().setCorrKey(correlationData.toString());
+
+    // // List<String> history = instance.getActivityCompletionHistory();
+    // // if(history!=null){
+    // // for(String tracingTag : history){
+    // //
+    // // Activity activityDone =
+    // // instance.getProcessDefinition().getActivity(tracingTag);
+    // //
+    // // if(activityDone instanceof SendTask){
+    // // SendTask sendTask = (SendTask) activityDone;
+    // //
+    // // if(sendTask.getDataInput() != null && sendTask.getDataInput().getName() !=
+    // // null)
+    // // return sendTask.getDataInput().get(instance, "");
+    // // else {
+    // // return sendTask.getInputPayloadTemplate();
+    // // }
+    // // }
+    // //
+    // // }
+    // //
+    // // }
+    // List<String> messageQueue = SendTask.getMessageQueue(instance);
+
+    // if (messageQueue != null && messageQueue.size() > 0) {
+
+    // // StringBuffer fullMessage = new StringBuffer();
+    // //
+    // // for(String message : messageQueue){
+    // // fullMessage.append(message);
+    // // }
+
+    // return messageQueue.get(messageQueue.size() - 1).toString().replace("\n",
+    // "").replace("\r", "");
+
+    // }
+
+    // return null;
+    // }
+
     @ProcessTransactional
     @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
             RequestMethod.POST }, produces = "application/json;charset=UTF-8")
-    public Object serviceMessage(HttpServletRequest request) throws Exception {
+    public Object serviceMessage(HttpServletRequest request,
+            @QueryParam("correlationKey") String correlationKey) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
@@ -439,7 +603,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         // find the correlated instance:
         List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
-        Object correlationData = null;
+        // Object correlationData = null;
         // ObjectInstance objectInstance = new ObjectInstance();
 
         if ("POST".equals(request.getMethod())) {
@@ -467,15 +631,16 @@ public class InstanceServiceImpl implements InstanceService {
                 // objectInstance.setBeanProperty(fieldName, converted);
             }
 
-            correlationData = jsonNode.get(serviceEndpointEntity.getCorrelationKey());
+            // correlationData = correlationKey;
 
-            if (correlationData != null)
+            if (correlationKey != null)
                 correlatedProcessInstanceEntities = processInstanceRepository
-                        .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
+                        .findByCorrKeyAndStatus(correlationKey, Activity.STATUS_RUNNING);
         }
 
         ProcessInstanceEntity processInstanceEntity;
-        if (correlatedProcessInstanceEntities == null || correlatedProcessInstanceEntities.size() == 0)
+        if (correlatedProcessInstanceEntities == null ||
+                correlatedProcessInstanceEntities.size() == 0)
             processInstanceEntity = null;
         else {
             processInstanceEntity = correlatedProcessInstanceEntities.get(0);
@@ -490,7 +655,8 @@ public class InstanceServiceImpl implements InstanceService {
             instance = (JPAProcessInstance) getProcessInstanceLocal(String.valueOf(processInstanceEntity.getInstId()));
 
         } else { // if no instances running, create new instance:
-            Object definition = definitionService.getDefinition(serviceEndpointEntity.getDefId(), true);
+            Object definition = definitionService.getDefinition(serviceEndpointEntity.getEvents().get(0).getDefId(),
+                    true);
 
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
@@ -533,8 +699,8 @@ public class InstanceServiceImpl implements InstanceService {
 
         // set correlation key so that this instance could be re-visited by the
         // recurring requester.
-        if (instance.isNewInstance() && correlationData != null)
-            instance.getProcessInstanceEntity().setCorrKey(correlationData.toString());
+        if (instance.isNewInstance() && correlationKey != null)
+            instance.getProcessInstanceEntity().setCorrKey(correlationKey);
 
         // List<String> history = instance.getActivityCompletionHistory();
         // if(history!=null){
@@ -567,7 +733,8 @@ public class InstanceServiceImpl implements InstanceService {
             // fullMessage.append(message);
             // }
 
-            return messageQueue.get(messageQueue.size() - 1).toString().replace("\n", "").replace("\r", "");
+            return messageQueue.get(messageQueue.size() - 1).toString().replace("\n",
+                    "").replace("\r", "");
 
         }
 
@@ -774,6 +941,7 @@ public class InstanceServiceImpl implements InstanceService {
     // "RESTFUl API PRINCIPLES"
     // "defintion-chages" > POST > "definition-changes/${defPath}"
 
+    @Transactional
     @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
@@ -781,14 +949,14 @@ public class InstanceServiceImpl implements InstanceService {
             ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
             definition.setId(defPath);
 
-            if(definition != null && definition instanceof ProcessDefinition){
+            if (definition != null && definition instanceof ProcessDefinition) {
                 invokeDeployFilters(definition, defPath);
             }
-            
+
         } catch (Exception e) {
             throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
         }
-        
+
     }
 
     private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {

@@ -1,13 +1,14 @@
 package org.uengine.kernel;
 
-import com.jayway.jsonpath.JsonPath;
-import org.codehaus.jackson.JsonNode;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.ServiceTask;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 
-import java.io.Serializable;
-import java.util.HashMap;
 
 public class CatchingMessageEvent extends Event implements MessageListener {
 
@@ -25,6 +26,7 @@ public class CatchingMessageEvent extends Event implements MessageListener {
 		if(checkLocalCall(instance)) return;
 
 		System.out.print("inside " + getClass().getName());
+
 	}
 
 	ProcessVariable dataOutput;

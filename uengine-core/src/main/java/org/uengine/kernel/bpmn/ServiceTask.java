@@ -297,7 +297,7 @@ public class ServiceTask extends DefaultActivity {
         public void setHeaders(HttpHeader[] headers) {
             this.headers = headers;
         }
-
+    
     String method;
         public String getMethod() {
             return method;

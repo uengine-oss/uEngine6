@@ -544,6 +544,20 @@ public class BpmnXMLParser {
                             + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
                             + className)
                     .orElse(null);
+        } else if (className.equals("StartEvent")) {
+            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+                    "message");
+            fullClassName = eventTypes.stream()
+                    .filter(eventType -> element.getElementsByTagName(eventType +
+                            "EventDefinition")
+                            .getLength() > 0
+                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                    .getLength() > 0)
+                    .findFirst()
+                    .map(eventType -> "org.uengine.kernel.bpmn."
+                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
+                            + className)
+                    .orElse(null);
         } else {
             fullClassName = "org.uengine.kernel.bpmn." + className;
         }

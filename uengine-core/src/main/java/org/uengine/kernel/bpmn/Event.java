@@ -88,12 +88,12 @@ public class Event extends DefaultActivity implements MessageListener{
 
 	@Override
 	public void beforeRegistered(ProcessInstance instance) throws Exception {
-
+        System.out.println("beforeRegistered");
 	}
 
 	@Override
 	public void afterRegistered(ProcessInstance instance) throws Exception {
-
+        System.out.println("afterRegistered");
 	}
 
 	@Override

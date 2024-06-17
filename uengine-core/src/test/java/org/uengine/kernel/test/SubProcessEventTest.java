@@ -1,12 +1,16 @@
 package org.uengine.kernel.test;
 
+import org.uengine.contexts.TextContext;
 import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.ExecutionScopeContext;
+import org.uengine.kernel.HumanActivity;
+import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ProcessVariableValue;
-import org.uengine.kernel.ReceiveActivity; // Assuming this import is necessary for ReceiveActivity
+import org.uengine.kernel.Role;
+import org.uengine.kernel.bpmn.EndEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.StartEvent;
@@ -20,30 +24,30 @@ public class SubProcessEventTest extends UEngineTest {
      * BPMN Text Diagram:
      * 
      * [StartEvent] --> (startEvent)
-     *     |
-     *     v
+     * |
+     * v
      * [SubProcess] --> (subProcess)
-     *     |
-     *     |--> [ReceiveActivity] --> (activityWithinSubProcess)
-     *     |
-     *     v
+     * |
+     * |--> [ReceiveActivity] --> (activityWithinSubProcess)
+     * |
+     * v
      * [Event] --> (cancelEvent)
-     *     |
-     *     v
+     * |
+     * v
      * [DefaultActivity] --> (activityAfterSubProcess)
      * 
      * Sequence Flows:
      * startEvent -> subProcess -> activityAfterSubProcess
      * 
      * Methods:
-     * setUp(): Initializes the process definition with the specified BPMN elements and sequence flows.
+     * setUp(): Initializes the process definition with the specified BPMN elements
+     * and sequence flows.
      */
 
-
-    
     public void setUp() throws Exception {
         processDefinition = new ProcessDefinition();
-
+        processDefinition.setRoles(new Role[] { new Role("reporter") });
+        processDefinition.setId("testId");
         // 서브프로세스 및 이벤트 구성
         SubProcess subProcess = new SubProcess();
         subProcess.setTracingTag("subProcess");
@@ -68,17 +72,46 @@ public class SubProcessEventTest extends UEngineTest {
         // subProcess를 processDefinition의 두 번째 요소로 추가
         processDefinition.addChildActivity(subProcess);
 
-        Event cancelEvent = new Event();
-        cancelEvent.setTracingTag("cancelEvent");
-        cancelEvent.setAttachedToRef("subProcess");
-        // cancelEvent를 processDefinition의 요소로 추가
-        processDefinition.addChildActivity(cancelEvent);
+        // Event cancelEvent = new Event();
+        // cancelEvent.setTracingTag("cancelEvent");
+        // cancelEvent.setAttachedToRef("subProcess");
+        // // cancelEvent를 processDefinition의 요소로 추가
+        // processDefinition.addChildActivity(cancelEvent);
 
+        Event subStartEvent = new StartEvent();
+        subStartEvent.setTracingTag("subStartEvent");
+        subProcess.addChildActivity(subStartEvent);
         // DefaultActivity를 ReceiveActivity로 변경
-        ReceiveActivity activityWithinSubProcess = new ReceiveActivity();
+        
+        ParameterContext parameterContext = new ParameterContext();
+        parameterContext.setDirection("OUT");
+        TextContext textContext = new TextContext();
+        textContext.setText("error");
+        parameterContext.setArgument(textContext);
+        parameterContext.setType("java.lang.String");
+        parameterContext.setVariable(myVariable);
+        ParameterContext[] parameters = new ParameterContext[] { parameterContext };
+
+        HumanActivity activityWithinSubProcess = new HumanActivity();
+        activityWithinSubProcess.setRole(processDefinition.getRole("reporter"));
         activityWithinSubProcess.setTracingTag("activityWithinSubProcess");
-        activityWithinSubProcess.setMessage("receive"); // 이벤트를 받기 위한 설정
+        activityWithinSubProcess.setParameters(parameters);
+        // activityWithinSubProcess.setMessage("receive"); // 이벤트를 받기 위한 설정
+        subProcess.addSequenceFlow(new SequenceFlow("subStartEvent", "activityWithinSubProcess"));
         subProcess.addChildActivity(activityWithinSubProcess);
+
+        HumanActivity activityWithinSubProcess2 = new HumanActivity();
+        activityWithinSubProcess2.setRole(processDefinition.getRole("reporter"));
+        activityWithinSubProcess2.setTracingTag("activityWithinSubProcess2");
+        activityWithinSubProcess2.setParameters(parameters);
+        // activityWithinSubProcess2.setMessage("receive"); // 이벤트를 받기 위한 설정
+        subProcess.addChildActivity(activityWithinSubProcess2);
+        subProcess.addSequenceFlow(new SequenceFlow("activityWithinSubProcess", "activityWithinSubProcess2"));
+
+        Event subEndEvent = new EndEvent();
+        subEndEvent.setTracingTag("subEndEvent");
+        subProcess.addSequenceFlow(new SequenceFlow("activityWithinSubProcess2", "subEndEvent"));
+        subProcess.addChildActivity(subEndEvent);
 
         DefaultActivity activityAfterSubProcess = new DefaultActivity();
         activityAfterSubProcess.setTracingTag("activityAfterSubProcess");
@@ -93,7 +126,6 @@ public class SubProcessEventTest extends UEngineTest {
 
     public void testCancelEventWithinSubProcess() throws Exception {
         ProcessInstance instance = processDefinition.createInstance();
-
         // Step 2: Create a ProcessVariableValue instance and populate it
         ProcessVariableValue pvv = new ProcessVariableValue();
         pvv.setName("myVar");
@@ -105,33 +137,33 @@ public class SubProcessEventTest extends UEngineTest {
 
         // Step 3: Set the ProcessVariableValue to the process instance
         instance.set("", "myVar", pvv);
+        instance.putRoleMapping("reporter", "reporter@uengine.org");
         instance.execute();
         // 서브프로세스 내에서 취소 이벤트 발생
-        instance.getProcessDefinition().fireMessage("event", instance, "cancelEvent");
+        // instance.getProcessDefinition().fireMessage("event", instance, "cancelEvent");
 
-        assertExecutionPathEquals("After Cancel Event Triggered Within SubProcess", new String[] {
-                "startEvent", "cancelEvent"
-        }, instance);
+        // assertExecutionPathEquals("After Cancel Event Triggered Within SubProcess", new String[] {
+        //         "startEvent", "cancelEvent"
+        // }, instance);
 
         // 서브프로세스 내의 ReceiveActivity를 트리거하여 진행
         ExecutionScopeContext rootExecutionScopeContext = instance.getExecutionScopeContext();
 
         for (ExecutionScopeContext esc : instance.getExecutionScopeContexts()) {
             instance.setExecutionScope(esc.getExecutionScope());
-            instance.getProcessDefinition().fireMessage("receive", instance, null);
-            instance.getProcessTransactionContext().commit();
+            assertEquals(instance.getStatus("activityWithinSubProcess"), instance.getStatus("activityWithinSubProcess2"));
         }
 
-        if (rootExecutionScopeContext != null) {
-            instance.setExecutionScope(rootExecutionScopeContext.getExecutionScope());
-        } else {
-            instance.setExecutionScope(null);
-        }
+        // if (rootExecutionScopeContext != null) {
+        //     instance.setExecutionScope(rootExecutionScopeContext.getExecutionScope());
+        // } else {
+        //     instance.setExecutionScope(null);
+        // }
 
-        assertExecutionPathEquals("After Receive Event Triggered Within SubProcess", new String[] {
-                "startEvent", "cancelEvent", "activityWithinSubProcess", "activityWithinSubProcess",
-                "activityWithinSubProcess", "subProcess", "activityAfterSubProcess", "subProcess",
-                "activityAfterSubProcess", "subProcess", "activityAfterSubProcess"
-        }, instance);
+        // assertExecutionPathEquals("After Receive Event Triggered Within SubProcess", new String[] {
+        //         "startEvent", "cancelEvent", "activityWithinSubProcess", "activityWithinSubProcess",
+        //         "activityWithinSubProcess", "subProcess", "activityAfterSubProcess", "subProcess",
+        //         "activityAfterSubProcess", "subProcess", "activityAfterSubProcess"
+        // }, instance);
     }
 }

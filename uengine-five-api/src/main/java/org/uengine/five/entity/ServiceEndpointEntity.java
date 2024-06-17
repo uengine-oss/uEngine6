@@ -1,24 +1,32 @@
 package org.uengine.five.entity;
 
-import org.uengine.kernel.ProcessDefinition;
+import java.util.List;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.EntityManager;
 import javax.persistence.Id;
+import javax.persistence.PersistenceContext;
 import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
 import javax.persistence.Table;
+
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Created by uengine on 2018. 1. 5..
  */
 @Entity
-@Table(name="bpm_service")
+@Table(name = "bpm_service")
+@EntityListeners(ServiceEndpointEntityListener.class)
 public class ServiceEndpointEntity {
 
-   @Id
+    @Id
     String path;
-    String messageClass;
-    String correlationKey;
-    String defId;
+
+    @ElementCollection
+    private List<CatchEvent> events;
 
     public String getPath() {
         return path;
@@ -28,35 +36,20 @@ public class ServiceEndpointEntity {
         this.path = path;
     }
 
-    public String getMessageClass() {
-        return messageClass;
-    }
-
-    public void setMessageClass(String messageClass) {
-        this.messageClass = messageClass;
-    }
-
-    public String getCorrelationKey() {
-        return correlationKey;
-    }
-
-    public void setCorrelationKey(String correlationKey) {
-        this.correlationKey = correlationKey;
-    }
-
-    public String getDefId() {
-        return defId;
-    }
-
-    public void setDefId(String defId) {
-        this.defId = defId;
-    }
 
     @PrePersist
-    public void trimPaths(){
-        if(getPath().startsWith("/")){
+    public void trimPaths() {
+        if (getPath().startsWith("/")) {
             setPath(getPath().substring(1));
         }
+    }
+
+    public List<CatchEvent> getEvents() {
+        return events;
+    }
+
+    public void setEvents(List<CatchEvent> events) {
+        this.events = events;
     }
 
 }
