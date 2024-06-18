@@ -2,6 +2,7 @@ package org.uengine.kernel.bpmn;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -72,21 +73,21 @@ public class FlowActivity extends ComplexActivity {
                 String source = sequenceFlow.getSourceRef();
                 Activity sourceActivity = null;
 
-				if (source != null) {
-					if (this instanceof SubProcess) {
-						for (Activity activity : this.getChildActivities()) {
-							if (activity.getTracingTag().equals(source)) {
-								sourceActivity = activity;
-								break;
-							}
-						}
-					} else {
-						sourceActivity = getProcessDefinition().getActivity(source);
+                if (source != null) {
+                    if (this instanceof SubProcess) {
+                        for (Activity activity : this.getChildActivities()) {
+                            if (activity.getTracingTag().equals(source)) {
+                                sourceActivity = activity;
+                                break;
+                            }
+                        }
+                    } else {
+                        sourceActivity = getProcessDefinition().getActivity(source);
 
-					}
-				} else if (sequenceFlow.getSourceActivity() != null) {
-					sourceActivity = sequenceFlow.getSourceActivity();
-				}
+                    }
+                } else if (sequenceFlow.getSourceActivity() != null) {
+                    sourceActivity = sequenceFlow.getSourceActivity();
+                }
 
                 if (sourceActivity != null) {
                     if (!sourceActivity.getOutgoingSequenceFlows().contains(sequenceFlow)) {
@@ -101,20 +102,20 @@ public class FlowActivity extends ComplexActivity {
                 String target = sequenceFlow.getTargetRef();
                 Activity targetActivity = null;
 
-				if (target != null) {
-					if (this instanceof SubProcess) {
-						for (Activity activity : this.getChildActivities()) {
-							if (activity.getTracingTag().equals(target)) {
-								targetActivity = activity;
-								break;
-							}
-						}
-					} else {
-						targetActivity = getProcessDefinition().getActivity(target);
-					}
-				} else if (sequenceFlow.getTargetActivity() != null) {
-					targetActivity = sequenceFlow.getTargetActivity();
-				}
+                if (target != null) {
+                    if (this instanceof SubProcess) {
+                        for (Activity activity : this.getChildActivities()) {
+                            if (activity.getTracingTag().equals(target)) {
+                                targetActivity = activity;
+                                break;
+                            }
+                        }
+                    } else {
+                        targetActivity = getProcessDefinition().getActivity(target);
+                    }
+                } else if (sequenceFlow.getTargetActivity() != null) {
+                    targetActivity = sequenceFlow.getTargetActivity();
+                }
 
                 if (targetActivity != null) {
                     if (!targetActivity.getIncomingSequenceFlows().contains(sequenceFlow)) {
@@ -163,10 +164,11 @@ public class FlowActivity extends ComplexActivity {
     }
 
     public List<Activity> getCatchingMessageEvents() {
-        
-        List<Activity> startActivities = new ArrayList<Activity>();
 
-        for (Activity childActivity : getChildActivities()) {
+        List<Activity> startActivities = new ArrayList<Activity>();
+        Hashtable<String, Activity> childActivities = getProcessDefinition().getWholeChildActivities();
+        for (String key : childActivities.keySet()) {
+            Activity childActivity = childActivities.get(key);
             if (childActivity instanceof CatchingMessageEvent) {
                 startActivities.add(childActivity);
             }
@@ -345,7 +347,6 @@ public class FlowActivity extends ComplexActivity {
             // register token before queueActivity()
             for (int i = 0; i < possibleNextActivities.size(); i++) {
                 Activity child = possibleNextActivities.get(i);
-			
 
                 child.reset(instance);
                 child.setStartedTime(instance, (Calendar) null);
@@ -355,17 +356,17 @@ public class FlowActivity extends ComplexActivity {
             }
 
             for (int i = 0; i < possibleNextActivities.size(); i++) {
-				Activity activity = possibleNextActivities.get(i);
-				boolean hasToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
-				if (activity instanceof Gateway) {
-					hasToken = ((Gateway) activity).isCompletedAllOfPreviousActivities(instance);
-				}
+                Activity activity = possibleNextActivities.get(i);
+                boolean hasToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
+                if (activity instanceof Gateway) {
+                    hasToken = ((Gateway) activity).isCompletedAllOfPreviousActivities(instance);
+                }
 
-				// if there are no gateway but if it look like a join, apply inclusive gateway.
-				if (activity.getIncomingSequenceFlows().size() == 1
-						|| hasToken)
-					queueActivity(activity, instance);
-			}
+                // if there are no gateway but if it look like a join, apply inclusive gateway.
+                if (activity.getIncomingSequenceFlows().size() == 1
+                        || hasToken)
+                    queueActivity(activity, instance);
+            }
 
         } else if (command.equals(ACTIVITY_DONE)) {
 

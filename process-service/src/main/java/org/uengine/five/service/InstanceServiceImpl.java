@@ -145,7 +145,8 @@ public class InstanceServiceImpl implements InstanceService {
                 return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance: " + e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error executing process instance: " + e.getMessage(), e);
             }
 
         }
@@ -585,6 +586,7 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
             RequestMethod.POST }, produces = "application/json;charset=UTF-8")
     public Object serviceMessage(HttpServletRequest request,
+            @QueryParam("correlationValue") String correlationValue,
             @QueryParam("correlationKey") String correlationKey) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
@@ -630,9 +632,9 @@ public class InstanceServiceImpl implements InstanceService {
 
             // correlationData = correlationKey;
 
-            if (correlationKey != null)
+            if (correlationValue != null)
                 correlatedProcessInstanceEntities = processInstanceRepository
-                        .findByCorrKeyAndStatus(correlationKey, Activity.STATUS_RUNNING);
+                        .findByCorrKeyAndStatus(correlationValue, Activity.STATUS_RUNNING);
         }
 
         ProcessInstanceEntity processInstanceEntity;
@@ -670,7 +672,7 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         // trigger the start or intermediate message catch events:
-        List<ActivityInstanceContext> runningActivities = instance.getCurrentRunningActivitiesDeeply();
+        List<ActivityInstanceContext> runningActivities = instance.getCurrentRunningActivitiesDeeply();// TODO 확인 필
 
         boolean neverTreated = true;
 
@@ -679,11 +681,13 @@ public class InstanceServiceImpl implements InstanceService {
                 Activity activity = activityInstanceContext.getActivity();
 
                 if (activity instanceof CatchingRestMessageEvent) {
-                    CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
+                    CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
+                    if (correlationKey.equals(catchingMessageEvent.getCorrelationKey())) {
+                        boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
 
-                    boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
-                    if (treated)
-                        neverTreated = false;
+                        if (treated)
+                            neverTreated = false;
+                    }
                 }
             }
         }
@@ -696,8 +700,8 @@ public class InstanceServiceImpl implements InstanceService {
 
         // set correlation key so that this instance could be re-visited by the
         // recurring requester.
-        if (instance.isNewInstance() && correlationKey != null)
-            instance.getProcessInstanceEntity().setCorrKey(correlationKey);
+        if (instance.isNewInstance() && correlationValue != null)
+            instance.getProcessInstanceEntity().setCorrKey(correlationValue);
 
         // List<String> history = instance.getActivityCompletionHistory();
         // if(history!=null){
@@ -943,7 +947,8 @@ public class InstanceServiceImpl implements InstanceService {
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
 
-            if (defPath.endsWith("form")) return;
+            if (defPath.endsWith("form"))
+                return;
 
             ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
             definition.setId(defPath);
@@ -980,8 +985,10 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation time, use the version
-                                                                                 // under construction
+            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation
+                                                                                                   // time, use the
+                                                                                                   // version
+            // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -994,7 +1001,8 @@ public class InstanceServiceImpl implements InstanceService {
             // return processDefinition.getFirstHumanActivity();
 
             try {
-                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, command.getInstanceName(), null);
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
+                        command.getInstanceName(), null);
 
                 org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
                 if (roleMappings != null) {
@@ -1003,32 +1011,34 @@ public class InstanceServiceImpl implements InstanceService {
                     }
                 }
 
-                if(command.getCorrelationKeyValue() != null){
-                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(command.getCorrelationKeyValue());
+                if (command.getCorrelationKeyValue() != null) {
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity()
+                            .setCorrKey(command.getCorrelationKeyValue());
                 }
 
                 instance.execute();
                 // new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
-        
+
                 WorkItemResource workItem = new WorkItemResource();
-                if(instance.getCurrentRunningActivity() != null){
+                if (instance.getCurrentRunningActivity() != null) {
                     Activity activity = instance.getCurrentRunningActivity().getActivity();
-                    
-                    if( activity instanceof org.uengine.kernel.FormActivity ){
-                       String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
-                       ((org.uengine.kernel.FormActivity) activity).setTool(tool);
-                    } else if( activity instanceof org.uengine.kernel.URLActivity ){
+
+                    if (activity instanceof org.uengine.kernel.FormActivity) {
+                        String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
+                        ((org.uengine.kernel.FormActivity) activity).setTool(tool);
+                    } else if (activity instanceof org.uengine.kernel.URLActivity) {
                         String urlTool = ((org.uengine.kernel.URLActivity) activity).getTool(instance);
                         ((org.uengine.kernel.URLActivity) activity).setTool(urlTool);
                     }
 
-                    workItem.setActivity(activity); 
+                    workItem.setActivity(activity);
                 }
 
                 return workItem;
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error get dry-run process instance: " + e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error get dry-run process instance: " + e.getMessage(), e);
             }
 
         }
@@ -1036,32 +1046,36 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
-    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST, RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
+            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
-            if(instance == null) return null;
+            if (instance == null)
+                return null;
             String instId = instance.getInstanceId();
             WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
 
-            if(worklistEntity == null) return null;
+            if (worklistEntity == null)
+                return null;
             String taskId = worklistEntity.getTaskId().toString();
 
-            if(command.getVariables() != null){
-                for(String varName : command.getVariables().keySet()){
+            if (command.getVariables() != null) {
+                for (String varName : command.getVariables().keySet()) {
                     String json = command.getVariables().get(varName);
                     setVariableWithTaskId(instId, taskId, varName, json);
                 }
             }
-          
+
             putWorkItemComplete(taskId, command.getWorkItem());
             return instance;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing dry-run process instance: " + e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error executing dry-run process instance: " + e.getMessage(), e);
         }
 
     }
