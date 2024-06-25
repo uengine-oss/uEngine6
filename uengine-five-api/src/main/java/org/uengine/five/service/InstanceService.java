@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +34,7 @@ import org.uengine.kernel.RoleMapping;
 @FeignClient(name = "bpm", url = "http://process-service:9094")
 public interface InstanceService {
 
-        @RequestMapping(value = "/instance", consumes="application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
         public RepresentationModel start(@RequestBody ProcessExecutionCommand command) throws Exception;
 
         // @RequestMapping(value = "/instance/{instanceId}/start", method =
@@ -104,15 +105,20 @@ public interface InstanceService {
                         throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem) throws Exception;
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+                        throws Exception;
 
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
-                        
+
         @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
         public Object getDryRun(@PathVariable("defId") String defId) throws Exception;
 
         @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
         public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception;
-                        
+
+        @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+        public Serializable validate(@RequestBody String xml)
+                        throws Exception;
+
 }

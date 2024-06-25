@@ -106,7 +106,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public static final String STATUS_RESERVED = "Reserved";
 	static ObjectMapper objectMapper = new ObjectMapper();
-    
+
 	public int getLoopBackCount(ProcessInstance instance) throws Exception {
 		if (instance == null) {
 			return 0;
@@ -1057,6 +1057,14 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 			vc.add(getActivityLabel() + " : all line have to include condition ");
 		}
 
+		if (getIncomingSequenceFlows().size() < 1) {
+			vc.getErrorMessage().add("해당 액티비티에 들어오는 시퀀스 플로우가 존재하지 않습니다.");
+		}
+
+		if (getOutgoingSequenceFlows().size() < 1) {
+			vc.getErrorMessage().add("해당 액티비티에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
+		}
+
 		return vc;
 	}
 
@@ -1826,7 +1834,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		Activity temp = this;
 		while (temp.getParentActivity() != null) {
 			temp = temp.getParentActivity();
-            // 임시 로직: 대표님께 물어보기
+			// 임시 로직: 대표님께 물어보기
 			if (temp.equals(complexActivity))
 				return true;
 		}
@@ -2098,7 +2106,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	}
 
 	EventSynchronization eventSynchronization;
-	
+
 	public EventSynchronization getEventSynchronization() {
 		return eventSynchronization;
 	}

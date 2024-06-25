@@ -2,12 +2,16 @@ package org.uengine.five.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.QueryParam;
@@ -16,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,11 +62,14 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
+import org.uengine.kernel.ValidationContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
+import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -1078,6 +1086,58 @@ public class InstanceServiceImpl implements InstanceService {
                     "Error executing dry-run process instance: " + e.getMessage(), e);
         }
 
+    }
+
+    @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @ProcessTransactional
+    public Serializable validate(@RequestBody String xml)
+            throws Exception {
+        String decodedXml = URLDecoder.decode(xml, StandardCharsets.UTF_8.name());
+        Serializable result = null;
+        BpmnXMLParser parser = new BpmnXMLParser();
+        ProcessDefinition processDefinition = parser.parse(decodedXml);
+        HashMap<String, String> validationMessage = new HashMap<>();
+
+        ConcurrentHashMap<String, Activity> childActivities = new ConcurrentHashMap<>(
+                processDefinition.getWholeChildActivities());
+
+        for (Map.Entry<String, Activity> entry : childActivities.entrySet()) {
+            Activity childActivity = entry.getValue();
+            ValidationContext validationContext = childActivity.validate(new HashMap<>());
+            StringBuilder messages = new StringBuilder();
+            for (String message : validationContext.getErrorMessage()) {
+                messages.append(message).append("\n");
+            }
+            if (messages.length() > 0) {
+                validationMessage.put(childActivity.getTracingTag(), messages.toString());
+            }
+
+            if (childActivity instanceof SubProcess) {
+                SubProcess subProcess = (SubProcess) childActivity;
+                validateSequenceFlow(subProcess.getSequenceFlows(), validationMessage);
+            }
+        }
+
+        ArrayList<SequenceFlow> sequenceFlows = processDefinition.getSequenceFlows();
+        validateSequenceFlow(sequenceFlows, validationMessage);
+
+        result = validationMessage;
+        return result;
+    }
+
+    void validateSequenceFlow(ArrayList<SequenceFlow> sequenceFlows, HashMap<String, String> validationMessage) {
+        for (SequenceFlow sequenceFlow : sequenceFlows) {
+            ValidationContext validationContext = sequenceFlow.validate(new HashMap<>());
+            StringBuilder messages = new StringBuilder();
+
+            for (String message : validationContext.getErrorMessage()) {
+                messages.append(message).append("\n");
+            }
+            if (messages.length() > 0) {
+                validationMessage.put(sequenceFlow.getTracingTag(), messages.toString());
+            }
+
+        }
     }
 
 }
