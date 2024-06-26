@@ -1096,7 +1096,7 @@ public class InstanceServiceImpl implements InstanceService {
         Serializable result = null;
         BpmnXMLParser parser = new BpmnXMLParser();
         ProcessDefinition processDefinition = parser.parse(decodedXml);
-        HashMap<String, String> validationMessage = new HashMap<>();
+        HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessages = new HashMap<>();
 
         ConcurrentHashMap<String, Activity> childActivities = new ConcurrentHashMap<>(
                 processDefinition.getWholeChildActivities());
@@ -1104,39 +1104,33 @@ public class InstanceServiceImpl implements InstanceService {
         for (Map.Entry<String, Activity> entry : childActivities.entrySet()) {
             Activity childActivity = entry.getValue();
             ValidationContext validationContext = childActivity.validate(new HashMap<>());
-            StringBuilder messages = new StringBuilder();
-            for (String message : validationContext.getErrorMessage()) {
-                messages.append(message).append("\n");
-            }
-            if (messages.length() > 0) {
-                validationMessage.put(childActivity.getTracingTag(), messages.toString());
+
+            if (validationContext.getValidationMessages() != null
+                    && validationContext.getValidationMessages().size() > 0) {
+                validationMessages.put(childActivity.getTracingTag(), validationContext.getValidationMessages());
             }
 
             if (childActivity instanceof SubProcess) {
                 SubProcess subProcess = (SubProcess) childActivity;
-                validateSequenceFlow(subProcess.getSequenceFlows(), validationMessage);
+                validateSequenceFlow(subProcess.getSequenceFlows(), validationMessages);
             }
         }
 
         ArrayList<SequenceFlow> sequenceFlows = processDefinition.getSequenceFlows();
-        validateSequenceFlow(sequenceFlows, validationMessage);
+        validateSequenceFlow(sequenceFlows, validationMessages);
 
-        result = validationMessage;
+        result = validationMessages;
         return result;
     }
 
-    void validateSequenceFlow(ArrayList<SequenceFlow> sequenceFlows, HashMap<String, String> validationMessage) {
+    void validateSequenceFlow(ArrayList<SequenceFlow> sequenceFlows,
+            HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessage) {
         for (SequenceFlow sequenceFlow : sequenceFlows) {
             ValidationContext validationContext = sequenceFlow.validate(new HashMap<>());
-            StringBuilder messages = new StringBuilder();
-
-            for (String message : validationContext.getErrorMessage()) {
-                messages.append(message).append("\n");
+            if (validationContext.getValidationMessages() != null
+                    && validationContext.getValidationMessages().size() > 0) {
+                validationMessage.put(sequenceFlow.getTracingTag(), validationContext.getValidationMessages());
             }
-            if (messages.length() > 0) {
-                validationMessage.put(sequenceFlow.getTracingTag(), messages.toString());
-            }
-
         }
     }
 
