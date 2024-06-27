@@ -22,6 +22,7 @@ public interface DefinitionService {
     public static final String DEFINITION_RAW = "/definition/raw";
     public static final String DEFINITION = "/definition";
     public static final String DEFINITION_MAP = "/definition/map";
+    public static final String DEFINITION_SYSTEM = "/definition/system";
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
     public RepresentationModel listDefinition(String basePath) throws Exception;

@@ -929,44 +929,48 @@ public class BpmnXMLParser {
     }
 
     public ProcessDefinition parse(String xml) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        // XML Tag Inner $type Cast to type
-        xml = xml.replace("$type", "type");
-        Document document = builder.parse(new InputSource(new StringReader(xml)));
-
-        ProcessDefinition processDefinition = new ProcessDefinition();
-        // // Process variables parsing
-        // NodeList dataNodes = document.getElementsByTagName("uengine:data");
-        // for (int i = 0; i < dataNodes.getLength(); i++) {
-        // Node dataNode = dataNodes.item(i);
-        // parseProcessVariables(dataNode, processDefinition);
-
-        // }
-
-        // All gateway types handling code
-        NodeList bpmnProcessNodes = document.getElementsByTagName("bpmn:process");
-        NodeList processNodes = document.getElementsByTagName("process");
-        if (bpmnProcessNodes.getLength() > 0) {
-            processNodes = bpmnProcessNodes;
-        } else if (processNodes.getLength() == 0) {
-            processNodes = bpmnProcessNodes; // Fallback to bpmn:process if both are empty
-        }
-        if (processNodes.getLength() == 0) {
-            throw new RuntimeException("No process tag found in the XML");
-        }
-
-        for (int i = 0; i < processNodes.getLength(); i++) {
-            Node processNode = processNodes.item(i);
-            boolean isExecutable = Boolean
-                    .parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
-            if (isExecutable) {
-                parseActivities(processNode, processDefinition);
+        try{
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            // XML Tag Inner $type Cast to type
+            xml = xml.replace("$type", "type");
+            Document document = builder.parse(new InputSource(new StringReader(xml)));
+    
+            ProcessDefinition processDefinition = new ProcessDefinition();
+            // // Process variables parsing
+            // NodeList dataNodes = document.getElementsByTagName("uengine:data");
+            // for (int i = 0; i < dataNodes.getLength(); i++) {
+            // Node dataNode = dataNodes.item(i);
+            // parseProcessVariables(dataNode, processDefinition);
+    
+            // }
+    
+            // All gateway types handling code
+            NodeList bpmnProcessNodes = document.getElementsByTagName("bpmn:process");
+            NodeList processNodes = document.getElementsByTagName("process");
+            if (bpmnProcessNodes.getLength() > 0) {
+                processNodes = bpmnProcessNodes;
+            } else if (processNodes.getLength() == 0) {
+                processNodes = bpmnProcessNodes; // Fallback to bpmn:process if both are empty
             }
+            if (processNodes.getLength() == 0) {
+                throw new RuntimeException("No process tag found in the XML");
+            }
+    
+            for (int i = 0; i < processNodes.getLength(); i++) {
+                Node processNode = processNodes.item(i);
+                boolean isExecutable = Boolean
+                        .parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
+                if (isExecutable) {
+                    parseActivities(processNode, processDefinition);
+                }
+            }
+    
+            processDefinition.afterDeserialization();
+    
+            return processDefinition;
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing BPMN XML", e);
         }
-
-        processDefinition.afterDeserialization();
-
-        return processDefinition;
     }
 }

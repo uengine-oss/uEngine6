@@ -48,7 +48,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
 /**
  * Created by uengine on 2017. 8. 9..
  *
@@ -74,7 +73,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @Autowired
     ApplicationContext applicationContext;
-    
+
     @Autowired
     InstanceService instanceService;
     // static BpmnXMLParser bpmnXMLParser = new BpmnXMLParser();
@@ -355,7 +354,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         resourceManager.save(resource, definition);
         instanceService.postCreatedRawDefinition(resource.getPath());
-       
+
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
             invokeDeployFilters((ProcessDefinition) definitionDeployed, resource.getPath());
@@ -399,6 +398,41 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         return getRawDefinition(definitionPath);
 
+    }
+
+    @RequestMapping(value = DEFINITION_SYSTEM + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
+    public DefinitionResource putRawSystem(@RequestBody String definition, HttpServletRequest request)
+            throws Exception {
+
+        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String name = path.substring(DEFINITION_SYSTEM.length());
+        // if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
+        // IContainer container = new ContainerResource();
+        // container.setPath(RESOURCE_ROOT + "/" + definitionPath);
+        // resourceManager.createFolder(container);
+        // return new DefinitionResource(container);
+        // }
+        String definitionPath = RESOURCE_ROOT + "/system" + name + ".json";
+        String fileExt = UEngineUtil.getFileExt(definitionPath);
+
+        // 무조건 xml 파일로 결국 저장됨.
+        DefaultResource resource = new DefaultResource(definitionPath);
+
+        Object definitionDeployed = null;
+
+        if (fileExt.endsWith("json")) {
+            resourceManager.save(resource, definition);
+        } else {
+            throw new Exception("unknown resource type: " + definitionPath);
+        }
+
+        // TODO: deploy filter 로 등록된 bean 들을 호출:
+        if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
+            invokeDeployFilters((ProcessDefinition) definitionDeployed,
+                    resource.getPath().substring(RESOURCE_ROOT.length() + 2));
+        }
+
+        return new DefinitionResource(resource);
     }
 
     @RequestMapping(value = DEFINITION_MAP + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
@@ -450,6 +484,60 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                 }
             }
         }
+    }
+
+    @RequestMapping(value = DEFINITION_SYSTEM, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public RepresentationModel getSystem() throws Exception {
+
+        // case of directory:
+        IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
+        if (resourceManager.exists(resource) && resourceManager.isContainer(resource)) { // is a folder
+            return _listSystem(RESOURCE_ROOT, "system");
+        }
+
+        return null;
+    }
+
+    private CollectionModel<DefinitionResource> _listSystem(String resourceRoot, String basePath) throws Exception {
+
+        if (basePath == null) {
+            basePath = "";
+        }
+
+        IContainer resource = new ContainerResource();
+        resource.setPath(resourceRoot + "/" + basePath);
+        List<IResource> resources = resourceManager.listFiles(resource);
+
+        List<DefinitionResource> definitions = new ArrayList<DefinitionResource>();
+        for (IResource resource1 : resources) {
+            DefinitionResource definition = new DefinitionResource(resource1);
+            definitions.add(definition);
+        }
+
+        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
+        return halResources;
+    }
+
+    @RequestMapping(value = DEFINITION_SYSTEM
+            + "/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getRawSystem(HttpServletRequest request) throws Exception {
+
+        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String name = path.substring(DEFINITION_SYSTEM.length());
+        String definitionPath = RESOURCE_ROOT + "/system" + name + ".json";
+        // 무조건 xml 파일로 결국 저장됨.
+        DefaultResource resource = new DefaultResource(definitionPath);
+        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
+
+        // if(unwrap) {
+        // return objectMapper.writeValueAsString(definition);
+        // }else{
+        // DefinitionWrapper definitionWrapper = new DefinitionWrapper(definition);
+        // String uEngineProcessJSON =
+        // objectMapper.writeValueAsString(definitionWrapper);
+        return definition;
+        // }
+
     }
 
     @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
