@@ -16,27 +16,29 @@ public class EndEvent extends StartEvent {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
 	boolean stopAllTokens;
-		public boolean isStopAllTokens() {
-			return stopAllTokens;
-		}
-		public void setStopAllTokens(boolean stopAllTokens) {
-			this.stopAllTokens = stopAllTokens;
-		}
+
+	public boolean isStopAllTokens() {
+		return stopAllTokens;
+	}
+
+	public void setStopAllTokens(boolean stopAllTokens) {
+		this.stopAllTokens = stopAllTokens;
+	}
 
 	public EndEvent() {
 		// TODO: 확인해야함
-		//super("terminate");
+		// super("terminate");
 		setName("End");
 	}
 
-	public void executeActivity(ProcessInstance instance) throws Exception{
+	public void executeActivity(ProcessInstance instance) throws Exception {
 
 		// TODO Auto-generated method stub
 		if (instance != null && instance.isSubProcess()) {
 			instance.getProcessDefinition().returnToMainProcess(instance);
 		}
 
-		if(isStopAllTokens()){
+		if (isStopAllTokens()) {
 			instance.getRootProcessInstance().stop();
 		}
 
@@ -44,5 +46,15 @@ public class EndEvent extends StartEvent {
 
 		fireComplete(instance);
 	}
-	
+
+	@Override
+	public ValidationContext validate(Map options) {
+		ValidationContext vc = new ValidationContext();
+		if (getIncomingSequenceFlows().size() < 1) {
+			vc.addValidationMessage("해당 이벤트에 들어오는 시퀀스 플로우가 존재하지 않습니다.", ValidationContext.ERROR);
+		}
+
+		return vc;
+	}
+
 }
