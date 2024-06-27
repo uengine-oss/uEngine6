@@ -428,36 +428,37 @@ public class BpmnXMLParser {
 
         Class<?> clazz = Class.forName(fullClassName);
         Activity task = (Activity) clazz.getDeclaredConstructor().newInstance();
-
-        NodeList chlidNodes = element.getChildNodes();
-        for (int i = 0; i < chlidNodes.getLength(); i++) {
-            Node childNode = chlidNodes.item(i);
+        NodeList childNodes = element.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            Node childNode = childNodes.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 Element childElement = (Element) childNode;
-                if ("uengine:extensionElements".equals(childElement.getTagName())) {
+                if ("bpmn:extensionElements".equals(childElement.getTagName())) {
+                    NodeList propertiesNodes = childElement.getElementsByTagName("uengine:properties");
+                    for (int j = 0; j < propertiesNodes.getLength(); j++) {
+                        Node propertiesNode = propertiesNodes.item(j);
+                        if (propertiesNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element propertiesElement = (Element) propertiesNode;
+                            NodeList jsonNodes = propertiesElement.getElementsByTagName("uengine:json");
+                            for (int k = 0; k < jsonNodes.getLength(); k++) {
+                                Node jsonNode = jsonNodes.item(k);
+                                if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
+                                        || jsonNode.getNodeType() == Node.TEXT_NODE
+                                        || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                    String jsonText = jsonNode.getTextContent();
+                                    if (jsonText.contains("_type")) {
+                                        clazz = Activity.class;
+                                    }
 
-                    NodeList jsonNodes = ((Element) childElement).getElementsByTagName("uengine:json");
-                    for (int l = 0; l < jsonNodes.getLength(); l++) {
-                        Node jsonNode = jsonNodes.item(l);
-                        if (jsonNode.getParentNode().isSameNode(childElement)) {
-                            if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
-                                    || jsonNode.getNodeType() == Node.TEXT_NODE
-                                    || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
-                                String jsonText = jsonNode.getTextContent();
-                                if (jsonText.contains("_type")) {
-                                    clazz = Activity.class;
-                                }
-
-                                Object jsonObject = objectMapper.readValue(jsonText, clazz);
-                                if (className.equals("SubProcess") && jsonObject instanceof SubProcess) {
-                                    task = (SubProcess) jsonObject;
-                                } else if (className.equals("BoundaryEvent")) {
-                                    task = (Event) jsonObject;
-                                    ((Event) task)
-                                            .setAttachedToRef(
-                                                    element.getAttribute("attachedToRef"));
-                                } else {
-                                    task = (Activity) jsonObject;
+                                    Object jsonObject = objectMapper.readValue(jsonText, clazz);
+                                    if (className.equals("SubProcess") && jsonObject instanceof SubProcess) {
+                                        task = (SubProcess) jsonObject;
+                                    } else if (className.equals("BoundaryEvent")) {
+                                        task = (Event) jsonObject;
+                                        ((Event) task).setAttachedToRef(element.getAttribute("attachedToRef"));
+                                    } else {
+                                        task = (Activity) jsonObject;
+                                    }
                                 }
                             }
                         }
