@@ -1032,37 +1032,38 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 		// 1. Transition 에 condition이 있으면 otherwise 가 1개는 있어야함
 		// 2. condition이 1개라도 있으면 나머지 transition에도 condition이 있어야함.
-		boolean otherwiseCondition = false;
+
+		// boolean otherwiseCondition = false;
 		boolean isCondition = false;
 		boolean emptyCondition = false; // 컨디션이 전혀 없는 경우는 true
 		for (Iterator<SequenceFlow> it = getOutgoingSequenceFlows().iterator(); it.hasNext();) {
 			SequenceFlow ts = (SequenceFlow) it.next();
 			if (ts.getCondition() != null) {
 				isCondition = true;
-				Condition condition = ts.getCondition();
-				if (condition instanceof Or) {
-					Condition[] condis = ((Or) condition).getConditions();
-					if (condis[0] instanceof Otherwise) {
-						otherwiseCondition = true;
-					}
-				}
+				// Condition condition = ts.getCondition();
+				// if (condition instanceof And) {
+				// Condition[] condis = ((Or) condition).getConditions();
+				// if (condis[0] instanceof Otherwise) {
+				// otherwiseCondition = true;
+				// }
+				// }
 			} else {
 				emptyCondition = true;
 			}
 		}
-		if (isCondition && !otherwiseCondition) { // 컨디션이 존재하는데 otherwise가 없을때
-			vc.add(getActivityLabel() + " : no otherwise condition. ");
-		}
+		// if (isCondition && !otherwiseCondition) { // 컨디션이 존재하는데 otherwise가 없을때
+		// vc.add(" : no otherwise condition. ");
+		// }
 		if (isCondition && emptyCondition) { // 컨디션이 존재하는데 어떤 선은 컨디션이 없을때
-			vc.add(getActivityLabel() + " : all line have to include condition ");
+			vc.add("출력 시퀀스 플로우의 컨디션이 하나라도 존재하면 동일한 분기의 모든 시퀀스플로우의 컨디션이 존재해야 합니다.");
 		}
 
 		if (getIncomingSequenceFlows().size() < 1) {
-			vc.add("해당 액티비티에 들어오는 시퀀스 플로우가 존재하지 않습니다.");
+			vc.add("해당 블록에 들어오는 시퀀스 플로우가 존재하지 않습니다.");
 		}
 
 		if (getOutgoingSequenceFlows().size() < 1) {
-			vc.add("해당 액티비티에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
+			vc.add("해당 블록에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
 		}
 
 		Set<Activity> visitedActivities = new HashSet();
