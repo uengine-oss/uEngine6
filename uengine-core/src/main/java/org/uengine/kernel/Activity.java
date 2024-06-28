@@ -1058,14 +1058,45 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 		if (getIncomingSequenceFlows().size() < 1) {
-			vc.addValidationMessage("해당 액티비티에 들어오는 시퀀스 플로우가 존재하지 않습니다.", ValidationContext.ERROR);
+			vc.add("해당 액티비티에 들어오는 시퀀스 플로우가 존재하지 않습니다.");
 		}
 
 		if (getOutgoingSequenceFlows().size() < 1) {
-			vc.addValidationMessage("해당 액티비티에서 나가는 시퀀스 플로우가 존재하지 않습니다.", ValidationContext.ERROR);
+			vc.add("해당 액티비티에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
+		}
+
+		Set<Activity> visitedActivities = new HashSet();
+		boolean isCircularReference = false;
+		for (SequenceFlow sequenceFlow : getOutgoingSequenceFlows()) {
+			Activity targetActivity = sequenceFlow.getTargetActivity();
+			if (hasCircularReference(targetActivity, visitedActivities)) {
+				isCircularReference = true;
+				break;
+			}
+		}
+		if (isCircularReference) {
+			vc.addWarning("이 블록은 최종적으로 자기 자신을 참조하도록 되어 있어 무한 루프의 가능성이 있습니다.");
 		}
 
 		return vc;
+	}
+
+	private boolean hasCircularReference(Activity activity, Set<Activity> visitedActivities) {
+		if (visitedActivities.contains(activity)) {
+			return true;
+		}
+
+		visitedActivities.add(activity);
+
+		for (SequenceFlow sequenceFlow : activity.getOutgoingSequenceFlows()) {
+			Activity targetActivity = sequenceFlow.getTargetActivity();
+			if (hasCircularReference(targetActivity, visitedActivities)) {
+				return true;
+			}
+		}
+
+		visitedActivities.remove(activity);
+		return false;
 	}
 
 	public void usabilityCheck(Map checkingValues) {

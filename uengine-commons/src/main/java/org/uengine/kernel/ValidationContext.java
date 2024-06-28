@@ -10,10 +10,7 @@ import java.util.*;
 public class ValidationContext extends java.util.Vector implements Serializable {
 	private static final long serialVersionUID = 1234L;
 	public static String OPTIONKEY_DISABLE_REPLICATION = "disable replication";
-	public static final String ERROR = "error";
-	public static final String WARNING = "warning";
 	HashMap<String, Object> codedMap = new HashMap<String, Object>();
-	ArrayList<ValidationMessage> validationMessages;
 
 	ArrayList<String> errorMessage;
 
@@ -25,17 +22,8 @@ public class ValidationContext extends java.util.Vector implements Serializable 
 		this.errorMessage = errorMessage;
 	}
 
-	public ArrayList<ValidationMessage> getValidationMessages() {
-		return validationMessages;
-	}
-
-	public void setValidationMessages(ArrayList<ValidationMessage> validationMessages) {
-		this.validationMessages = validationMessages;
-	}
-
 	public ValidationContext() {
 		errorMessage = new ArrayList<String>();
-		validationMessages = new ArrayList<ValidationMessage>();
 	}
 
 	public void add(String cause, String resolution, int errorLevel, String code) {
@@ -107,28 +95,6 @@ public class ValidationContext extends java.util.Vector implements Serializable 
 		for (Enumeration enumeration = this.elements(); enumeration.hasMoreElements();) {
 			LeveledException item = (LeveledException) enumeration.nextElement();
 			errorMessage.add(item.toString());
-		}
-	}
-
-	public void addValidationMessage(String message, String errorLevel) {
-		validationMessages.add(new ValidationMessage(message, errorLevel));
-	}
-
-	public class ValidationMessage implements Serializable {
-		public String message;
-		public String errorLevel;
-
-		public ValidationMessage(String message, String errorLevel) {
-			this.message = message;
-			this.errorLevel = errorLevel;
-		}
-
-		public void setMessage(String message) {
-			this.message = message;
-		}
-
-		public void setErrorLevel(String errorLevel) {
-			this.errorLevel = errorLevel;
 		}
 	}
 }

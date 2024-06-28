@@ -450,13 +450,13 @@ public class Evaluate extends Condition {
 		// }
 		// }
 		if (key == null || key.equals("")) {
-			validationContext.addValidationMessage("프로세스 변수를 참조하는 조건이 존재하지 않습니다.", ValidationContext.ERROR);
+			validationContext.add("프로세스 변수를 참조하는 조건이 존재하지 않습니다.");
 		}
 		if (value == null || value.equals("")) {
-			validationContext.addValidationMessage("조건에 해당하는 값이 존재하지 않습니다.", ValidationContext.ERROR);
+			validationContext.add("조건에 해당하는 값이 존재하지 않습니다.");
 		}
 		if (condition == null || condition.equals("")) {
-			validationContext.addValidationMessage("조건이 존재하지 않습니다.", ValidationContext.ERROR);
+			validationContext.add("조건이 존재하지 않습니다.");
 		}
 		return validationContext;
 	}
