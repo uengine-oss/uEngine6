@@ -2,19 +2,25 @@ package org.uengine.five.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.QueryParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,11 +64,14 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
+import org.uengine.kernel.ValidationContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
+import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
+import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -94,9 +103,9 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     WorklistRepository worklistRepository;
 
-    
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
+
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
@@ -140,7 +149,7 @@ public class InstanceServiceImpl implements InstanceService {
                     }
                 }
 
-                if(corrKeyValue != null){
+                if (corrKeyValue != null) {
                     ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKeyValue);
                 }
 
@@ -148,7 +157,8 @@ public class InstanceServiceImpl implements InstanceService {
                 return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing process instance: " + e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error executing process instance: " + e.getMessage(), e);
             }
 
         }
@@ -422,10 +432,174 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
+    // @ProcessTransactional
+    // @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
+    // RequestMethod.POST }, produces = "application/json;charset=UTF-8")
+    // public Object serviceMessage(HttpServletRequest request) throws Exception {
+
+    // String path = (String)
+    // request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+    // if (path == null || path.length() == 0)
+    // throw new ResourceNotFoundException();
+
+    // ServiceEndpointEntity serviceEndpointEntity = serviceEndpointRepository
+    // .findById(path.substring(SERVICES_ROOT.length() + 2)).get();
+
+    // if (serviceEndpointEntity == null)
+    // throw new ResourceNotFoundException();
+
+    // // find the correlated instance:
+    // List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
+    // Object correlationData = null;
+    // // ObjectInstance objectInstance = new ObjectInstance();
+
+    // if ("POST".equals(request.getMethod())) {
+
+    // ByteArrayOutputStream bao = new ByteArrayOutputStream();
+    // UEngineUtil.copyStream(request.getInputStream(), bao);
+
+    // JsonNode jsonNode = objectMapper.readTree(bao.toByteArray());
+
+    // // convert jsonNode to object instance.
+    // Iterator<String> fieldNames = jsonNode.fieldNames();
+    // while (fieldNames.hasNext()) {
+    // String fieldName = fieldNames.next();
+
+    // Object childNode = jsonNode.get(fieldName);
+    // Object converted = null;
+
+    // if (childNode instanceof TextNode) {
+    // converted = ((TextNode) childNode).textValue();
+    // } else if (childNode instanceof ValueNode) {
+    // converted = ((ValueNode) childNode).textValue();
+    // } else
+    // converted = childNode;
+
+    // // objectInstance.setBeanProperty(fieldName, converted);
+    // }
+
+    // correlationData =
+    // jsonNode.get(serviceEndpointEntity.getEvents().get(0).getCorrelationKey()).asText();
+
+    // if (correlationData != null)
+    // correlatedProcessInstanceEntities = processInstanceRepository
+    // .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
+    // }
+
+    // ProcessInstanceEntity processInstanceEntity;
+    // if (correlatedProcessInstanceEntities == null ||
+    // correlatedProcessInstanceEntities.size() == 0)
+    // processInstanceEntity = null;
+    // else {
+    // processInstanceEntity = correlatedProcessInstanceEntities.get(0);
+    // if (correlatedProcessInstanceEntities.size() > 1)
+    // System.err.println("More than one correlated process instance found!");
+    // }
+
+    // JPAProcessInstance instance = null;
+
+    // // case that correlation instance exists and is running:
+    // if (processInstanceEntity != null) {
+    // instance = (JPAProcessInstance)
+    // getProcessInstanceLocal(String.valueOf(processInstanceEntity.getInstId()));
+
+    // } else { // if no instances running, create new instance:
+    // Object definition =
+    // definitionService.getDefinition(serviceEndpointEntity.getEvents().get(0).getDefId(),
+    // true);
+
+    // ProcessDefinition processDefinition = (ProcessDefinition) definition;
+
+    // instance = (JPAProcessInstance) applicationContext.getBean(
+    // ProcessInstance.class,
+    // // new Object[]{
+    // processDefinition,
+    // null,
+    // null
+    // // }
+    // );
+
+    // instance.execute();
+    // }
+
+    // // trigger the start or intermediate message catch events:
+    // List<ActivityInstanceContext> runningActivities =
+    // instance.getCurrentRunningActivitiesDeeply();
+
+    // boolean neverTreated = true;
+
+    // if (runningActivities != null) {
+    // for (ActivityInstanceContext activityInstanceContext : runningActivities) {
+    // Activity activity = activityInstanceContext.getActivity();
+
+    // if (activity instanceof CatchingRestMessageEvent) {
+    // CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
+
+    // boolean treated =
+    // catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
+    // if (treated)
+    // neverTreated = false;
+    // }
+    // }
+    // }
+
+    // if (neverTreated) {
+    // instance.stop();
+
+    // return "문제가 발생하여 처음으로 돌아갑니다.";
+    // }
+
+    // // set correlation key so that this instance could be re-visited by the
+    // // recurring requester.
+    // if (instance.isNewInstance() && correlationData != null)
+    // instance.getProcessInstanceEntity().setCorrKey(correlationData.toString());
+
+    // // List<String> history = instance.getActivityCompletionHistory();
+    // // if(history!=null){
+    // // for(String tracingTag : history){
+    // //
+    // // Activity activityDone =
+    // // instance.getProcessDefinition().getActivity(tracingTag);
+    // //
+    // // if(activityDone instanceof SendTask){
+    // // SendTask sendTask = (SendTask) activityDone;
+    // //
+    // // if(sendTask.getDataInput() != null && sendTask.getDataInput().getName() !=
+    // // null)
+    // // return sendTask.getDataInput().get(instance, "");
+    // // else {
+    // // return sendTask.getInputPayloadTemplate();
+    // // }
+    // // }
+    // //
+    // // }
+    // //
+    // // }
+    // List<String> messageQueue = SendTask.getMessageQueue(instance);
+
+    // if (messageQueue != null && messageQueue.size() > 0) {
+
+    // // StringBuffer fullMessage = new StringBuffer();
+    // //
+    // // for(String message : messageQueue){
+    // // fullMessage.append(message);
+    // // }
+
+    // return messageQueue.get(messageQueue.size() - 1).toString().replace("\n",
+    // "").replace("\r", "");
+
+    // }
+
+    // return null;
+    // }
+
     @ProcessTransactional
     @RequestMapping(value = SERVICES_ROOT + "/**", method = { RequestMethod.GET,
             RequestMethod.POST }, produces = "application/json;charset=UTF-8")
-    public Object serviceMessage(HttpServletRequest request) throws Exception {
+    public Object serviceMessage(HttpServletRequest request,
+            @QueryParam("correlationValue") String correlationValue,
+            @QueryParam("correlationKey") String correlationKey) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
@@ -440,7 +614,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         // find the correlated instance:
         List<ProcessInstanceEntity> correlatedProcessInstanceEntities = null;
-        Object correlationData = null;
+        // Object correlationData = null;
         // ObjectInstance objectInstance = new ObjectInstance();
 
         if ("POST".equals(request.getMethod())) {
@@ -468,15 +642,16 @@ public class InstanceServiceImpl implements InstanceService {
                 // objectInstance.setBeanProperty(fieldName, converted);
             }
 
-            correlationData = jsonNode.get(serviceEndpointEntity.getCorrelationKey());
+            // correlationData = correlationKey;
 
-            if (correlationData != null)
+            if (correlationValue != null)
                 correlatedProcessInstanceEntities = processInstanceRepository
-                        .findByCorrKeyAndStatus(correlationData.toString(), Activity.STATUS_RUNNING);
+                        .findByCorrKeyAndStatus(correlationValue, Activity.STATUS_RUNNING);
         }
 
         ProcessInstanceEntity processInstanceEntity;
-        if (correlatedProcessInstanceEntities == null || correlatedProcessInstanceEntities.size() == 0)
+        if (correlatedProcessInstanceEntities == null ||
+                correlatedProcessInstanceEntities.size() == 0)
             processInstanceEntity = null;
         else {
             processInstanceEntity = correlatedProcessInstanceEntities.get(0);
@@ -491,7 +666,8 @@ public class InstanceServiceImpl implements InstanceService {
             instance = (JPAProcessInstance) getProcessInstanceLocal(String.valueOf(processInstanceEntity.getInstId()));
 
         } else { // if no instances running, create new instance:
-            Object definition = definitionService.getDefinition(serviceEndpointEntity.getDefId(), true);
+            Object definition = definitionService.getDefinition(serviceEndpointEntity.getEvents().get(0).getDefId(),
+                    true);
 
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
@@ -508,7 +684,7 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         // trigger the start or intermediate message catch events:
-        List<ActivityInstanceContext> runningActivities = instance.getCurrentRunningActivitiesDeeply();
+        List<ActivityInstanceContext> runningActivities = instance.getCurrentRunningActivitiesDeeply();// TODO 확인 필
 
         boolean neverTreated = true;
 
@@ -517,11 +693,13 @@ public class InstanceServiceImpl implements InstanceService {
                 Activity activity = activityInstanceContext.getActivity();
 
                 if (activity instanceof CatchingRestMessageEvent) {
-                    CatchingMessageEvent catchingMessageEvent = (CatchingMessageEvent) activity;
+                    CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
+                    if (correlationKey.equals(catchingMessageEvent.getCorrelationKey())) {
+                        boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
 
-                    boolean treated = catchingMessageEvent.onMessage(activityInstanceContext.getInstance(), null);
-                    if (treated)
-                        neverTreated = false;
+                        if (treated)
+                            neverTreated = false;
+                    }
                 }
             }
         }
@@ -534,8 +712,8 @@ public class InstanceServiceImpl implements InstanceService {
 
         // set correlation key so that this instance could be re-visited by the
         // recurring requester.
-        if (instance.isNewInstance() && correlationData != null)
-            instance.getProcessInstanceEntity().setCorrKey(correlationData.toString());
+        if (instance.isNewInstance() && correlationValue != null)
+            instance.getProcessInstanceEntity().setCorrKey(correlationValue);
 
         // List<String> history = instance.getActivityCompletionHistory();
         // if(history!=null){
@@ -568,7 +746,8 @@ public class InstanceServiceImpl implements InstanceService {
             // fullMessage.append(message);
             // }
 
-            return messageQueue.get(messageQueue.size() - 1).toString().replace("\n", "").replace("\r", "");
+            return messageQueue.get(messageQueue.size() - 1).toString().replace("\n",
+                    "").replace("\r", "");
 
         }
 
@@ -780,18 +959,19 @@ public class InstanceServiceImpl implements InstanceService {
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
 
-            if (defPath.endsWith("form")) return;
+            if (defPath.endsWith("form"))
+                return;
 
             ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
             definition.setId(defPath);
 
-            if(definition != null && definition instanceof ProcessDefinition){
+            if (definition != null && definition instanceof ProcessDefinition) {
                 invokeDeployFilters(definition, defPath);
             }
         } catch (Exception e) {
             throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
         }
-        
+
     }
 
     private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
@@ -818,8 +998,10 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation time, use the version
-                                                                                 // under construction
+            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation
+                                                                                                   // time, use the
+                                                                                                   // version
+            // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -832,7 +1014,8 @@ public class InstanceServiceImpl implements InstanceService {
             // return processDefinition.getFirstHumanActivity();
 
             try {
-                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, command.getInstanceName(), null);
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
+                        command.getInstanceName(), null);
 
                 org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
                 if (roleMappings != null) {
@@ -841,32 +1024,34 @@ public class InstanceServiceImpl implements InstanceService {
                     }
                 }
 
-                if(command.getCorrelationKeyValue() != null){
-                    ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(command.getCorrelationKeyValue());
+                if (command.getCorrelationKeyValue() != null) {
+                    ((JPAProcessInstance) instance).getProcessInstanceEntity()
+                            .setCorrKey(command.getCorrelationKeyValue());
                 }
 
                 instance.execute();
                 // new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
-        
+
                 WorkItemResource workItem = new WorkItemResource();
-                if(instance.getCurrentRunningActivity() != null){
+                if (instance.getCurrentRunningActivity() != null) {
                     Activity activity = instance.getCurrentRunningActivity().getActivity();
-                    
-                    if( activity instanceof org.uengine.kernel.FormActivity ){
-                       String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
-                       ((org.uengine.kernel.FormActivity) activity).setTool(tool);
-                    } else if( activity instanceof org.uengine.kernel.URLActivity ){
+
+                    if (activity instanceof org.uengine.kernel.FormActivity) {
+                        String tool = ((org.uengine.kernel.FormActivity) activity).getTool(instance);
+                        ((org.uengine.kernel.FormActivity) activity).setTool(tool);
+                    } else if (activity instanceof org.uengine.kernel.URLActivity) {
                         String urlTool = ((org.uengine.kernel.URLActivity) activity).getTool(instance);
                         ((org.uengine.kernel.URLActivity) activity).setTool(urlTool);
                     }
 
-                    workItem.setActivity(activity); 
+                    workItem.setActivity(activity);
                 }
 
                 return workItem;
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error get dry-run process instance: " + e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error get dry-run process instance: " + e.getMessage(), e);
             }
 
         }
@@ -874,34 +1059,84 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
-    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST, RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
+            RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
     public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
-            if(instance == null) return null;
+            if (instance == null)
+                return null;
             String instId = instance.getInstanceId();
             WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
 
-            if(worklistEntity == null) return null;
+            if (worklistEntity == null)
+                return null;
             String taskId = worklistEntity.getTaskId().toString();
 
-            if(command.getVariables() != null){
-                for(String varName : command.getVariables().keySet()){
+            if (command.getVariables() != null) {
+                for (String varName : command.getVariables().keySet()) {
                     String json = command.getVariables().get(varName);
                     setVariableWithTaskId(instId, taskId, varName, json);
                 }
             }
-          
+
             putWorkItemComplete(taskId, command.getWorkItem());
             return instance;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error executing dry-run process instance: " + e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error executing dry-run process instance: " + e.getMessage(), e);
         }
 
+    }
+
+    @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @ProcessTransactional
+    public Serializable validate(@RequestBody String xml)
+            throws Exception {
+        String decodedXml = URLDecoder.decode(xml, StandardCharsets.UTF_8.name());
+        Serializable result = null;
+        BpmnXMLParser parser = new BpmnXMLParser();
+        ProcessDefinition processDefinition = parser.parse(decodedXml);
+        HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessages = new HashMap<>();
+
+        ConcurrentHashMap<String, Activity> childActivities = new ConcurrentHashMap<>(
+                processDefinition.getWholeChildActivities());
+
+        for (Map.Entry<String, Activity> entry : childActivities.entrySet()) {
+            Activity childActivity = entry.getValue();
+            ValidationContext validationContext = childActivity.validate(new HashMap<>());
+
+            if (validationContext.getValidationMessages() != null
+                    && validationContext.getValidationMessages().size() > 0) {
+                validationMessages.put(childActivity.getTracingTag(), validationContext.getValidationMessages());
+            }
+
+            if (childActivity instanceof SubProcess) {
+                SubProcess subProcess = (SubProcess) childActivity;
+                validateSequenceFlow(subProcess.getSequenceFlows(), validationMessages);
+            }
+        }
+
+        ArrayList<SequenceFlow> sequenceFlows = processDefinition.getSequenceFlows();
+        validateSequenceFlow(sequenceFlows, validationMessages);
+
+        result = validationMessages;
+        return result;
+    }
+
+    void validateSequenceFlow(ArrayList<SequenceFlow> sequenceFlows,
+            HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessage) {
+        for (SequenceFlow sequenceFlow : sequenceFlows) {
+            ValidationContext validationContext = sequenceFlow.validate(new HashMap<>());
+            if (validationContext.getValidationMessages() != null
+                    && validationContext.getValidationMessages().size() > 0) {
+                validationMessage.put(sequenceFlow.getTracingTag(), validationContext.getValidationMessages());
+            }
+        }
     }
 
     @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")

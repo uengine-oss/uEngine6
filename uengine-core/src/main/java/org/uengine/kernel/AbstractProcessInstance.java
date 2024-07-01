@@ -483,26 +483,8 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 			public void logic(Activity act) {
 				try {
 					ProcessInstance instancehere = finalThis;
-
-					if (act instanceof SubProcessActivity
-							&& (act.getStatus(instancehere).equals(Activity.STATUS_COMPLETED)
-									|| act.getStatus(instancehere).equals(Activity.STATUS_RUNNING))) {
-						SubProcessActivity spAct = (SubProcessActivity) act;
-						List<String> spInstanceIds = spAct.getSubprocessIds(instancehere);
-
-						if (spInstanceIds.size() == 0) {
-							throw new UEngineException("Activity in the running subprocess cannot be found.");
-						} else {
-							for (String spInstanceId : spInstanceIds) {
-								ProcessInstance instance = (ProcessInstance) getInstance(spInstanceId);
-								if (instancehere == instance) {
-									continue;
-								} else {
-									runningActivities.addAll(instance.getActivitiesDeeply(filter));
-								}
-							}
-						}
-
+					if (act instanceof SubProcess) {
+						addFilteredActivity(instancehere, runningActivities, act, filter);
 					} else if (!(act instanceof ComplexActivity)
 							&& (filter == null || filter.indexOf(act.getStatus(instancehere)) > -1)) {
 						runningActivities.add(new ActivityInstanceContext(act, instancehere));
@@ -516,6 +498,25 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
 		forLoop.run(getProcessDefinition());
 
 		return runningActivities;
+	}
+
+	void addFilteredActivity(ProcessInstance finalThis, Vector runningActivities, Activity act, String filter)
+			throws Exception {
+
+		final ProcessInstance instancehere = finalThis;
+		if (act instanceof SubProcess) {
+			SubProcess spAct = (SubProcess) act;
+			for (Activity activity : spAct.getChildActivities()) {
+				for (ExecutionScopeContext esc : instancehere.getExecutionScopeContexts()) {
+					instancehere.setExecutionScopeContext(esc);
+					addFilteredActivity(instancehere, runningActivities, activity, filter);
+				}
+			}
+			// instancehere.setExecutionScopeContext(oldEsc);
+		} else if (!(act instanceof ComplexActivity)
+				&& (filter == null || filter.indexOf(act.getStatus(instancehere)) > -1)) {
+			runningActivities.add(new ActivityInstanceContext(act, instancehere));
+		}
 	}
 
 	public List<ActivityInstanceContext> getCurrentRunningActivitiesDeeply() throws Exception {

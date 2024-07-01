@@ -2,17 +2,15 @@ package org.uengine.five.overriding;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.ProcessInstanceEntity;
-import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
@@ -100,15 +98,18 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             setNewInstance(true);
             setProcessInstanceEntity(new ProcessInstanceEntity());
 
-            if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
-                getProcessInstanceEntity()
-                        .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
-
+            if(options != null) {
+                if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
+                    getProcessInstanceEntity()
+                            .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
+    
+                }
             }
+            
 
             getProcessInstanceEntity().setName(getProcessDefinition().getName() + instanceId);
             getProcessInstanceEntity().setDefId(procDefinition.getId());
-
+            getProcessInstanceEntity().setCorrKey(UUID.randomUUID().toString());
             getProcessInstanceEntity().setStatus(Activity.STATUS_READY);
             getProcessInstanceEntity().setDefName(procDefinition.getName());
 

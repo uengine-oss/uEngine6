@@ -1122,4 +1122,14 @@ public class SubProcess extends ScopeActivity {
     public String getMultipleInstanceOption() {
         return multipleInstanceOption;
     }
+
+    public ValidationContext validate(HashMap<String, Object> context) {
+        ValidationContext vc = super.validate(context);
+
+        if (getForEachRole() == null && getForEachVariable() == null) {
+            vc.add("해당 서브 프로세스에 ForEach Role 또는 ForEach Variable이 설정되어 있지 않습니다.");
+        }
+
+        return vc;
+    }
 }

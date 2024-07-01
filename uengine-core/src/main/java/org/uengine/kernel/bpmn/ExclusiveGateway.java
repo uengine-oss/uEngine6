@@ -2,9 +2,13 @@ package org.uengine.kernel.bpmn;
 
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ValidationContext;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ExclusiveGateway extends Gateway {
 
