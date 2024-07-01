@@ -335,6 +335,16 @@ public class BpmnXMLParser {
             Node variableNode = variableNodes.item(i);
             if (variableNode.getNodeName().equals("uengine:variable")) {
                 parseVariable((Element) variableNode, processDefinition);
+            } else if(variableNode.getNodeName().equals("uengine:json")){
+                // LEE
+                 Node definitionNode = ((Element) variableNode).getFirstChild();
+                 if(definitionNode != null) {
+                    String jsonText = definitionNode.getNodeValue();
+                    ProcessDefinition definition = objectMapper.readValue(jsonText, ProcessDefinition.class);
+                    if(processDefinition instanceof ProcessDefinition){
+                        ((ProcessDefinition) processDefinition).setInstanceNamePattern(definition.getInstanceNamePattern());
+                    }
+                 }
             }
         }
     }

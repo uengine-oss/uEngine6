@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
@@ -43,6 +44,7 @@ import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ActivityInstanceContext;
 import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.DefaultProcessInstance;
@@ -126,8 +128,10 @@ public class InstanceServiceImpl implements InstanceService {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
             try {
-                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
-                        command.getInstanceName(), null);
+                // org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, command.getInstanceName(), null);
+
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, processDefinition.getName(), null);
+                // invokeActivityFilters(null, instance);
 
                 org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
                 if (roleMappings != null) {
@@ -573,7 +577,7 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception {
-
+        if(taskId == null || taskId.equals("null")) return null;
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
         if (worklistEntity == null) {
             throw new Exception("No such work item where taskId = " + taskId);
@@ -805,6 +809,7 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
+    
     @ProcessTransactional(readOnly = true)
     @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
@@ -898,5 +903,29 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
     }
+
+    @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public WorkItemResource getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
+        if(corrKey == null) return null;
+
+        List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(corrKey, "Running");
+        for(ProcessInstanceEntity processInstanceEntity : processInstanceList){
+            WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(processInstanceEntity.getInstId());
+
+            if(worklistEntity != null){   
+                ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(worklistEntity.getDefId());
+                HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
+                     
+                WorkItemResource workItem = new WorkItemResource();
+                workItem.setActivity(activity);
+                workItem.setWorklist(worklistEntity); 
+
+                return workItem;
+            }
+        }
+        return null;
+    }
+
 
 }
