@@ -1093,6 +1093,7 @@ public class InstanceServiceImpl implements InstanceService {
 
     }
 
+
     @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ProcessTransactional
     public Serializable validate(@RequestBody String xml)
@@ -1101,23 +1102,26 @@ public class InstanceServiceImpl implements InstanceService {
         Serializable result = null;
         BpmnXMLParser parser = new BpmnXMLParser();
         ProcessDefinition processDefinition = parser.parse(decodedXml);
-        HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessages = new HashMap<>();
+        HashMap<String, ValidationContext> validationMessages = new HashMap<>();
 
         ConcurrentHashMap<String, Activity> childActivities = new ConcurrentHashMap<>(
                 processDefinition.getWholeChildActivities());
 
         for (Map.Entry<String, Activity> entry : childActivities.entrySet()) {
             Activity childActivity = entry.getValue();
-            ValidationContext validationContext = childActivity.validate(new HashMap<>());
-
-            if (validationContext.getValidationMessages() != null
-                    && validationContext.getValidationMessages().size() > 0) {
-                validationMessages.put(childActivity.getTracingTag(), validationContext.getValidationMessages());
-            }
+            Map<String, Object> options = new HashMap<>();
+            options.put(ValidationContext.OPTIONKEY_DISABLE_REPLICATION, true);
+            ValidationContext validationContext = childActivity.validate(options);
 
             if (childActivity instanceof SubProcess) {
                 SubProcess subProcess = (SubProcess) childActivity;
+                validationContext = subProcess.validate(options);
                 validateSequenceFlow(subProcess.getSequenceFlows(), validationMessages);
+            }
+
+            if (validationContext != null
+                    && validationContext.size() > 0) {
+                validationMessages.put(childActivity.getTracingTag(), validationContext);
             }
         }
 
@@ -1129,16 +1133,22 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     void validateSequenceFlow(ArrayList<SequenceFlow> sequenceFlows,
-            HashMap<String, ArrayList<ValidationContext.ValidationMessage>> validationMessage) {
+            HashMap<String, ValidationContext> validationMessage) {
         for (SequenceFlow sequenceFlow : sequenceFlows) {
-            ValidationContext validationContext = sequenceFlow.validate(new HashMap<>());
-            if (validationContext.getValidationMessages() != null
-                    && validationContext.getValidationMessages().size() > 0) {
-                validationMessage.put(sequenceFlow.getTracingTag(), validationContext.getValidationMessages());
+            Map<String, Object> options = new HashMap<>();
+            options.put(ValidationContext.OPTIONKEY_DISABLE_REPLICATION, true);
+            ValidationContext validationContext = sequenceFlow.validate(options);
+            if (validationContext != null
+                    && validationContext.size() > 0) {
+                validationMessage.put(sequenceFlow.getTracingTag(), validationContext);
             }
         }
     }
 
+
+
+    
+    
     @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
     public WorkItemResource getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
