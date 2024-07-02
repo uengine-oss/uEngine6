@@ -77,7 +77,7 @@ public class AsyncEventListener {
             EventMappingEntity eventMappingEntity = eventMappingRepository.findEventMappingByEventType(typeHeader);
             
             if(eventMappingEntity == null ) 
-                return;
+                throw new Exception("EventMappingEntity is null"); 
 
             String corrKey = eventMappingEntity.getCorrelationKey();
             String coorKeyValue = eventContent.get(corrKey).toString();
