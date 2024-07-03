@@ -111,9 +111,9 @@ public interface InstanceService {
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
 
-        @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+        @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET)
         public Object getDryRun(@PathVariable("defId") String defId) throws Exception;
-
+        
         @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
         public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception;
 

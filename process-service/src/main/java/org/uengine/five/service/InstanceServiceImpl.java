@@ -990,18 +990,24 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
+    @ProcessTransactional(readOnly = true)
+    @RequestMapping(value = "/dry-run/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getDryRun(HttpServletRequest request) throws Exception {
+        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String definitionPath = path.substring("/dry-run".length() + 1);
+
+        return getDryRun(definitionPath);
+    }
     
     @ProcessTransactional(readOnly = true)
-    @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/dry-run/{defId:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         command.setProcessDefinitionId(defId);
 
         Object definition;
         try {
-            String defPath = java.net.URLDecoder.decode(command.getProcessDefinitionId(), "UTF-8");
-            definition = definitionService.getDefinition(defPath, false); 
-            
+            definition = definitionService.getDefinition(defId, false); 
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -1058,6 +1064,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         return null;
     }
+
 
     @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
