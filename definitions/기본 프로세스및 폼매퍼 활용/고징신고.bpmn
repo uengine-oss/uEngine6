@@ -16,7 +16,7 @@
           <uengine:json>{"defaultValue":""}</uengine:json>
         </uengine:variable>
         <uengine:variable name="고장설명폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/고장설명","filePath":"trouble/고장설명.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"기본 프로세스및 폼매퍼 활용/고장설명","filePath":"기본 프로세스및 폼매퍼 활용/고장설명.form"}}</uengine:json>
         </uengine:variable>
       </uengine:properties>
     </bpmn:extensionElements>
