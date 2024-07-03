@@ -1,0 +1,3 @@
+<section>   <row-layout name="" alias="" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">
+        <section>   <row-layout name="" alias="" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">
+           <textarea-field name="PurchaseContent" alias="구매 내용" rows="5" disabled="false" v-model="slotProps.modelValue['PurchaseContent']"></textarea-field></div></div></row-layout></section></div></div></row-layout></section>
