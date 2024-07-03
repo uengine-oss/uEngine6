@@ -124,7 +124,8 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(filePath, !simulation); // if simulation time, use the version
+            String defPath = java.net.URLDecoder.decode(filePath, "UTF-8");
+            definition = definitionService.getDefinition(defPath, !simulation); // if simulation time, use the version
                                                                                  // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
@@ -998,10 +999,9 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(command.getProcessDefinitionId(), false); // if simulation
-                                                                                                   // time, use the
-                                                                                                   // version
-            // under construction
+            String defPath = java.net.URLDecoder.decode(command.getProcessDefinitionId(), "UTF-8");
+            definition = definitionService.getDefinition(defPath, false); 
+            
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);

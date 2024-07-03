@@ -1,0 +1,2 @@
+<section>   <row-layout name="" alias="" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">
+           <textarea-field name="처리내용" alias="처리내용" rows="5" disabled="false" v-model="slotProps.modelValue['처리내용']"></textarea-field>   <boolean-field name="처리완료여부" alias="처리완료여부" disabled="false" v-model="slotProps.modelValue['처리완료여부']"></boolean-field></div></div></row-layout></section>

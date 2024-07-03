@@ -1,2 +1,0 @@
-<section>   <row-layout name="" alias="" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">
-           <text-field name="SendEmail" alias="받는 사람 이메일" type="email" disabled="false" v-model="slotProps.modelValue['SendEmail']"></text-field>   <textarea-field name="TroubleClear" alias="처리 내용" rows="5" disabled="false" v-model="slotProps.modelValue['TroubleClear']"></textarea-field></div></div></row-layout></section>
