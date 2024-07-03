@@ -1,3 +1,0 @@
-<section><div class="row">
-        <div class="col-sm-12"><select-field name="Trouble Type" alias="장애 유형" items="[{'sw':'소프트웨어'},{'hw':'하드웨어'}]" v-model="formValues['Trouble Type']"></select-field><text-field name="description" alias="장애 설명" v-model="formValues['description']"></text-field></div>
-    </div></section>

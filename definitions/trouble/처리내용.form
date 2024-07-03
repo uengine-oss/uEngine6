@@ -1,2 +1,0 @@
-<section>   <row-layout name="고장" alias="고장" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">
-           <textarea-field name="고장내용" alias="고장내용" rows="5" disabled="false" v-model="slotProps.modelValue['고장내용']"></textarea-field>   <textarea-field name="처리내용" alias="처리내용" rows="5" disabled="false" v-model="slotProps.modelValue['처리내용']"></textarea-field></div></div></row-layout></section>
