@@ -16,7 +16,7 @@
           <uengine:json>{"defaultValue":""}</uengine:json>
         </uengine:variable>
         <uengine:variable name="고장" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/고장내용","filePath":"trouble/고장내용.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"분기 처리/고장내용","filePath":"분기 처리/고장내용.form"}}</uengine:json>
         </uengine:variable>
       </uengine:properties>
     </bpmn:extensionElements>

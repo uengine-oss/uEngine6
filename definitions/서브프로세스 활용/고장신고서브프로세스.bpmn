@@ -19,16 +19,16 @@
           <uengine:json>{"defaultValue":""}</uengine:json>
         </uengine:variable>
         <uengine:variable name="고장설명폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/고장설명","filePath":"trouble/고장설명.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"서브프로세스 활용/고장설명","filePath":"서브프로세스 활용/고장설명.form"}}</uengine:json>
         </uengine:variable>
         <uengine:variable name="고장내용폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/고장내용M","filePath":"trouble/고장내용M.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"서브프로세스 활용/고장내용M","filePath":"서브프로세스 활용/고장내용M.form"}}</uengine:json>
         </uengine:variable>
         <uengine:variable name="처리내용폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/처리내용","filePath":"trouble/처리내용.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"서브프로세스 활용/처리내용","filePath":"서브프로세스 활용/처리내용.form"}}</uengine:json>
         </uengine:variable>
         <uengine:variable name="처리확인폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"trouble/처리확인","filePath":"trouble/처리확인.form"}}</uengine:json>
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"서브프로세스 활용/처리확인","filePath":"서브프로세스 활용/처리확인.form"}}</uengine:json>
         </uengine:variable>
         <uengine:variable name="고장" type="Text">
           <uengine:json>{"defaultValue":""}</uengine:json>

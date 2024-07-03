@@ -53,6 +53,8 @@ public class ServiceRegisterDeployFilter implements DeployFilter {
         ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
 
         List<Activity> catchingMessageEvents = definition.getCatchingMessageEvents();
+        if(catchingMessageEvents == null) return;
+        
         List<CatchEvent> catchEvents = new ArrayList<>();
         for (Activity activity : catchingMessageEvents) {
             if (activity instanceof CatchingMessageEvent) {
