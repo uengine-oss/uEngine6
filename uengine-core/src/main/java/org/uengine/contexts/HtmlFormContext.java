@@ -313,6 +313,8 @@ public class HtmlFormContext
 	/* transient */ Map<String, Serializable> valueMap;
 
 	public Map<String, Serializable> getValueMap() {
+		if (valueMap == null)
+			valueMap = new HashMap<>();
 		return valueMap;
 	}
 
@@ -328,27 +330,17 @@ public class HtmlFormContext
 		// }
 	}
 
-	public void setValueMap(Map<String, Serializable> valueMap) {
-		this.valueMap = valueMap;
-
+	public void setValueMap(Map<String, Serializable> newValueMap) {
+		valueMap = new HashMap<>();
 		// indexing array depth for each variables
 		Set clonedSet = new HashSet();
-		clonedSet.addAll(valueMap.keySet());
+		clonedSet.addAll(newValueMap.keySet());
 		Iterator keyIter = clonedSet.iterator();
 		while (keyIter.hasNext()) {
 			String key = (String) keyIter.next();
+			Serializable value = newValueMap.get(key);
 
-			int indexOfArraySign = key.indexOf('[');
-			if (indexOfArraySign > -1) {
-				String arrayIndexingKey = key.substring(0, indexOfArraySign);
-				for (int j = 0; j < key.length(); j++) {
-					char charWhereI = key.charAt(j);
-					if (charWhereI == '[') {
-						arrayIndexingKey = arrayIndexingKey + "[]";
-					}
-				}
-				valueMap.put(arrayIndexingKey, "");
-			}
+			valueMap.put(key, value);
 		}
 	}
 
