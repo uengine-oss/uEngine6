@@ -56,15 +56,17 @@ public class FormActivity extends HumanActivity {
 		setTool("formHandler");
 	}
 
-	MappingContext mappingContext;
+    // TODO: 매핑 관련 개선 
+    // 하위 코드 ReceiveActivity 에서 상속받아서 사용하도록 수정
+	// MappingContext mappingContext;
 
-	public MappingContext getMappingContext() {
-		return mappingContext;
-	}
+	// public MappingContext getMappingContext() {
+	// 	return mappingContext;
+	// }
 
-	public void setMappingContext(MappingContext mappingContext) {
-		this.mappingContext = mappingContext;
-	}
+	// public void setMappingContext(MappingContext mappingContext) {
+	// 	this.mappingContext = mappingContext;
+	// }
 
 	ProcessVariable variableForHtmlFormContext;
 

@@ -61,7 +61,8 @@ public class DefaultComponentFactory implements IComponentFactory {
     @Override
     public <T> Map<String, T> getComponents(Class<T> clazz, Object[] constructorParameters) throws Exception {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getComponents'");
+        // throw new UnsupportedOperationException("Unimplemented method 'getComponents'");
+        return null;
     }
 
 

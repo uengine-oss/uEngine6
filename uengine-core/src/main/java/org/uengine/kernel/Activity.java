@@ -742,8 +742,14 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 			if (getParentActivity() != null)
 				getParentActivity().onEvent(CHILD_SKIPPED, instance, payload);
 		} else if (command.equals(ACTIVITY_RESUMED)) {
-			if (getParentActivity() != null)
+			if (getParentActivity() != null) {
+                // Test -> workitem에 정상적으로 추가 안됨.
+                // String status = getParentActivity().getStatus(instance);
+                // if (!status.equals(Activity.STATUS_RUNNING)) {
+                //     getParentActivity().onEvent(CHILD_RESUMED, instance, payload);
+                // }
 				getParentActivity().onEvent(CHILD_RESUMED, instance, payload);
+            }
 		} else if (command.equals(ACTIVITY_STOPPED)) {
 			instance.setStatus(getTracingTag(), Activity.STATUS_STOPPED);
 
@@ -758,6 +764,49 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	}
 
+    
+
+    public void backToHere(ProcessInstance instance) throws Exception {
+        // ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        String execScope = null;
+        if (tracingTag.contains(":")) {
+            execScope = tracingTag.split(":")[1];
+            tracingTag = tracingTag.split(":")[0];
+        }
+        if (execScope != null) {
+            instance.setExecutionScope(execScope);
+        }
+        System.out.println("**********************");
+        System.out.println("getInstanceId : " + instance.getInstanceId());
+        System.out.println("getExecutionScopeContext : " + instance.getExecutionScopeContext());
+        System.out.println("**********************");
+        ProcessDefinition definition = instance.getProcessDefinition();
+        List<Activity> list = new ArrayList<Activity>();
+
+        // Activity returningActivity = definition.getActivity(tracingTag);
+
+        // returningActivity.compensateToThis(instance);
+        definition.gatherPropagatedActivitiesOf(instance, this, list);
+
+        Activity proActiviy;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            proActiviy = list.get(i);
+            // compensate
+            proActiviy.compensate(instance);
+        }
+
+        this.resume(instance);
+        /*
+         * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
+         * List list = new ArrayList();
+         * definition.gatherPropagatedActivitiesOf(instance,
+         * definition.getWholeChildActivity(tracingTag), list);
+         * 
+         * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
+         */
+
+        // return new InstanceResource(instance);
+    }
 	/**
 	 * only when needed to reserve activity before running, it stores the runner
 	 * ticket for trigger the activity later.
@@ -1184,7 +1233,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 				// if(getParentActivity() instanceof SubProcess){
 
-				/// TODO: this is temporal. it is not exact logic.
+				// TODO: this is temporal. it is not exact logic.
 				String parentStatus = getParentActivity().getStatus(instance);
 				if (STATUS_RUNNING.equals(parentStatus)) {
 					status = STATUS_MULTIPLE;

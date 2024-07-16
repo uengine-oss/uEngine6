@@ -43,7 +43,7 @@ public class HumanActivity extends ReceiveActivity {
 
 	protected Role role;
 
-	// Todo: CheckPoin
+	// Todo: CheckPoint
 	public Role getRole() {
 
 		if (role != null && role.getName() != null && getProcessDefinition() != null) {
@@ -75,6 +75,16 @@ public class HumanActivity extends ReceiveActivity {
 
 	public String getTool(ProcessInstance processInstance) {
 		return getTool();
+	}
+
+    String checkPoint;
+
+	public String getCheckPoint() {
+		return checkPoint;
+	}
+
+	public void setCheckPoint(String checkPoint) {
+		this.checkPoint = checkPoint;
 	}
 
 	public String getTool() {
@@ -961,7 +971,10 @@ public class HumanActivity extends ReceiveActivity {
 		// UserManagerBean.addWorkload(getRole().getMapping(instance).getEndpoint(),
 		// (-1)*getWorkload());
 		super.afterComplete(instance);
-		dataMapping(instance, getMappingContexts());
+        
+        // TODO: 매핑 관련 개선
+		// dataMapping(instance, getMappingContexts());
+        dataMapping(instance, getMappingContext().getMappingElements());
 		fireEventToActivityFilters(instance, "saveAnyway", null);
 	}
 
@@ -1054,6 +1067,8 @@ public class HumanActivity extends ReceiveActivity {
 				worklist.cancelWorkItem(taskId, parameters, instance.getProcessTransactionContext());
 			}
 	}
+
+    
 
 	@Override
 	public void reserveActivity(ProcessInstance instance) throws Exception {
@@ -1321,9 +1336,9 @@ public class HumanActivity extends ReceiveActivity {
 			onComplete(instance, new org.uengine.kernel.ResultPayload());
 			fireComplete(instance);
 		}
-
-		dataMapping(instance, getMappingContextsIn());
-
+        // TODO: 매핑 관련 개선
+		// dataMapping(instance, getMappingContextsIn());
+        dataMapping(instance, getMappingContext().getMappingElements());
 		super.afterExecute(instance);
 	}
 

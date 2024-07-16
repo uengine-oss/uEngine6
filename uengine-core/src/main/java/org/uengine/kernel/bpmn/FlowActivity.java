@@ -240,36 +240,58 @@ public class FlowActivity extends ComplexActivity {
         // TODO: find out events and register them as event listeners as follows:
         // for each events: getProcessDefinition().addMessageListener(instance,
         // eventActivity);
-        for (Activity childActivity : getChildActivities()) {
-            if (childActivity instanceof Event && childActivity instanceof MessageListener
-                    && (childActivity.getIncomingSequenceFlows() == null
-                            || childActivity.getIncomingSequenceFlows().size() == 0)
-                    && ((Event) childActivity).getAttachedToRef() == null) {
-                getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
-            }
-        }
 
-        // if (getSequenceFlows().size() == 0) {
-        //// System.out.println("This is conventional uengine process - 2");
-        // super.executeActivity(instance);
-        // }else{
-        List<Activity> startActivities = getStartActivities();
-        if (startActivities != null && startActivities.size() > 0) {
-
-            // Execute Event activity first than the regular activities since the first
-            // activity may occur any events.
-            for (Activity startActivity : startActivities) {
-                if (startActivity instanceof Event)
-                    queueActivity(startActivity, instance);
+        if (getStatus(instance) == STATUS_READY) {
+            // 하위 로직은 첫 실행일때만.
+            for (Activity childActivity : getChildActivities()) {
+                if (childActivity instanceof Event && childActivity instanceof MessageListener
+                        && (childActivity.getIncomingSequenceFlows() == null
+                                || childActivity.getIncomingSequenceFlows().size() == 0)
+                        && ((Event) childActivity).getAttachedToRef() == null) {
+                    getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
+                }
             }
 
-            for (Activity startActivity : startActivities) {
-                if (!(startActivity instanceof Event))
-                    queueActivity(startActivity, instance);
+            // if (getSequenceFlows().size() == 0) {
+            //// System.out.println("This is conventional uengine process - 2");
+            // super.executeActivity(instance);
+            // }else{
+            List<Activity> startActivities = getStartActivities();
+            if (startActivities != null && startActivities.size() > 0) {
+
+                // Execute Event activity first than the regular activities since the first
+                // activity may occur any events.
+                for (Activity startActivity : startActivities) {
+                    if (startActivity instanceof Event)
+                        queueActivity(startActivity, instance);
+                }
+
+                for (Activity startActivity : startActivities) {
+                    if (!(startActivity instanceof Event))
+                        queueActivity(startActivity, instance);
+                }
+            } else {
+                fireComplete(instance); // throw new UEngineException("Can't find start activity");
             }
         } else {
-            fireComplete(instance); // throw new UEngineException("Can't find start activity");
+            int currStep = getCurrentStep(instance);
+            if (currStep >= getChildActivities().size()) {
+                fireComplete(instance);
+                return;
+            }
+
+            Activity childActivity = getChildActivities().get(currStep);
+            // if(!childActivity.isBackwardActivity()){
+            queueActivity(childActivity, instance);
+            // }else{//if the activity is a backward activity, which is for compensating and
+            // // only need to be executed in compensation process, skip running the
+            // activity.
+            // currStep++;
+            // setCurrentStep(instance, currStep);
+            // executeActivity(instance);
+            // }
         }
+
         // }
 
     }
@@ -440,6 +462,45 @@ public class FlowActivity extends ComplexActivity {
 
     @Override
     protected void gatherPropagatedActivitiesOf(final ProcessInstance instance, Activity child, List list)
+            throws Exception {
+
+        final List<Activity> propagatedActivities = new ArrayList<Activity>();
+
+        new TreeVisitor<Activity>() {
+
+            @Override
+            public List<Activity> getChild(Activity parent) {
+                List<SequenceFlow> outgoings = parent.getOutgoingSequenceFlows();
+
+                List<Activity> outgoingActivities = new ArrayList<Activity>();
+
+                for (SequenceFlow sequenceFlow : outgoings) {
+                    outgoingActivities.add(sequenceFlow.getTargetActivity());
+                }
+
+                return outgoingActivities;
+            }
+
+            @Override
+            public void logic(Activity elem) {
+                try {
+                    if (!Activity.STATUS_READY.equals(elem.getStatus(instance))
+                            && !propagatedActivities.contains(elem)) {
+                        propagatedActivities.add(elem);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.run(child);
+
+        list.addAll(propagatedActivities);
+
+    }
+
+    @Override
+    protected void gatherPropagatedActivitiesOf(final ProcessInstance instance, Activity child, List list,
+            String execScope)
             throws Exception {
 
         final List<Activity> propagatedActivities = new ArrayList<Activity>();
