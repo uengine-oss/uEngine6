@@ -5,8 +5,8 @@ import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +22,7 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +37,6 @@ import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.WorkItemResource;
-import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.entity.WorklistEntity;
@@ -50,9 +50,7 @@ import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
-import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ActivityInstanceContext;
-import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.ExecutionScopeContext;
@@ -61,12 +59,10 @@ import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
-import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
-import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
@@ -92,6 +88,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
  * jackson engine. TODO: accept? typed json is sometimes hard to read
  */
 @RestController
+@CrossOrigin(origins = "*")
 public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
@@ -126,7 +123,7 @@ public class InstanceServiceImpl implements InstanceService {
         try {
             String defPath = java.net.URLDecoder.decode(filePath, "UTF-8");
             definition = definitionService.getDefinition(defPath, !simulation); // if simulation time, use the version
-                                                                                 // under construction
+                                                                                // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -138,9 +135,12 @@ public class InstanceServiceImpl implements InstanceService {
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
             try {
-                // org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, command.getInstanceName(), null);
+                // org.uengine.kernel.ProcessInstance instance =
+                // AbstractProcessInstance.create(processDefinition, command.getInstanceName(),
+                // null);
 
-                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition, processDefinition.getName(), null);
+                org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
+                        processDefinition.getName(), null);
                 // invokeActivityFilters(null, instance);
 
                 org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
@@ -244,30 +244,46 @@ public class InstanceServiceImpl implements InstanceService {
             @PathVariable("tracingTag") String tracingTag) throws Exception {
 
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        ProcessDefinition definition = instance.getProcessDefinition();
-        List<Activity> list = new ArrayList<Activity>();
-
-        Activity returningActivity = definition.getActivity(tracingTag);
-
-        // returningActivity.compensateToThis(instance);
-        definition.gatherPropagatedActivitiesOf(instance, returningActivity, list);
-
-        Activity proActiviy;
-        for (int i = list.size() - 1; i >= 0; i--) {
-            proActiviy = list.get(i);
-            // compensate
-            proActiviy.compensate(instance);
+        String execScope = null;
+        if (tracingTag.contains(":")) {
+            execScope = tracingTag.split(":")[1];
+            tracingTag = tracingTag.split(":")[0];
+        }
+        if (execScope != null) {
+            instance.setExecutionScope(execScope);
         }
 
-        returningActivity.resume(instance);
-        /*
-         * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
-         * List list = new ArrayList();
-         * definition.gatherPropagatedActivitiesOf(instance,
-         * definition.getWholeChildActivity(tracingTag), list);
-         * 
-         * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
-         */
+        instance.getProcessDefinition().getActivity(tracingTag).backToHere(instance);
+        // System.out.println("**********************");
+        // System.out.println("getInstanceId : " + instance.getInstanceId());
+        // System.out.println("getExecutionScopeContext : " +
+        // instance.getExecutionScopeContext());
+        // System.out.println("**********************");
+        // ProcessDefinition definition = instance.getProcessDefinition();
+        // List<Activity> list = new ArrayList<Activity>();
+
+        // Activity returningActivity = definition.getActivity(tracingTag);
+
+        // // returningActivity.compensateToThis(instance);
+
+        // definition.gatherPropagatedActivitiesOf(instance, returningActivity, list);
+
+        // Activity proActiviy;
+        // for (int i = list.size() - 1; i >= 0; i--) {
+        // proActiviy = list.get(i);
+        // // compensate
+        // proActiviy.compensate(instance);
+        // }
+
+        // returningActivity.resume(instance);
+        // /*
+        // * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
+        // * List list = new ArrayList();
+        // * definition.gatherPropagatedActivitiesOf(instance,
+        // * definition.getWholeChildActivity(tracingTag), list);
+        // *
+        // * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
+        // */
 
         return new InstanceResource(instance);
     }
@@ -757,7 +773,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public WorkItemResource getWorkItem(@PathVariable("taskId") String taskId) throws Exception {
-        if(taskId == null || taskId.equals("null")) return null;
+        if (taskId == null || taskId.equals("null"))
+            return null;
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
         if (worklistEntity == null) {
             throw new Exception("No such work item where taskId = " + taskId);
@@ -779,13 +796,14 @@ public class InstanceServiceImpl implements InstanceService {
         Map parameterValues = new HashMap<String, Object>();
         if (activity.getParameters() != null) {
             for (ParameterContext parameterContext : activity.getParameters()) {
-                if (parameterContext.getVariable() != null && parameterContext.getDirection().indexOf("IN") == 0) {
+                if (parameterContext.getVariable() != null && parameterContext.getDirection().indexOf("in") == 0) {
                     parameterValues.put(parameterContext.getArgument().getText(),
                             parameterContext.getVariable().get(instance, "", ""));
                 }
             }
         }
-
+        // Argument Key -> Value
+        //
         if (parameterValues.size() > 0) {
             workItem.setParameterValues(parameterValues);
         }
@@ -795,7 +813,7 @@ public class InstanceServiceImpl implements InstanceService {
         return workItem;
     }
 
-    @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/work-item/{taskId}/save", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
     public void putWorkItem(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
@@ -820,7 +838,7 @@ public class InstanceServiceImpl implements InstanceService {
         if (workItem.getParameterValues() != null
                 && humanActivity.getParameters() != null) {
             for (ParameterContext parameterContext : humanActivity.getParameters()) {
-                if (parameterContext.getDirection().indexOf("OUT") >= 0
+                if (parameterContext.getDirection().indexOf("out") >= 0
                         && workItem.getParameterValues().containsKey(parameterContext.getArgument().getText())) {
 
                     Serializable data = (Serializable) workItem.getParameterValues()
@@ -850,7 +868,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         // if (workItem.getWorklist() != null &&
         // "SAVED".equals(workItem.getWorklist().getStatus())) {
-        humanActivity.saveWorkItem(instance, variableChanges);
+        // humanActivity.mappingOut(instance, variableChanges);
         // } else {
         // try {
         // humanActivity.fireReceived(instance, variableChanges);
@@ -887,41 +905,51 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         // map the argument list to variables change list
-        Map variableChanges = new HashMap<String, Object>();
+        Map<String, Object> parameterValues = workItem.getParameterValues();
+        // if (workItem.getParameterValues() != null
+        //         && humanActivity.getEventSynchronization().getMappingContext().getMappingElements() != null) {
+        //     for (ParameterContext parameterContext : humanActivity.getEventSynchronization().getMappingContext()
+        //             .getMappingElements()) {
+        //         if (parameterContext.getDirection().indexOf("out") >= 0) {
+        //             Serializable data;
+        //             if (parameterContext.getTransformerMapping() != null) {
+        //                 for 
+        //                 // data =
+        //                 // parameterContext.getTransformerMapping().getTransformer().letTransform(instance,
+        //                 // null, null);
+        //             } else {
+        //                 String varName = parameterContext.getVariable().getName();
+        //                 String[] parts = varName.split("\\.");
+        //                 String name = String.join(".", Arrays.copyOfRange(parts, 1, parts.length));
+        //                 if (workItem.getParameterValues().containsKey(name)) {
+        //                     data = (Serializable) workItem.getParameterValues()
+        //                             .get(name);
+        //                     variableChanges.put(parameterContext.getVariable().getName(), data);
+        //                 }
 
-        if (workItem.getParameterValues() != null
-                && humanActivity.getParameters() != null) {
-            for (ParameterContext parameterContext : humanActivity.getParameters()) {
-                if (parameterContext.getDirection().indexOf("OUT") >= 0
-                        && workItem.getParameterValues().containsKey(parameterContext.getArgument().getText())) {
+        //             }
+        //             // Serializable data = (Serializable) workItem.getParameterValues()
+        //             // .get(parameterContext.getArgument().getText());
 
-                    Serializable data = (Serializable) workItem.getParameterValues()
-                            .get(parameterContext.getArgument().getText());
-                    // if("REST".equals(parameterContext.getVariable().getPersistOption())){
-                    // RestResourceProcessVariableValue restResourceProcessVariableValue = new
-                    // RestResourceProcessVariableValue();
-                    // data = restResourceProcessVariableValue.lightweight(data,
-                    // parameterContext.getVariable(), instance);
-                    // }
+        //             // if (data instanceof Map && ((Map) data).containsKey("_type")) {
+        //             // String typeName = null;
+        //             // try {
+        //             // typeName = (String) ((Map) data).get("_type");
+        //             // Class classType =
+        //             // Thread.currentThread().getContextClassLoader().loadClass(typeName);
+        //             // data = (Serializable)
+        //             // ProcessServiceApplication.objectMapper.convertValue(data, classType);
+        //             // } catch (Exception e) {
+        //             // throw new Exception("Error while convert map to type: " + typeName, e);
+        //             // }
+        //             // }
 
-                    if (data instanceof Map && ((Map) data).containsKey("_type")) {
-                        String typeName = null;
-                        try {
-                            typeName = (String) ((Map) data).get("_type");
-                            Class classType = Thread.currentThread().getContextClassLoader().loadClass(typeName);
-                            data = (Serializable) ProcessServiceApplication.objectMapper.convertValue(data, classType);
-                        } catch (Exception e) {
-                            throw new Exception("Error while convert map to type: " + typeName, e);
-                        }
-                    }
-
-                    variableChanges.put(parameterContext.getVariable().getName(), data);
-                }
-            }
-        }
+        //         }
+        //     }
+        // }
 
         try {
-            humanActivity.fireReceived(instance, variableChanges);
+            humanActivity.fireReceived(instance, parameterValues);
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
@@ -998,7 +1026,9 @@ public class InstanceServiceImpl implements InstanceService {
 
         return getDryRun(definitionPath);
     }
-    
+
+    //
+
     @ProcessTransactional(readOnly = true)
     @RequestMapping(value = "/dry-run/{defId:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
@@ -1007,7 +1037,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(defId, false); 
+            definition = definitionService.getDefinition(defId, false);
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -1065,7 +1095,6 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
-
     @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
@@ -1074,8 +1103,10 @@ public class InstanceServiceImpl implements InstanceService {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
+
             if (instance == null)
                 return null;
+
             String instId = instance.getInstanceId();
             WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
 
@@ -1097,9 +1128,7 @@ public class InstanceServiceImpl implements InstanceService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Error executing dry-run process instance: " + e.getMessage(), e);
         }
-
     }
-
 
     @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ProcessTransactional
@@ -1152,32 +1181,31 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-
-
-    
-    
     @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
     public WorkItemResource getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
-        if(corrKey == null) return null;
+        if (corrKey == null)
+            return null;
 
-        List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(corrKey, "Running");
-        for(ProcessInstanceEntity processInstanceEntity : processInstanceList){
-            WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(processInstanceEntity.getInstId());
+        List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(corrKey,
+                "Running");
+        for (ProcessInstanceEntity processInstanceEntity : processInstanceList) {
+            WorklistEntity worklistEntity = worklistRepository
+                    .findCurrentWorkItemByInstId(processInstanceEntity.getInstId());
 
-            if(worklistEntity != null){   
-                ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(worklistEntity.getDefId());
+            if (worklistEntity != null) {
+                ProcessDefinition definition = (ProcessDefinition) definitionService
+                        .getDefinition(worklistEntity.getDefId());
                 HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
-                     
+
                 WorkItemResource workItem = new WorkItemResource();
                 workItem.setActivity(activity);
-                workItem.setWorklist(worklistEntity); 
+                workItem.setWorklist(worklistEntity);
 
                 return workItem;
             }
         }
         return null;
     }
-
 
 }

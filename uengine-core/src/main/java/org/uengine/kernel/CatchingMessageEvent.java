@@ -91,6 +91,8 @@ public class CatchingMessageEvent extends Event implements MessageListener {
 
 	public boolean onMessage(ProcessInstance instance, Object payload) throws Exception {
 
+        // TODO: 매핑 관련 개선
+
 		if(getDataOutput()!=null && getDataOutput().getName()!=null)
 			getDataOutput().set(instance, "", (Serializable) payload);
 
@@ -118,7 +120,7 @@ public class CatchingMessageEvent extends Event implements MessageListener {
 						transformerMapping.getTransformer().getArgumentSourceMap().put(transformerMapping.getTransformer().getInputArguments()[0], DIRECT_VALUE);
 					}
 
-					value = transformerMapping.getTransformer().letTransform(instance, options);
+					value = transformerMapping.getTransformer().letTransform(instance, options, null);
 				}
 
 

@@ -3,6 +3,7 @@ package org.uengine.processdesigner.mapper;
 import java.awt.Point;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,12 +68,12 @@ public abstract class Transformer implements NeedArrangementToSerialize, Seriali
 		Map options = new HashMap();
 		options.put(OPTION_KEY_OUTPUT_ARGUMENT, outputArgumentName);
 
-		return letTransform(instance, options);
+		return letTransform(instance, options, null);
 	}
 
 	// in run-time, there is no TransformerArgument objects, so we need to use the
 	// argumentSourceMap instead
-	public Object letTransform(ProcessInstance instance, Map options) throws Exception {
+	public Object letTransform(ProcessInstance instance, Map options, Map payload) throws Exception {
 		HashMap parameters = new HashMap();
 
 		int maxNumberOfParameterValues = 1;
@@ -128,7 +129,7 @@ public abstract class Transformer implements NeedArrangementToSerialize, Seriali
 
 						options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
 								tm.getLinkedArgumentName());
-						result = transformer.letTransform(instance, options);
+						result = transformer.letTransform(instance, options, payload);
 
 						/**
 						 * if the transformer has two or more argument out,
@@ -146,15 +147,21 @@ public abstract class Transformer implements NeedArrangementToSerialize, Seriali
 							parameters.put(inputArguments[i], optionValue);
 
 						} else {
-							Object parameter = instance.getBeanProperty((String) argumentSource);
+                            Object parameter = null;
+                            if(payload != null) {
+                                String[] parts = ((String) argumentSource).split("\\.");
+                                String result = String.join(".", Arrays.copyOfRange(parts, 1, parts.length));
+                                parameter = payload.get(result);
+                            } else {
+                                parameter = instance.getBeanProperty((String) argumentSource);
+                            }
+							// Object parameter = instance.getBeanProperty((String) argumentSource);
 
 							if (parameter instanceof ProcessVariableValue) {
 								ProcessVariableValue pvv = ((ProcessVariableValue) parameter);
 								if (maxNumberOfParameterValues < pvv.size())
 									maxNumberOfParameterValues = pvv.size();
-							} else
-
-							if (parameter instanceof RoleMapping) {
+							} else if (parameter instanceof RoleMapping) {
 								RoleMapping rm = ((RoleMapping) parameter);
 								if (maxNumberOfParameterValues < rm.size())
 									maxNumberOfParameterValues = rm.size();

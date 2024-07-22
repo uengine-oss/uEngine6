@@ -22,9 +22,10 @@ public class ParameterContext implements Serializable {
     public ParameterContext() {
     }
 
+    // MappingElement - Target
+    // ParameterContext - Source
     TextContext argument = org.uengine.contexts.TextContext.createInstance();
 
-    // @Name
     public TextContext getArgument() {
         if (argument != null && argument.getText() == null && getVariable() != null) {
             return getVariable().getDisplayName();
@@ -47,6 +48,8 @@ public class ParameterContext implements Serializable {
         this.split = split;
     }
 
+    // MappingElement - Source
+    // ParameterContext - Target
     ProcessVariable variable;
 
     public ProcessVariable getVariable() {

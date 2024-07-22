@@ -21,6 +21,7 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
   cloud:
     stream:
       kafka:
@@ -70,7 +71,6 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-
         bpm-topic:
           destination: bpm.topic
           contentType: application/json

@@ -146,7 +146,7 @@ public class HtmlFormContext
 		if (variableKey.indexOf('.') > 0) {
 			resolvePartNeeded = true;
 		}
-
+        if(valueMap == null) return null;
 		Object value = valueMap.get(fieldName);
 
 		if (resolvePartNeeded) {

@@ -14,7 +14,6 @@ import org.uengine.processdesigner.mapper.Transformer;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 import org.uengine.util.UEngineUtil;
 
-
 public class ReceiveActivity extends DefaultActivity implements MessageListener, NeedArrangementToSerialize {
     private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
@@ -32,17 +31,20 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     MessageDefinition messageDefinition;
+
     public MessageDefinition getMessageDefinition() {
         return messageDefinition;
     }
 
     public void setMessageDefinition(MessageDefinition definition) {
-        if (definition == null) definition = new MessageDefinition();
+        if (definition == null)
+            definition = new MessageDefinition();
         messageDefinition = definition;
         setMessage(definition.getName());
     }
 
-    ParameterContext[] parameters; //TODO 이게 널일때 어떻게 할것인가>?????
+    ParameterContext[] parameters;
+
     public ParameterContext[] getParameters() {
         return parameters;
     }
@@ -52,6 +54,7 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     Role fromRole;
+
     public Role getFromRole() {
         return fromRole;
     }
@@ -60,19 +63,18 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
         fromRole = role;
     }
 
-/////////////////////////
+    /////////////////////////
 
     public ReceiveActivity() {
         super("Receive");
     }
 
-
     protected void executeActivity(ProcessInstance instance) throws Exception {
         System.out.println("ReceiveActivity::waiting for message : " + message);
-        getProcessDefinition().addMessageListener(instance, this); //subscribes to JMS topic
+        getProcessDefinition().addMessageListener(instance, this); // subscribes to JMS topic
     }
 
-    //TODO: hot-spot
+    // TODO: hot-spot
     protected void onEvent(String command, ProcessInstance instance, Object payload) throws Exception {
         if (!isMyMessage(command, instance, payload)) {
             super.onEvent(command, instance, payload);
@@ -90,17 +92,18 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
         instance.addDebugInfo(this);
 
-        if (payload != null && (getParameters() != null)) {
+        if (payload != null && (getEventSynchronization().getMappingContext().getMappingElements() != null)) {
 
             Vector payloads = null;
-            ParameterContext[] paramCtxs = getParameters();
+            ParameterContext[] paramCtxs = getEventSynchronization().getMappingContext().getMappingElements();
 
             if (payload instanceof Vector) {
                 System.out.println("ReceiveActivity::payload is " + payload);
                 payloads = (Vector) payload;
 
-                //TODO: test this
-                if (!testMyMessage(instance, payloads)) return;
+                // TODO: test this
+                if (!testMyMessage(instance, payloads))
+                    return;
 
                 int i = 0;
                 for (Iterator iter = payloads.iterator(); iter.hasNext(); i++) {
@@ -112,47 +115,78 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                 savePayload(instance, (Map) payload);
             }
 
-            //TODO: when user rollback this receive activity, listener should be added again.
+            // TODO: when user rollback this receive activity, listener should be added
+            // again.
             getProcessDefinition().removeMessageListener(getMessage(), instance, getTracingTag());
         }
 
         fireComplete(instance);
     }
 
-    // ADDED 
+    // ADDED
     protected void afterComplete(ProcessInstance instance) throws Exception {
-		mappingOut(instance);
-		super.afterComplete(instance);
-	}
-   
-    protected void mappingOut(ProcessInstance instance) throws Exception {}
-    protected void mappingOut(ProcessInstance instance, ParameterContext[] params) throws Exception {
-        if(params == null) return;
+        super.afterComplete(instance);
+    }
 
-        for (ParameterContext param : params) {
-            try {
-                if(param.getTransformerMapping() == null) continue;
+    protected void mappingOut(ProcessInstance instance, Map payload) throws Exception {
+        ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
+        if (params != null) {
+            for (int i = 0; i < params.length; i++) {
+                try {
+                    ParameterContext param = params[i];
 
-                String targetFieldName = param.getArgument().getText();
-                Map options = new HashMap();
-                options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
-                        param.getTransformerMapping().getLinkedArgumentName());
-                options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_FORM_FIELD_NAME,
-                        targetFieldName);
+                    Object value = null;
+                    String targetFieldName = param.getArgument().getText();
 
-                TransformerMapping tm = param.getTransformerMapping();
-                Transformer transformer = tm.getTransformer();
-                Object value = param.getTransformerMapping().getTransformer().letTransform(instance, options);
-                // System.out.println(value);
-                instance.setBeanProperty(targetFieldName, (Serializable) value);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
+                    if (param.getTransformerMapping() != null) {
+
+                        Map options = new HashMap();
+                        options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_OUTPUT_ARGUMENT,
+                                param.getTransformerMapping().getLinkedArgumentName());
+                        options.put(org.uengine.processdesigner.mapper.Transformer.OPTION_KEY_FORM_FIELD_NAME,
+                                targetFieldName);
+
+                        TransformerMapping tm = param.getTransformerMapping();
+                        Transformer transformer = tm.getTransformer();
+                        // if(srcVariableName.startsWith("[Arguments]")) {
+                        //     value = payload.get(srcVariableName);
+                        // } else {
+                        //     value = instance.getBeanProperty(srcVariableName);
+                        // }
+                        value = param.getTransformerMapping().getTransformer().letTransform(instance, options, payload);
+                        System.out.println(value);
+                        instance.setBeanProperty(targetFieldName, (Serializable) value);
+
+                    } else {
+                        String srcVariableName = param.getVariable().getName();
+                        if(srcVariableName.startsWith("[Arguments]")) {
+                            String[] parts = srcVariableName.split("\\.");
+                            String result = String.join(".", Arrays.copyOfRange(parts, 1, parts.length));
+                            value = payload.get(result);
+                        } else {
+                            value = instance.getBeanProperty(srcVariableName);
+                        }
+                        instance.setBeanProperty(targetFieldName, (Serializable) value);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // if (!(instance instanceof SimulatorProcessInstance)) {
+                    throw e;
+                    // }
+                }
             }
         }
-	}
-    public void savePayload(ProcessInstance instance, ResultPayload resultPayload) throws Exception {
+        // for (ParameterContext param : params) {
+        //     try {
+                
+        //     } catch (Exception e) {
+        //         e.printStackTrace();
+        //         throw e;
+        //     }
+        // }
+    }
 
+    public void savePayload(ProcessInstance instance, ResultPayload resultPayload) throws Exception {
 
         KeyedParameter[] processVariableChanges = resultPayload.getProcessVariableChanges();
         if (processVariableChanges != null)
@@ -167,35 +201,42 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                 }
 
                 if (saveVariableValue)
-                    instance.set("", processVariableChanges[i].getKey(), (Serializable) processVariableChanges[i].getValue());
+                    instance.set("", processVariableChanges[i].getKey(),
+                            (Serializable) processVariableChanges[i].getValue());
             }
     }
 
     public void savePayload(ProcessInstance instance, Map resultPayload) throws Exception {
-
-        for (Object key : resultPayload.keySet()) {
-            String variableKey = key.toString();
-            Object variableValue = resultPayload.get(key);
-
-            boolean saveVariableValue = true;
-
-            if (variableValue instanceof CommandVariableValue) {
-                saveVariableValue = !((CommandVariableValue) variableValue).doCommand(instance, variableKey);
+        if(getEventSynchronization().getMappingContext().getMappingElements() != null) {
+            mappingOut(instance, resultPayload);
+        } else {
+            for (Object key : resultPayload.keySet()) {
+                String variableKey = key.toString();
+                Object variableValue = resultPayload.get(key);
+    
+                boolean saveVariableValue = true;
+    
+                if (variableValue instanceof CommandVariableValue) {
+                    saveVariableValue = !((CommandVariableValue) variableValue).doCommand(instance, variableKey);
+                }
+    
+                if (saveVariableValue)
+                    instance.set("", variableKey, (Serializable) variableValue);
             }
-
-            if (saveVariableValue)
-                instance.set("", variableKey, (Serializable) variableValue);
         }
+         
     }
 
     protected boolean testMyMessage(ProcessInstance instance, Vector payloads) throws Exception {
-        if (fromRole == null) return true;
+        if (fromRole == null)
+            return true;
 
         ProcessVariable identifier = fromRole.getIdentifier();
         System.out.println("	test my role:: fromRole=" + fromRole);
         System.out.println("				:: identifier=" + identifier);
 
-        if (identifier == null) return true;
+        if (identifier == null)
+            return true;
 
         ParameterContext[] parameters = getParameters();
         Object identifierValue = identifier.get(instance, "");
@@ -206,7 +247,7 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                 Object paramValue = payloads.elementAt(i);
                 System.out.println("				:: value of parameter=" + paramValue);
                 if (identifierValue.equals(paramValue)) {
-                    //when the filter met
+                    // when the filter met
                     return true;
                 }
             }
@@ -218,14 +259,16 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     public ValidationContext validate(Map options) {
         ValidationContext validationContext = super.validate(options);
 
-//		if(getMessage()== null)
-//			validationContext.addWarning(getActivityLabel()+" Message must be specified.");
+        // if(getMessage()== null)
+        // validationContext.addWarning(getActivityLabel()+" Message must be
+        // specified.");
 
         if (getParameters() != null) {
             ParameterContext[] parameters = getParameters();
             for (int i = 0; i < parameters.length; i++) {
                 if (parameters[i].getVariable() == null) {
-                    validationContext.addWarning(getActivityLabel() + " All of the parameters must be bound with variable.");
+                    validationContext
+                            .addWarning(getActivityLabel() + " All of the parameters must be bound with variable.");
                     break;
                 }
             }
@@ -237,7 +280,6 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     public void fireReceived(ProcessInstance instance, Object payload) throws Exception {
         onReceive(instance, payload);
     }
-
 
     public boolean onMessage(ProcessInstance instance, Object payload) throws Exception {
         onEvent(Activity.PREPIX_MESSAGE + "_" + getMessage(), instance, payload);
@@ -260,15 +302,15 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     }
 
-
     @Override
     public void beforeSerialization() {
 
         if (getParameters() != null)
             for (ParameterContext parameterContext : getParameters()) {
                 if (parameterContext.getVariable() != null) {
-                    //parameterContext.getVariable().setName(parameterContext.getArgument().getText());
-                    ProcessVariable realPV = getProcessDefinition().getProcessVariable(parameterContext.getVariable().getName());
+                    // parameterContext.getVariable().setName(parameterContext.getArgument().getText());
+                    ProcessVariable realPV = getProcessDefinition()
+                            .getProcessVariable(parameterContext.getVariable().getName());
                     parameterContext.setVariable(realPV);
                 }
             }
@@ -279,54 +321,52 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     }
 
-
     ///// implementation of ModelingTimeSensitive features. /////
 
     // MappingContext mapper;
 
     // public MappingContext getMapper() {
-    //     return mapper;
+    // return mapper;
     // }
 
     // public void setMapper(MappingContext mapper) {
-    //     this.mapper = mapper;
+    // this.mapper = mapper;
     // }
 
-    MappingContext mapperIn;
+    // MappingContext mapperIn;
 
-    public MappingContext getMapperIn() {
-        return mapperIn;
-    }
+    // public MappingContext getMapperIn() {
+    // return mapperIn;
+    // }
 
-    public void setMapperIn(MappingContext mapperIn) {
-        this.mapperIn = mapperIn;
-    }
+    // public void setMapperIn(MappingContext mapperIn) {
+    // this.mapperIn = mapperIn;
+    // }
 
+    // ParameterContext[] mappingContexts;
 
-    ParameterContext[] mappingContexts;
+    // public ParameterContext[] getMappingContexts() {
+    // return mappingContexts;
+    // }
 
-    public ParameterContext[] getMappingContexts() {
-        return mappingContexts;
-    }
+    // public void setMappingContexts(ParameterContext[] mappingContexts) {
+    // this.mappingContexts = mappingContexts;
+    // }
 
-    public void setMappingContexts(ParameterContext[] mappingContexts) {
-        this.mappingContexts = mappingContexts;
-    }
+    // ParameterContext[] mappingContextsIn;
 
-    ParameterContext[] mappingContextsIn;
+    // public ParameterContext[] getMappingContextsIn() {
+    // return mappingContextsIn;
+    // }
 
-    public ParameterContext[] getMappingContextsIn() {
-        return mappingContextsIn;
-    }
-
-    public void setMappingContextsIn(ParameterContext[] mappingContextsIn) {
-        this.mappingContextsIn = mappingContextsIn;
-    }
-
+    // public void setMappingContextsIn(ParameterContext[] mappingContextsIn) {
+    // this.mappingContextsIn = mappingContextsIn;
+    // }
 
     protected void dataMapping(ProcessInstance instance, ParameterContext[] mappingContexts) throws Exception {
 
-        if (mappingContexts == null) return;
+        if (mappingContexts == null)
+            return;
 
         for (ParameterContext param : mappingContexts) {
 
@@ -335,10 +375,12 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
             Object value = null;
 
             if (param.getVariable() == null && param.getTransformerMapping() != null) {
-                value = param.getTransformerMapping().getTransformer().letTransform(instance, param.getTransformerMapping().getLinkedArgumentName());
+                value = param.getTransformerMapping().getTransformer().letTransform(instance,
+                        param.getTransformerMapping().getLinkedArgumentName());
             } else {
                 srcVariableName = param.getVariable().getName();
-                if (srcVariableName.startsWith("[activities]") || srcVariableName.startsWith("[instance]") || srcVariableName.startsWith("[roles]")) {
+                if (srcVariableName.startsWith("[activities]") || srcVariableName.startsWith("[instance]")
+                        || srcVariableName.startsWith("[roles]")) {
                     value = instance.getBeanProperty(srcVariableName); // varA
                 } else {
                     String[] wholePartPath = srcVariableName.replace('.', '@').split("@");
@@ -368,30 +410,30 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     // @Override
     // public void onModelingTime() {
-    //     mapper = new MappingContext(this, null, getMappingContexts());
-    //     mapperIn = new MappingContext(this, null, getMappingContexts());
+    // mapper = new MappingContext(this, null, getMappingContexts());
+    // mapperIn = new MappingContext(this, null, getMappingContexts());
 
-    //     autowire(mapper);
-    //     autowire(mapperIn);
+    // autowire(mapper);
+    // autowire(mapperIn);
     // }
 
     // @Override
     // public void afterModelingTime() {
-    //     ParameterContext[] mappingElements =
-    //             mapper.getMappingCanvas().getMappingElements();
+    // ParameterContext[] mappingElements =
+    // mapper.getMappingCanvas().getMappingElements();
 
-    //     setMappingContexts(mappingElements);
+    // setMappingContexts(mappingElements);
 
-    //     setMapper(null);
+    // setMapper(null);
 
-    //     ////
+    // ////
 
-    //     ParameterContext[] mappingElementsIn =
-    //             mapperIn.getMappingCanvas().getMappingElements();
+    // ParameterContext[] mappingElementsIn =
+    // mapperIn.getMappingCanvas().getMappingElements();
 
-    //     setMappingContexts(mappingElementsIn);
+    // setMappingContexts(mappingElementsIn);
 
-    //     setMapperIn(null);
+    // setMapperIn(null);
     // }
 
 }
