@@ -16,12 +16,14 @@ import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.HumanActivity;
+import org.uengine.kernel.Otherwise;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
 import org.uengine.kernel.RoleResolutionContext;
 import org.uengine.kernel.ScopeActivity;
 import org.uengine.kernel.bpmn.Event;
+import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SubProcess;
 import org.w3c.dom.Document;
@@ -335,17 +337,18 @@ public class BpmnXMLParser {
             Node variableNode = variableNodes.item(i);
             if (variableNode.getNodeName().equals("uengine:variable")) {
                 parseVariable((Element) variableNode, processDefinition);
-            } else if(variableNode.getNodeName().equals("uengine:json")){
+            } else if (variableNode.getNodeName().equals("uengine:json")) {
                 // LEE
-                if(variableNode.getParentNode().getParentNode().getParentNode().getNodeName().equals("bpmn:process")){
+                if (variableNode.getParentNode().getParentNode().getParentNode().getNodeName().equals("bpmn:process")) {
                     // main process
                     Node definitionNode = ((Element) variableNode).getFirstChild();
-                    if(definitionNode != null) {
-                       String jsonText = definitionNode.getNodeValue();
-                       ProcessDefinition definition = objectMapper.readValue(jsonText, ProcessDefinition.class);
-                       if(processDefinition instanceof ProcessDefinition){
-                           ((ProcessDefinition) processDefinition).setInstanceNamePattern(definition.getInstanceNamePattern());
-                       }
+                    if (definitionNode != null) {
+                        String jsonText = definitionNode.getNodeValue();
+                        ProcessDefinition definition = objectMapper.readValue(jsonText, ProcessDefinition.class);
+                        if (processDefinition instanceof ProcessDefinition) {
+                            ((ProcessDefinition) processDefinition)
+                                    .setInstanceNamePattern(definition.getInstanceNamePattern());
+                        }
                     }
                 }
             }
@@ -413,8 +416,10 @@ public class BpmnXMLParser {
                     if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE
                             || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                         String jsonText = jsonNode.getTextContent();
-                        SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText, SequenceFlow.class);
-                        BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+                        if (!"".equals(jsonText)) {
+                            SequenceFlow jsonSequenceFlow = objectMapper.readValue(jsonText, SequenceFlow.class);
+                            BeanUtils.copyProperties(sequenceFlow, jsonSequenceFlow);
+                        }
                     }
                 }
             }
@@ -490,6 +495,19 @@ public class BpmnXMLParser {
                 ((HumanActivity) task).setRole(role);
             }
 
+        }
+
+        if (task instanceof Gateway) {
+            String defaultSequence = element.getAttribute("default");
+            SequenceFlow defaultSequenceFlow = Arrays
+                    .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
+                    .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
+                    .findFirst()
+                    .orElse(null);
+            if (defaultSequenceFlow != null) {
+                defaultSequenceFlow.setCondition(new Otherwise());
+                defaultSequenceFlow.setOtherwise(true);
+            }
         }
 
         task.setTracingTag(id);
@@ -933,22 +951,22 @@ public class BpmnXMLParser {
     }
 
     public ProcessDefinition parse(String xml) throws Exception {
-        try{
+        try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             // XML Tag Inner $type Cast to type
             xml = xml.replace("$type", "type");
             Document document = builder.parse(new InputSource(new StringReader(xml)));
-    
+
             ProcessDefinition processDefinition = new ProcessDefinition();
             // // Process variables parsing
             // NodeList dataNodes = document.getElementsByTagName("uengine:data");
             // for (int i = 0; i < dataNodes.getLength(); i++) {
             // Node dataNode = dataNodes.item(i);
             // parseProcessVariables(dataNode, processDefinition);
-    
+
             // }
-    
+
             // All gateway types handling code
             NodeList bpmnProcessNodes = document.getElementsByTagName("bpmn:process");
             NodeList processNodes = document.getElementsByTagName("process");
@@ -960,7 +978,7 @@ public class BpmnXMLParser {
             if (processNodes.getLength() == 0) {
                 throw new RuntimeException("No process tag found in the XML");
             }
-    
+
             for (int i = 0; i < processNodes.getLength(); i++) {
                 Node processNode = processNodes.item(i);
                 boolean isExecutable = Boolean
@@ -969,9 +987,9 @@ public class BpmnXMLParser {
                     parseActivities(processNode, processDefinition);
                 }
             }
-    
+
             processDefinition.afterDeserialization();
-    
+
             return processDefinition;
         } catch (Exception e) {
             throw new RuntimeException("Error parsing BPMN XML", e);
