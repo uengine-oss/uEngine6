@@ -438,7 +438,6 @@ public class BpmnXMLParser {
 
         String className = nodeName.substring(0, 1).toUpperCase() + nodeName.substring(1);
         String fullClassName = parseFullClassName(element, className);
-
         Class<?> clazz = Class.forName(fullClassName);
         Activity task = (Activity) clazz.getDeclaredConstructor().newInstance();
         NodeList childNodes = element.getChildNodes();
@@ -508,7 +507,7 @@ public class BpmnXMLParser {
             fullClassName = "org.uengine.kernel.ScriptActivity";
         } else if (className.equals("BoundaryEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message");
+                    "message", "escalation");
             fullClassName = eventTypes.stream()
                     .filter(eventType -> element.getElementsByTagName(eventType +
                             "EventDefinition")
@@ -516,14 +515,18 @@ public class BpmnXMLParser {
                             || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
                                     .getLength() > 0)
                     .findFirst()
-                    .map(eventType -> "org.uengine.kernel.bpmn."
-                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
-                            + "Event")
+                    .map(eventType -> {
+                        if (eventType.equals("error")) {
+                            return "org.uengine.kernel.bpmn.CatchingErrorEvent";
+                        } else {
+                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+                        }
+                    })
                     .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
 
         } else if (className.equals("IntermediateCatchEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message");
+                    "message", "escalation");
             fullClassName = eventTypes.stream()
                     .filter(eventType -> element.getElementsByTagName(eventType +
                             "EventDefinition")
@@ -562,6 +565,24 @@ public class BpmnXMLParser {
                     .map(eventType -> "org.uengine.kernel.bpmn."
                             + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
                             + className)
+                    .orElse("org.uengine.kernel.bpmn." + className);
+        } else if (className.equals("EndEvent")) {
+            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
+                    "message");
+            fullClassName = eventTypes.stream()
+                    .filter(eventType -> element.getElementsByTagName(eventType +
+                            "EventDefinition")
+                            .getLength() > 0
+                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
+                                    .getLength() > 0)
+                    .findFirst()
+                    .map(eventType -> {
+                        if (eventType.equals("error")) {
+                            return "org.uengine.kernel.SendErrorEvent";
+                        } else {
+                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+                        }
+                    })
                     .orElse("org.uengine.kernel.bpmn." + className);
         } else {
             fullClassName = "org.uengine.kernel.bpmn." + className;
