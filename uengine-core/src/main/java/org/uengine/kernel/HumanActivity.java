@@ -974,7 +974,7 @@ public class HumanActivity extends ReceiveActivity {
         
         // TODO: 매핑 관련 개선
 		// dataMapping(instance, getMappingContexts());
-        dataMapping(instance, getMappingContext().getMappingElements());
+        // dataMapping(instance, getParameters());
 		fireEventToActivityFilters(instance, "saveAnyway", null);
 	}
 
@@ -1338,7 +1338,8 @@ public class HumanActivity extends ReceiveActivity {
 		}
         // TODO: 매핑 관련 개선
 		// dataMapping(instance, getMappingContextsIn());
-        dataMapping(instance, getMappingContext().getMappingElements());
+        // dataMapping(instance, getParameters());
+        // mappingOut(instance, extendedAttributes);
 		super.afterExecute(instance);
 	}
 

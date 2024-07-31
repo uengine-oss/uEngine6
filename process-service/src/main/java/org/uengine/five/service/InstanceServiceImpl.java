@@ -1,6 +1,9 @@
 package org.uengine.five.service;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.QueryParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -24,7 +28,9 @@ import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -99,6 +105,9 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     WorklistRepository worklistRepository;
+
+    @Autowired
+    private ApplicationContext context;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
@@ -234,8 +243,18 @@ public class InstanceServiceImpl implements InstanceService {
     public Vector getEventList(@PathVariable("instanceId") String instanceId) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
         Vector messageListener = (Vector) instance.getMessageListeners("event");
-
-        return messageListener;
+        Vector<Map<String, String>> eventList = new Vector<>();
+        for (Object listener : messageListener) {
+            String event = (String) listener;
+            Activity act = instance.getProcessDefinition().getActivity(event);
+            String name = act.getName();
+            Map<String, String> eventMap = new HashMap<>();
+            eventMap.put("tracingTag", event);
+            eventMap.put("name", name);
+            eventList.add(eventMap);
+        }
+        
+        return eventList;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -865,36 +884,31 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
         }
+    }
 
-        // if (workItem.getWorklist() != null &&
-        // "SAVED".equals(workItem.getWorklist().getStatus())) {
-        // humanActivity.mappingOut(instance, variableChanges);
-        // } else {
-        // try {
-        // humanActivity.fireReceived(instance, variableChanges);
-        // } catch (Exception e) {
-        // humanActivity.fireFault(instance, e);
-
-        // throw new UEngineException(e.getMessage(), null, new
-        // UEngineException(e.getMessage(), e), instance,
-        // humanActivity);
-        // }
-        // }
-
+    public void writeToFile(String filePath, String content) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            writer.write(content);
+        }
     }
 
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
-    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate)
             throws Exception {
 
+        boolean simulate = Boolean.parseBoolean(isSimulate);
+        if(simulate) {
+            writeToFile("example.txt", "Start method executed\n");
+            writeToFile("example.txt", "Payload\n");
+        }
         // instance.setExecutionScope(esc.getExecutionScope());
-
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
-
+        
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        
         instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
                 .getActivity(worklistEntity.getTrcTag()));
@@ -906,50 +920,10 @@ public class InstanceServiceImpl implements InstanceService {
 
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
-        // if (workItem.getParameterValues() != null
-        //         && humanActivity.getEventSynchronization().getMappingContext().getMappingElements() != null) {
-        //     for (ParameterContext parameterContext : humanActivity.getEventSynchronization().getMappingContext()
-        //             .getMappingElements()) {
-        //         if (parameterContext.getDirection().indexOf("out") >= 0) {
-        //             Serializable data;
-        //             if (parameterContext.getTransformerMapping() != null) {
-        //                 for 
-        //                 // data =
-        //                 // parameterContext.getTransformerMapping().getTransformer().letTransform(instance,
-        //                 // null, null);
-        //             } else {
-        //                 String varName = parameterContext.getVariable().getName();
-        //                 String[] parts = varName.split("\\.");
-        //                 String name = String.join(".", Arrays.copyOfRange(parts, 1, parts.length));
-        //                 if (workItem.getParameterValues().containsKey(name)) {
-        //                     data = (Serializable) workItem.getParameterValues()
-        //                             .get(name);
-        //                     variableChanges.put(parameterContext.getVariable().getName(), data);
-        //                 }
-
-        //             }
-        //             // Serializable data = (Serializable) workItem.getParameterValues()
-        //             // .get(parameterContext.getArgument().getText());
-
-        //             // if (data instanceof Map && ((Map) data).containsKey("_type")) {
-        //             // String typeName = null;
-        //             // try {
-        //             // typeName = (String) ((Map) data).get("_type");
-        //             // Class classType =
-        //             // Thread.currentThread().getContextClassLoader().loadClass(typeName);
-        //             // data = (Serializable)
-        //             // ProcessServiceApplication.objectMapper.convertValue(data, classType);
-        //             // } catch (Exception e) {
-        //             // throw new Exception("Error while convert map to type: " + typeName, e);
-        //             // }
-        //             // }
-
-        //         }
-        //     }
-        // }
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
+            // 
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
@@ -968,6 +942,13 @@ public class InstanceServiceImpl implements InstanceService {
         } else {
             throw new ResourceNotFoundException("Instance not found for ID: " + instanceId);
         }
+    }
+    
+    @PostMapping("/instance/shutdown")
+    public void shutdownContext() {
+        int exitCode = 0; // 정상 종료 코드
+        // 애플리케이션 종료
+        SpringApplication.exit(context, () -> exitCode);
     }
 
     @Override
@@ -1099,7 +1080,7 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception {
+    public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command, @RequestHeader("isSimulation") String isSimulate) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
@@ -1121,7 +1102,7 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
 
-            putWorkItemComplete(taskId, command.getWorkItem());
+            putWorkItemComplete(taskId, command.getWorkItem(), isSimulate);
             return instance;
         } catch (Exception e) {
             e.printStackTrace();
@@ -1131,7 +1112,6 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    @ProcessTransactional
     public Serializable validate(@RequestBody String xml)
             throws Exception {
         String decodedXml = URLDecoder.decode(xml, StandardCharsets.UTF_8.name());

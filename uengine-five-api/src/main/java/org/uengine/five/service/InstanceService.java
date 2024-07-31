@@ -3,11 +3,14 @@ package org.uengine.five.service;
 import java.io.Serializable;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -105,8 +108,7 @@ public interface InstanceService {
                         throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
-                        throws Exception;
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate) throws Exception;
 
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
@@ -115,7 +117,7 @@ public interface InstanceService {
         public Object getDryRun(@PathVariable("defId") String defId) throws Exception;
         
         @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-        public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command) throws Exception;
+        public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command, @RequestHeader("isSimulate") String isSimulate) throws Exception;
 
         @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         public Serializable validate(@RequestBody String xml)
