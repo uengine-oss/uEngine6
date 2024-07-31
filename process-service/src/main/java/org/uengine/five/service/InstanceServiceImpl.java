@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
-import org.uengine.five.dto.DryRunExecutionCommand;
+import org.uengine.five.dto.StartAndCompleteCommand;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -65,6 +65,7 @@ import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
@@ -364,11 +365,17 @@ public class InstanceServiceImpl implements InstanceService {
     public void setVariableWithTaskId(@PathVariable("instanceId") String instanceId,
             @PathVariable("taskId") String taskId, @PathVariable("varName") String varName,
             @RequestBody String json) throws Exception {
+        setVariableWithTaskId(instanceId, taskId, varName, json, null);
+    }
+
+    public void setVariableWithTaskId(String instanceId,
+            String taskId, String varName,
+            @RequestBody String json, WorkItemResource workItemResource) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        WorkItemResource workItem = getWorkItem(taskId);
+        WorkItemResource workItem = workItemResource != null ? workItemResource : getWorkItem(taskId);
         ExecutionScopeContext oldExecutionScopeContext = instance.getExecutionScopeContext();
 
-        if (workItem.getWorklist().getExecScope() != null) {
+        if (workItem.getWorklist() != null && workItem.getWorklist().getExecScope() != null) {
             if (instance.getExecutionScopeContext() == null) {
                 ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
                 executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
@@ -821,8 +828,26 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
         }
-        // Argument Key -> Value
-        //
+
+        // TODO: mappingIn의 결과가 나와야 함
+
+        if (workItem.getWorklist().getExecScope() != null) {
+            if (instance.getExecutionScopeContext() == null) {
+                ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
+                executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
+                instance.setExecutionScopeContext(executionScopeContext);
+            }
+        }
+
+        if (activity instanceof ReceiveActivity) {
+            Map<String, Object> mappingInValues = activity.getMappingInValues(instance);
+            if (mappingInValues.size() > 0) {
+                for (Map.Entry<String, Object> entry : mappingInValues.entrySet()) {
+                    parameterValues.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
         if (parameterValues.size() > 0) {
             workItem.setParameterValues(parameterValues);
         }
@@ -1001,18 +1026,18 @@ public class InstanceServiceImpl implements InstanceService {
 
     @ProcessTransactional(readOnly = true)
     @RequestMapping(value = "/dry-run/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Object getDryRun(HttpServletRequest request) throws Exception {
+    public Object dryRun(HttpServletRequest request) throws Exception {
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String definitionPath = path.substring("/dry-run".length() + 1);
 
-        return getDryRun(definitionPath);
+        return dryRun(definitionPath);
     }
 
     //
 
     @ProcessTransactional(readOnly = true)
     @RequestMapping(value = "/dry-run/{defId:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Object getDryRun(@PathVariable("defId") String defId) throws Exception {
+    public Object dryRun(@PathVariable("defId") String defId) throws Exception {
         ProcessExecutionCommand command = new ProcessExecutionCommand();
         command.setProcessDefinitionId(defId);
 
@@ -1059,6 +1084,24 @@ public class InstanceServiceImpl implements InstanceService {
                     } else if (activity instanceof org.uengine.kernel.URLActivity) {
                         String urlTool = ((org.uengine.kernel.URLActivity) activity).getTool(instance);
                         ((org.uengine.kernel.URLActivity) activity).setTool(urlTool);
+                    } else {
+                        String tool = ((org.uengine.kernel.HumanActivity) activity).getTool(instance);
+                        ((org.uengine.kernel.HumanActivity) activity).setTool(tool);
+                    }
+
+                    Map<String, Object> parameterValues = new HashMap<String, Object>();
+
+                    if (activity instanceof ReceiveActivity) {
+                        Map<String, Object> mappingInValues = ((ReceiveActivity) activity).getMappingInValues(instance);
+                        if (mappingInValues.size() > 0) {
+                            for (Map.Entry<String, Object> entry : mappingInValues.entrySet()) {
+                                parameterValues.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+
+                    if (parameterValues.size() > 0) {
+                        workItem.setParameterValues(parameterValues);
                     }
 
                     workItem.setActivity(activity);
@@ -1076,11 +1119,12 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
-    @RequestMapping(value = "/dry-run", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
+    @RequestMapping(value = "/start-and-complete", consumes = "application/json;charset=UTF-8", method = {
+            RequestMethod.POST,
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource dryRunInstance(@RequestBody DryRunExecutionCommand command, @RequestHeader("isSimulation") String isSimulate) throws Exception {
+    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
@@ -1098,7 +1142,7 @@ public class InstanceServiceImpl implements InstanceService {
             if (command.getVariables() != null) {
                 for (String varName : command.getVariables().keySet()) {
                     String json = command.getVariables().get(varName);
-                    setVariableWithTaskId(instId, taskId, varName, json);
+                    setVariableWithTaskId(instId, taskId, varName, json, command.getWorkItem());
                 }
             }
 
@@ -1111,7 +1155,8 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    @RequestMapping(value = "/validation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @RequestMapping(value = "/validate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @ProcessTransactional
     public Serializable validate(@RequestBody String xml)
             throws Exception {
         String decodedXml = URLDecoder.decode(xml, StandardCharsets.UTF_8.name());

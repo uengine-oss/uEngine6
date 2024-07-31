@@ -11,6 +11,7 @@ import java.util.Vector;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.uengine.contexts.DynamicVariables;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.SimulatorTransactionContext;
 import org.uengine.util.ActivityForLoop;
@@ -946,6 +947,19 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 				String objectIndex = key.substring(1, key.indexOf("]."));
 				String propertyName = key.substring(key.indexOf("].") + 2);
 				Object object = objects.get(objectIndex);
+				if (object == null) {
+					String dynamicKey = key.substring(key.indexOf("["), key.indexOf("].") + 1);
+					Object dynamicVariables = get(dynamicKey);
+					if (dynamicVariables == null) {
+						object = new DynamicVariables();
+					} else {
+						object = dynamicVariables;
+					}
+
+					objects.put(key.substring(key.indexOf("[") + 1, key.indexOf("].")), new ActivityBeanResolver(this));
+
+					set("", dynamicKey, (Serializable) object);
+				}
 
 				UEngineUtil.setBeanProperty(object, propertyName, value, object instanceof ProcessInstance);
 			} else
@@ -982,6 +996,17 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 				String objectIndex = key.substring(1, key.indexOf("]."));
 				String propertyName = key.substring(key.indexOf("].") + 2);
 				Object object = objects.get(objectIndex);
+
+				if (object == null) {
+					String dynamicKey = key.substring(key.indexOf("["), key.indexOf("].") + 1);
+					Object dynamicVariables = get(dynamicKey);
+					if (dynamicVariables == null) {
+						object = new DynamicVariables();
+					} else {
+						object = dynamicVariables;
+					}
+
+				}
 
 				boolean ignoreBeanPropertyResolver = object instanceof ProcessInstance;
 
