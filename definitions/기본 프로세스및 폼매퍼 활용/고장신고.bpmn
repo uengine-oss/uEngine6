@@ -18,6 +18,9 @@
         <uengine:variable name="고장설명폼" type="Form">
           <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"기본 프로세스및 폼매퍼 활용/고장설명","filePath":"기본 프로세스및 폼매퍼 활용/고장설명.form"}}</uengine:json>
         </uengine:variable>
+        <uengine:variable name="고장설명폼2" type="Form">
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"기본 프로세스및 폼매퍼 활용/고장설명2","filePath":"기본 프로세스및 폼매퍼 활용/고장설명2.form"}}</uengine:json>
+        </uengine:variable>
       </uengine:properties>
     </bpmn:extensionElements>
     <bpmn:laneSet id="LaneSet_0jvx63h">
@@ -56,7 +59,7 @@
     <bpmn:userTask id="Activity_01n3x3h" name="고장신고">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"mappingContext":{"mappingElements":[{"argument":{"text":"고장설명폼.고장설명"},"transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.ConcatTransformer","name":"Concat","location":{"x":356.3999938964844,"y":146.2750015258789},"argumentSourceMap":{"str1":{"_type":"org.uengine.processdesigner.mapper.TransformerMapping","transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.DirectValueTransformer","name":"DirectValue","location":{"x":166.39999389648438,"y":93.2750015258789},"argumentSourceMap":{},"value":"고장내용:\n"},"linkedArgumentName":"out"},"str2":"고장설명폼.고장설명"}},"linkedArgumentName":"고장설명폼.고장설명"},"isKey":false}]},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","variable":{"name":"고장설명폼","askWhenInit":false,"isVolatile":false},"isKey":false}]},"eventType":"","attributes":[]},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_01lfhh6</bpmn:incoming>
@@ -66,36 +69,42 @@
     <bpmn:userTask id="Activity_0ozgz09" name="고장접수">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"mappingContext":{},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼2"},"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"고장설명폼2"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"고장설명폼2.고장설명"},"direction":"out","transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.DirectValueTransformer","name":"DirectValue","location":{"x":536,"y":321.09375},"argumentSourceMap":{},"value":"고장설명 + "},"linkedArgumentName":"고장설명폼2.고장설명"},"isKey":false}]},"eventType":"","attributes":[]},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0kavghk</bpmn:incoming>
       <bpmn:outgoing>Flow_1kbbveh</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_1kbbveh" sourceRef="Activity_0ozgz09" targetRef="Activity_1kzqm5b" />
+    <bpmn:sequenceFlow id="Flow_1kbbveh" name="" sourceRef="Activity_0ozgz09" targetRef="Activity_1kzqm5b">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+    </bpmn:sequenceFlow>
     <bpmn:userTask id="Activity_1kzqm5b" name="고장처리">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"mappingContext":{},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1kbbveh</bpmn:incoming>
-      <bpmn:outgoing>Flow_0u410ci</bpmn:outgoing>
+      <bpmn:outgoing>Flow_03lb0jh</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_0u410ci" sourceRef="Activity_1kzqm5b" targetRef="Activity_0123mrh" />
     <bpmn:userTask id="Activity_0123mrh" name="고장처리알림">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"mappingContext":{},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0u410ci</bpmn:incoming>
+      <bpmn:incoming>Flow_03lb0jh</bpmn:incoming>
       <bpmn:outgoing>Flow_0abbf6p</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="Event_1pjcjl8">
       <bpmn:incoming>Flow_0abbf6p</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_0abbf6p" sourceRef="Activity_0123mrh" targetRef="Event_1pjcjl8" />
+    <bpmn:sequenceFlow id="Flow_03lb0jh" sourceRef="Activity_1kzqm5b" targetRef="Activity_0123mrh" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0nayosu">
@@ -152,15 +161,18 @@
         <di:waypoint x="660" y="240" />
         <di:waypoint x="660" y="370" />
         <di:waypoint x="690" y="370" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0u410ci_di" bpmnElement="Flow_0u410ci">
-        <di:waypoint x="790" y="370" />
-        <di:waypoint x="820" y="370" />
-        <di:waypoint x="820" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="636" y="302" width="78" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0abbf6p_di" bpmnElement="Flow_0abbf6p">
         <di:waypoint x="870" y="120" />
         <di:waypoint x="922" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03lb0jh_di" bpmnElement="Flow_03lb0jh">
+        <di:waypoint x="790" y="370" />
+        <di:waypoint x="820" y="370" />
+        <di:waypoint x="820" y="160" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
