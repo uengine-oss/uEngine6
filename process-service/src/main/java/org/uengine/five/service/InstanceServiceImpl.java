@@ -254,7 +254,7 @@ public class InstanceServiceImpl implements InstanceService {
             eventMap.put("name", name);
             eventList.add(eventMap);
         }
-        
+
         return eventList;
     }
 
@@ -923,16 +923,17 @@ public class InstanceServiceImpl implements InstanceService {
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
     public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate)
+
             throws Exception {
 
         boolean simulate = Boolean.parseBoolean(isSimulate);
         
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
-        
+
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        
+
         instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
                 .getActivity(worklistEntity.getTrcTag()));
@@ -971,7 +972,7 @@ public class InstanceServiceImpl implements InstanceService {
             throw new ResourceNotFoundException("Instance not found for ID: " + instanceId);
         }
     }
-    
+
     @PostMapping("/instance/shutdown")
     public void shutdownContext() {
         int exitCode = 0; // 정상 종료 코드
@@ -1149,7 +1150,7 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
 
-            putWorkItemComplete(taskId, command.getWorkItem(), isSimulate);
+            putWorkItemComplete(taskId, command.getWorkItem());
             return instance;
         } catch (Exception e) {
             e.printStackTrace();

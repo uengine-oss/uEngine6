@@ -15,12 +15,7 @@
         <uengine:variable name="고장" type="Text">
           <uengine:json>{"defaultValue":""}</uengine:json>
         </uengine:variable>
-        <uengine:variable name="고장설명폼" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"기본 프로세스및 폼매퍼 활용/고장설명","filePath":"기본 프로세스및 폼매퍼 활용/고장설명.form"}}</uengine:json>
-        </uengine:variable>
-        <uengine:variable name="고장설명폼2" type="Form">
-          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"기본 프로세스및 폼매퍼 활용/고장설명2","filePath":"기본 프로세스및 폼매퍼 활용/고장설명2.form"}}</uengine:json>
-        </uengine:variable>
+        <uengine:variable name="처리내용" type="Text" />
       </uengine:properties>
     </bpmn:extensionElements>
     <bpmn:laneSet id="LaneSet_0jvx63h">
@@ -59,7 +54,7 @@
     <bpmn:userTask id="Activity_01n3x3h" name="고장신고">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","variable":{"name":"고장설명폼","askWhenInit":false,"isVolatile":false},"isKey":false}]},"eventType":"","attributes":[]},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"고장내용","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.ConcatTransformer","name":"Concat","location":{"x":406,"y":302.09375},"argumentSourceMap":{"str1":"[Arguments].고장내용"}},"linkedArgumentName":"고장"},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_01lfhh6</bpmn:incoming>
@@ -69,42 +64,36 @@
     <bpmn:userTask id="Activity_0ozgz09" name="고장접수">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼2"},"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"고장설명폼2"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"고장설명폼2.고장설명"},"direction":"out","transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.DirectValueTransformer","name":"DirectValue","location":{"x":536,"y":321.09375},"argumentSourceMap":{},"value":"고장설명 + "},"linkedArgumentName":"고장설명폼2.고장설명"},"isKey":false}]},"eventType":"","attributes":[]},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"고장IN","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"[Arguments].고장IN"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0kavghk</bpmn:incoming>
       <bpmn:outgoing>Flow_1kbbveh</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_1kbbveh" name="" sourceRef="Activity_0ozgz09" targetRef="Activity_1kzqm5b">
-      <bpmn:extensionElements>
-        <uengine:properties>
-          <uengine:json>{}</uengine:json>
-        </uengine:properties>
-      </bpmn:extensionElements>
-    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1kbbveh" sourceRef="Activity_0ozgz09" targetRef="Activity_1kzqm5b" />
     <bpmn:userTask id="Activity_1kzqm5b" name="고장처리">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"처리내용"},"direction":"out","variable":{"name":"[Arguments].처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]},"eventType":"","attributes":[{"name":"처리내용","className":"String","isKey":false,"isCorrKey":false}]},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1kbbveh</bpmn:incoming>
-      <bpmn:outgoing>Flow_03lb0jh</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0u410ci</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0u410ci" sourceRef="Activity_1kzqm5b" targetRef="Activity_0123mrh" />
     <bpmn:userTask id="Activity_0123mrh" name="고장처리알림">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableForHtmlFormContext":{"name":"고장설명폼"},"eventSynchronization":{"mappingContext":{}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+          <uengine:json>{"eventSynchronization":{"mappingContext":{"mappingElements":[{"argument":{"text":"[Arguments].처리결과"},"direction":"out","variable":{"name":"처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]},"eventType":"","attributes":[{"name":"처리결과","className":"String","isKey":false,"isCorrKey":false}]},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_03lb0jh</bpmn:incoming>
+      <bpmn:incoming>Flow_0u410ci</bpmn:incoming>
       <bpmn:outgoing>Flow_0abbf6p</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="Event_1pjcjl8">
       <bpmn:incoming>Flow_0abbf6p</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_0abbf6p" sourceRef="Activity_0123mrh" targetRef="Event_1pjcjl8" />
-    <bpmn:sequenceFlow id="Flow_03lb0jh" sourceRef="Activity_1kzqm5b" targetRef="Activity_0123mrh" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0nayosu">
@@ -161,18 +150,15 @@
         <di:waypoint x="660" y="240" />
         <di:waypoint x="660" y="370" />
         <di:waypoint x="690" y="370" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="636" y="302" width="78" height="14" />
-        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u410ci_di" bpmnElement="Flow_0u410ci">
+        <di:waypoint x="790" y="370" />
+        <di:waypoint x="820" y="370" />
+        <di:waypoint x="820" y="160" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0abbf6p_di" bpmnElement="Flow_0abbf6p">
         <di:waypoint x="870" y="120" />
         <di:waypoint x="922" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_03lb0jh_di" bpmnElement="Flow_03lb0jh">
-        <di:waypoint x="790" y="370" />
-        <di:waypoint x="820" y="370" />
-        <di:waypoint x="820" y="160" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

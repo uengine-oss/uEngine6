@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -344,6 +345,10 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 
 		if (sourceValue instanceof IndexedProcessVariableMap) {
 			ProcessVariableValue pvv = getMultiple(scopeByTracingTag, key);
+			int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
+			if (executionOrder > -1) {
+				pvv.setCursor(executionOrder);
+			}
 			sourceValue = pvv.getValue();
 		} else if (sourceValue == null) {
 			ProcessDefinition pd = getProcessDefinition();
@@ -362,6 +367,22 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		}
 
 		return sourceValue;
+	}
+
+	int getExecutionScopeOrder(ExecutionScopeContext executionScopeContext) {
+		AtomicInteger order = new AtomicInteger(-1);
+		for (ExecutionScopeContext child : executionScopeContext.childs) {
+			order.incrementAndGet();
+			if (child.getExecutionScope().equals(getExecutionScopeContext().getExecutionScope())) {
+				return order.get();
+			} else {
+				if (child.childs != null) {
+					order.set(getExecutionScopeOrder(child));
+				}
+			}
+		}
+
+		return order.get();
 	}
 
 	protected Serializable resolveParts(Serializable sourceValue, String key) throws Exception {
