@@ -17,6 +17,12 @@ public class Not extends Condition{
 			this.condition = condition;
 		}
 
+    /*
+     * Jackson은 기본적으로 기본 생성자(파라미터가 없는 생성자)를 사용하여 객체를 생성합니다. 
+     * 클래스에 기본 생성자가 없으면 Jackson은 객체를 생성할 수 없습니다.
+     */
+    public Not() {
+    }
 	public Not(Condition condition){
 		this.condition = condition;
 	}

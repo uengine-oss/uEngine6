@@ -1,7 +1,6 @@
 package org.uengine.five.serializers;
 
 import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,15 +11,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.uengine.contexts.HtmlFormContext;
-import org.uengine.five.entity.WorklistEntity;
-import org.uengine.five.overriding.IAMRoleResolutionContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.Otherwise;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
-import org.uengine.kernel.RoleResolutionContext;
 import org.uengine.kernel.ScopeActivity;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Gateway;
@@ -34,8 +30,10 @@ import org.xml.sax.InputSource;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class BpmnXMLParser {
 
@@ -151,6 +149,8 @@ public class BpmnXMLParser {
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
                     break;
+                case "bpmn:association": break;
+                case "bpmn:textAnnotation": break;
                 default:
                     parseNode(element, laneInfo, processDefinition, mainProcessDefinition);
                     break;
@@ -194,6 +194,8 @@ public class BpmnXMLParser {
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
                     break;
+                case "bpmn:association": break;
+                case "bpmn:textAnnotation": break;    
                 default:
                     parseNode(element, laneInfo, processDefinition, null);
                     break;
@@ -366,6 +368,12 @@ public class BpmnXMLParser {
             if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE || jsonNode.getNodeType() == Node.TEXT_NODE
                     || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                 String jsonText = jsonNode.getTextContent();
+                ObjectNode jsonVariableNode = (ObjectNode) objectMapper.readTree(jsonText);
+                jsonVariableNode.remove("datasource");
+                jsonVariableNode.remove("type");
+                
+                jsonText = objectMapper.writeValueAsString(jsonVariableNode);
+
                 variable = objectMapper.readValue(jsonText, ProcessVariable.class);
                 variable.setName(varName);
                 String javaType = convertToJavaType(type);
@@ -498,15 +506,16 @@ public class BpmnXMLParser {
 
         if (task instanceof Gateway) {
             String defaultSequence = element.getAttribute("default");
-            SequenceFlow defaultSequenceFlow = Arrays
-                    .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
-                    .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
-                    .findFirst()
-                    .orElse(null);
-            if (defaultSequenceFlow != null) {
-                defaultSequenceFlow.setCondition(new Otherwise());
-                defaultSequenceFlow.setOtherwise(true);
-            }
+            // SequenceFlow defaultSequenceFlow = Arrays
+            //         .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
+            //         .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
+            //         .findFirst()
+            //         .orElse(null);
+            // if (defaultSequenceFlow != null) {
+            //     defaultSequenceFlow.setCondition(new Otherwise());
+            //     defaultSequenceFlow.setOtherwise(true);
+            // }
+            ((Gateway)task).setDefaultFlow(defaultSequence);
         }
 
         task.setTracingTag(id);

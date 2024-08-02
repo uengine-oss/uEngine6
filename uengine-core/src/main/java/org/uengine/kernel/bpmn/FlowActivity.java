@@ -13,6 +13,7 @@ import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.ComplexActivity;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.MessageListener;
+import org.uengine.kernel.Otherwise;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.TransactionListener;
@@ -158,6 +159,17 @@ public class FlowActivity extends ComplexActivity {
                                     });
                 }
 
+            } else if (childActivity instanceof Gateway) {
+                final Gateway gateway = (Gateway) childActivity;
+                Iterator<SequenceFlow> it = sequenceFlows.iterator();
+                while (it.hasNext()) {
+                    SequenceFlow flow = it.next();
+                    if (flow.getTracingTag().equals(gateway.getDefaultFlow())) {
+                        flow.setCondition(new Otherwise());
+                        flow.setOtherwise(true);
+                        break;
+                    }
+                }
             }
         }
 
@@ -493,48 +505,6 @@ public class FlowActivity extends ComplexActivity {
                 }
             }
         }.run(child);
-
         list.addAll(propagatedActivities);
-
     }
-
-    @Override
-    protected void gatherPropagatedActivitiesOf(final ProcessInstance instance, Activity child, List list,
-            String execScope)
-            throws Exception {
-
-        final List<Activity> propagatedActivities = new ArrayList<Activity>();
-
-        new TreeVisitor<Activity>() {
-
-            @Override
-            public List<Activity> getChild(Activity parent) {
-                List<SequenceFlow> outgoings = parent.getOutgoingSequenceFlows();
-
-                List<Activity> outgoingActivities = new ArrayList<Activity>();
-
-                for (SequenceFlow sequenceFlow : outgoings) {
-                    outgoingActivities.add(sequenceFlow.getTargetActivity());
-                }
-
-                return outgoingActivities;
-            }
-
-            @Override
-            public void logic(Activity elem) {
-                try {
-                    if (!Activity.STATUS_READY.equals(elem.getStatus(instance))
-                            && !propagatedActivities.contains(elem)) {
-                        propagatedActivities.add(elem);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.run(child);
-
-        list.addAll(propagatedActivities);
-
-    }
-
 }

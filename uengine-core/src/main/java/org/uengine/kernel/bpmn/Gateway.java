@@ -19,6 +19,8 @@ public class Gateway extends Activity {
 		super(name);
 	}
 
+    String defaultFlow;
+
 	@Override
 	protected void executeActivity(ProcessInstance instance) throws Exception {
 
@@ -116,5 +118,13 @@ public class Gateway extends Activity {
 		ValidationContext validationContext = super.validate(options);
 		return validationContext;
 	}
+
+    public String getDefaultFlow() {
+        return defaultFlow;
+    }
+
+    public void setDefaultFlow(String defaultFlow) {
+        this.defaultFlow = defaultFlow;
+    }
 
 }

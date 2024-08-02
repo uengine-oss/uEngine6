@@ -2,13 +2,13 @@ package org.uengine.five.service;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -38,10 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
-import org.uengine.five.dto.StartAndCompleteCommand;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
+import org.uengine.five.dto.StartAndCompleteCommand;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
@@ -912,7 +912,9 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     public void writeToFile(String filePath, String content) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+        File file = new File(filePath);
+        file.getParentFile().mkdirs(); // Ensure the parent directories exist
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
             writer.write(content);
         }
     }
@@ -924,10 +926,7 @@ public class InstanceServiceImpl implements InstanceService {
             throws Exception {
 
         boolean simulate = Boolean.parseBoolean(isSimulate);
-        if(simulate) {
-            writeToFile("example.txt", "Start method executed\n");
-            writeToFile("example.txt", "Payload\n");
-        }
+        
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
         
@@ -942,12 +941,16 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
         }
-
+        if(simulate) {
+            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "{\nbefore: " + instance.getAll().toString() + ",\n");
+            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "payload: " + workItem.toString() + ",\n");
+        }
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
+            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "result: " + instance.getAll().toString() + "}");
             // 
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
@@ -1124,7 +1127,7 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command) throws Exception {
+    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command, @RequestHeader("isSimulate") String isSimulate) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);

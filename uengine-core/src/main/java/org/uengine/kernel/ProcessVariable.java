@@ -79,8 +79,17 @@ public class ProcessVariable implements java.io.Serializable, NeedArrangementToS
 			this.type = type;
 		}
 
+    String description;
+    
 
-	boolean global;
+	public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    boolean global;
 		public boolean isGlobal() {
 			return global;
 		}
