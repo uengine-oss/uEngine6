@@ -108,7 +108,7 @@ public interface InstanceService {
                         throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem)
+        public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate)
                         throws Exception;
 
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
