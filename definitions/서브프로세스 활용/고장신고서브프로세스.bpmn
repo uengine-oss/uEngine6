@@ -135,7 +135,7 @@
       <bpmn:userTask id="Activity_0be0fkv" name="소프트웨어 고장처리">
         <bpmn:extensionElements>
           <uengine:properties>
-            <uengine:json>{"variableForHtmlFormContext":{"name":"처리내용폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"처리내용폼"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"처리확인폼.처리내용"},"direction":"out","variable":{"name":"처리내용폼.처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+            <uengine:json>{"variableForHtmlFormContext":{"name":"처리내용폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"처리확인폼.처리내용"},"direction":"out","variable":{"name":"처리내용폼.처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
           </uengine:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_039yfts</bpmn:incoming>
@@ -158,7 +158,7 @@
       <bpmn:userTask id="Activity_1kzqm5b" name="하드웨어 고장처리">
         <bpmn:extensionElements>
           <uengine:properties>
-            <uengine:json>{"variableForHtmlFormContext":{"name":"처리내용폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"처리내용폼"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"처리확인폼.처리내용"},"direction":"out","variable":{"name":"처리내용폼.처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+            <uengine:json>{"variableForHtmlFormContext":{"name":"처리내용폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"처리확인폼.처리내용"},"direction":"out","variable":{"name":"처리내용폼.처리내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
           </uengine:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_0m1ny6c</bpmn:incoming>
@@ -204,7 +204,7 @@
       <bpmn:userTask id="Activity_0ybw0az" name="고장확인">
         <bpmn:extensionElements>
           <uengine:properties>
-            <uengine:json>{"variableForHtmlFormContext":{"name":"고장확인폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"고장확인폼"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"고장유형"},"direction":"out","variable":{"name":"고장확인폼.고장유형","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
+            <uengine:json>{"variableForHtmlFormContext":{"name":"고장확인폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"고장확인폼"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"고장유형"},"direction":"out","variable":{"name":"고장확인폼.고장유형","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"처리내용폼.고장유형"},"direction":"out","variable":{"name":"고장확인폼.고장유형","askWhenInit":false,"isVolatile":false},"isKey":false},{"argument":{"text":"처리내용폼.고장내용"},"direction":"out","variable":{"name":"고장확인폼.고장내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
           </uengine:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_19qtpz4</bpmn:incoming>
