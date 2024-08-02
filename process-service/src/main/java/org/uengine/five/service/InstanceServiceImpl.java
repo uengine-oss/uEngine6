@@ -922,12 +922,13 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
-    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate)
+    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
+            @RequestHeader("isSimulate") String isSimulate)
 
             throws Exception {
 
         boolean simulate = Boolean.parseBoolean(isSimulate);
-        
+
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
@@ -942,17 +943,20 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
         }
-        if(simulate) {
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "{\nbefore: " + instance.getAll().toString() + ",\n");
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "payload: " + workItem.toString() + ",\n");
+        if (simulate) {
+            writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
+                    "{\nbefore: " + instance.getAll().toString() + ",\n");
+            writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
+                    "payload: " + workItem.toString() + ",\n");
         }
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "result: " + instance.getAll().toString() + "}");
-            // 
+            writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
+                    "result: " + instance.getAll().toString() + "}");
+            //
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
@@ -1128,7 +1132,8 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command, @RequestHeader("isSimulate") String isSimulate) throws Exception {
+    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command,
+            @RequestHeader("isSimulate") String isSimulate) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
@@ -1150,7 +1155,7 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
 
-            putWorkItemComplete(taskId, command.getWorkItem());
+            putWorkItemComplete(taskId, command.getWorkItem(), isSimulate);
             return instance;
         } catch (Exception e) {
             e.printStackTrace();
