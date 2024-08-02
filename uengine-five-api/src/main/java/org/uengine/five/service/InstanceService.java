@@ -117,7 +117,7 @@ public interface InstanceService {
         public Object dryRun(@PathVariable("defId") String defId) throws Exception;
 
         @RequestMapping(value = "/start-and-complete", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
-        public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command) throws Exception;
+        public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command, @RequestHeader("isSimulate") String isSimulate) throws Exception;
 
         @RequestMapping(value = "/validate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         public Serializable validate(@RequestBody String xml)
