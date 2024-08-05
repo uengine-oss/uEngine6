@@ -945,7 +945,8 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
-    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem, @RequestHeader("isSimulate") String isSimulate)
+    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
+            @RequestHeader("isSimulate") String isSimulate)
 
             throws Exception {
 
@@ -1161,7 +1162,8 @@ public class InstanceServiceImpl implements InstanceService {
             RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
     @Transactional(rollbackFor = { Exception.class })
     @ProcessTransactional
-    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command, @RequestHeader("isSimulate") String isSimulate) throws Exception {
+    public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command,
+            @RequestHeader("isSimulate") String isSimulate) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
             InstanceResource instance = start(processExecutionCommand);
