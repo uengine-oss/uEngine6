@@ -1,8 +1,11 @@
 package org.uengine.five.service;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
@@ -77,6 +80,7 @@ import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
 import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.util.UEngineUtil;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -912,11 +916,30 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     public void writeToFile(String filePath, String content) throws IOException {
-        File file = new File(filePath);
+        File file = new File("test/"+filePath);
         file.getParentFile().mkdirs(); // Ensure the parent directories exist
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            writer.write(content);
+            if (!file.exists()) {
+                writer.write(content);
+            }
         }
+    }
+
+    public Map<String, Object> readFromFile(String filePath) throws IOException {
+        File file = new File("test/" + filePath);
+        if (!file.exists()) {
+            throw new FileNotFoundException("File not found: " + filePath);
+        }
+        StringBuilder contentBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                contentBuilder.append(line).append(System.lineSeparator());
+            }
+        }
+        String fileContent = contentBuilder.toString();
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(fileContent, new TypeReference<Map<String, Object>>() {});
     }
 
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
@@ -926,7 +949,7 @@ public class InstanceServiceImpl implements InstanceService {
 
             throws Exception {
 
-        boolean simulate = Boolean.parseBoolean(isSimulate);
+               
         
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
@@ -942,16 +965,26 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
         }
-        if(simulate) {
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "{\nbefore: " + instance.getAll().toString() + ",\n");
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "payload: " + workItem.toString() + ",\n");
+        ObjectMapper objectMapper = new ObjectMapper();
+        String workItemJson = objectMapper.writeValueAsString(workItem);
+        writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", workItemJson);
+        
+        if(isSimulate.equals("record")) {
+            
+        } else {
+            boolean simulate = Boolean.parseBoolean(isSimulate);
+            if(simulate) {
+                Map<String, Object> readValues = readFromFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json");
+                workItem.setParameterValues(readValues); 
+            }
         }
+        
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
-            writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "result: " + instance.getAll().toString() + "}");
+            // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "result: " + instance.getAll().toString() + "}");
             // 
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
@@ -1150,7 +1183,7 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
 
-            putWorkItemComplete(taskId, command.getWorkItem());
+            putWorkItemComplete(taskId, command.getWorkItem(), isSimulate);
             return instance;
         } catch (Exception e) {
             e.printStackTrace();
