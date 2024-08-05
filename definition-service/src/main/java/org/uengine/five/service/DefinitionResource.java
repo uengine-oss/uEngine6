@@ -1,6 +1,9 @@
 package org.uengine.five.service;
 
-import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.*;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.methodOn;
+
+import java.util.List;
 
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
@@ -19,20 +22,25 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DefinitionResource extends RepresentationModel {
 
     String name;
-
     public DefinitionResource() {
     }
 
     public DefinitionResource(IResource resource1) throws Exception {
-        setName(resource1.getName());
-        setDirectory(resource1 instanceof IContainer);
+        if(resource1.getName().contains("@")) {
+            String[] splitName = resource1.getName().split("@");
+            String id = splitName[0];
+            String name = splitName[1].split("\\.")[0];
 
-        // String relativePath =
-        // resource1.getPath().substring(DefinitionServiceImpl.RESOURCE_ROOT.length() +
-        // 1);
-
-        // setPath(relativePath);
-        setPath(resource1.getPath());
+            setName(name);
+            setDirectory(resource1 instanceof IContainer);
+            setPath(resource1.getPath());
+        } else {
+            setName(resource1.getName());
+            setDirectory(resource1 instanceof IContainer);
+            setPath(resource1.getPath());
+        }
+        
+        
         add(
                 linkTo(
                         methodOn(DefinitionServiceImpl.class)
@@ -93,5 +101,6 @@ public class DefinitionResource extends RepresentationModel {
     public void setPath(String path) {
         this.path = path;
     }
+
 
 }

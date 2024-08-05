@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
+import org.uengine.five.entity.ProcessDefinitionEntity;
+import org.uengine.five.repository.DefinitionEntityRepository;
 // import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
@@ -73,6 +75,9 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @Autowired
     ApplicationContext applicationContext;
+
+    @Autowired
+    DefinitionEntityRepository definitionEntityRepository;
 
     @Autowired
     InstanceService instanceService;
@@ -331,10 +336,12 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
      * @param definition
      * @throws Exception
      */
-    @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
-    public DefinitionResource putRawDefinition(@RequestBody String definition, HttpServletRequest request)
+    @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT }, produces = "application/json;charset=UTF-8")
+    public DefinitionResource putRawDefinition(@RequestBody Map<String, String> definitionMap, HttpServletRequest request)
             throws Exception {
 
+        String definition = definitionMap.get("definition");
+        String name = definitionMap.get("name");
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
         String definitionPath = path.substring(DEFINITION_RAW.length());
@@ -344,7 +351,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             resourceManager.createFolder(container);
             return new DefinitionResource(container);
         }
-        // definitionPath = definitionPath + ".bpmn";
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
         // 무조건 xml 파일로 결국 저장됨.
@@ -359,6 +365,12 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
             invokeDeployFilters((ProcessDefinition) definitionDeployed, resource.getPath());
         }
+        // resource.setDisplayName(fileExt);
+        resource.setDisplayName(name);
+        ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity();
+        processDefinitionEntity.setName(name);
+        processDefinitionEntity.setPath(definitionPath);
+        definitionEntityRepository.save(processDefinitionEntity);
 
         return new DefinitionResource(resource);
     }
@@ -373,7 +385,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         }
 
-        // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
 
