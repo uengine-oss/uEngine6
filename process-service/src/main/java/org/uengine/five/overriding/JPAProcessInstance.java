@@ -28,6 +28,7 @@ import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
+import org.uengine.modeling.resource.Serializer;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.webservices.worklist.WorkList;
 
@@ -98,14 +99,13 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             setNewInstance(true);
             setProcessInstanceEntity(new ProcessInstanceEntity());
 
-            if(options != null) {
+            if (options != null) {
                 if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
                     getProcessInstanceEntity()
                             .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
-    
+
                 }
             }
-            
 
             getProcessInstanceEntity().setName(getProcessDefinition().getName() + instanceId);
             getProcessInstanceEntity().setDefId(procDefinition.getId());
@@ -324,12 +324,14 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     protected Map loadVariables() throws Exception {
         IResource resource = new DefaultResource("instances/" + getInstanceId());
-        return (Map) resourceManager.getObject(resource);
+        String serializedVariables = (String) resourceManager.getObject(resource);
+        return (Map) Serializer.deserialize(serializedVariables);
     }
 
     protected void saveVariables() throws Exception {
         IResource resource = new DefaultResource("instances/" + getInstanceId());
-        resourceManager.save(resource, getVariables());
+        String serializedVariables = Serializer.serialize(getVariables());
+        resourceManager.save(resource, serializedVariables);
     }
 
     public void setStatus(String scope, String status) throws Exception {
