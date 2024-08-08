@@ -28,6 +28,7 @@ import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
+import org.uengine.modeling.resource.Serializer;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.webservices.worklist.WorkList;
 
@@ -98,14 +99,13 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             setNewInstance(true);
             setProcessInstanceEntity(new ProcessInstanceEntity());
 
-            if(options != null) {
+            if (options != null) {
                 if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
                     getProcessInstanceEntity()
                             .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
-    
+
                 }
             }
-            
 
             getProcessInstanceEntity().setName(getProcessDefinition().getName() + instanceId);
             getProcessInstanceEntity().setDefId(procDefinition.getId());
@@ -323,9 +323,9 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
     }
 
     protected Map loadVariables() throws Exception {
-        java.util.Calendar calendar = java.util.Calendar.getInstance();
-        String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
-        String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
+        Date date = getProcessInstanceEntity().getStartedDate();
+        String currentYear = String.valueOf(date.getYear());
+        String currentMonth = String.valueOf(date.getMonth());
         IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         return (Map) resourceManager.getObject(resource);
     }
