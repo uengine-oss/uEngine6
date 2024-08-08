@@ -323,12 +323,18 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
     }
 
     protected Map loadVariables() throws Exception {
-        IResource resource = new DefaultResource("instances/" + getInstanceId());
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
+        String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
+        IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         return (Map) resourceManager.getObject(resource);
     }
 
     protected void saveVariables() throws Exception {
-        IResource resource = new DefaultResource("instances/" + getInstanceId());
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
+        String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
+        IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         resourceManager.save(resource, getVariables());
     }
 
