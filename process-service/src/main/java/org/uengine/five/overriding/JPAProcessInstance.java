@@ -324,8 +324,9 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     protected Map loadVariables() throws Exception {
         Date date = getProcessInstanceEntity().getStartedDate();
-        String currentYear = String.valueOf(date.getYear());
-        String currentMonth = String.valueOf(date.getMonth());
+       
+        String currentYear = String.valueOf(date.getYear() + 1900);
+        String currentMonth = String.format("%02d", date.getMonth() + 1);
         IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         return (Map) resourceManager.getObject(resource);
     }
