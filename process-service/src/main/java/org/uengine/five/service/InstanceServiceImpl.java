@@ -28,6 +28,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -322,6 +323,14 @@ public class InstanceServiceImpl implements InstanceService {
         Map variables = ((DefaultProcessInstance) instance).getVariables();
 
         return variables;
+    }
+
+    @RequestMapping(value = "/instance/{instanceId}/running", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public ResponseEntity<List<WorklistEntity>> getRunningTaskId(@PathVariable("instanceId") String instanceId) throws Exception {
+
+        List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(Long.parseLong(instanceId));
+        return ResponseEntity.ok(worklistEntity);
     }
 
     @RequestMapping(value = "/instance/{instId}/variable/{varName}", method = RequestMethod.GET)
@@ -915,16 +924,31 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    public void writeToFile(String filePath, String content) throws IOException {
-        File file = new File("test/"+filePath);
+    public void writeToFile(String filePath, WorkItemResource workItem) throws IOException {
+        File file = new File("test/" + filePath);
         file.getParentFile().mkdirs(); // Ensure the parent directories exist
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
             if (!file.exists()) {
-                writer.write(content);
+                String workItemJson = objectMapper.writeValueAsString(workItem);
+                writer.write(workItemJson);
+            } else {
+
+                Map<String, Object> existObj = readFromFile(filePath);
+                int index = existObj.size();
+                existObj.put(String.valueOf(index), workItem.getParameterValues());
+                // for (Map.Entry<String, Object> entry : workItem.getParameterValues().entrySet()) {
+                //     // existObj.(entry.getKey(), entry.getValue());
+                    
+                // }
+
+                objectMapper.writeValue(file, existObj);
+                // String result = objectMapper.writeValueAsString(existObj);
+                // writer.write(result);
             }
         }
     }
 
+    
     public Map<String, Object> readFromFile(String filePath) throws IOException {
         File file = new File("test/" + filePath);
         if (!file.exists()) {
@@ -939,7 +963,44 @@ public class InstanceServiceImpl implements InstanceService {
         }
         String fileContent = contentBuilder.toString();
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(fileContent, new TypeReference<Map<String, Object>>() {});
+        if(fileContent.length() == 0) {
+            Map<String, Object> result = new HashMap<>();
+            return result;
+        } else {
+            return objectMapper.readValue(fileContent, new TypeReference<Map<String, Object>>() {
+            });
+        }
+        
+    }
+
+    
+    @RequestMapping(value = "/test/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Map<String, Object> testList(HttpServletRequest request) throws IOException {
+        String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        folderPath = folderPath.substring("/test/".length());
+
+        Map<String, Object> result = new HashMap<>();
+        File folder = new File("test/" + folderPath);
+        if (!folder.exists() || !folder.isDirectory()) {
+            throw new FileNotFoundException("Folder not found: " + folderPath);
+        }
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    StringBuilder contentBuilder = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            contentBuilder.append(line).append(System.lineSeparator());
+                        }
+                    }
+                    String fileNameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf('.'));
+                    result.put(fileNameWithoutExtension, contentBuilder.toString());
+                }
+            }
+        }
+        return result;
     }
 
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
@@ -950,8 +1011,6 @@ public class InstanceServiceImpl implements InstanceService {
 
             throws Exception {
 
-               
-        
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
@@ -966,27 +1025,30 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        String workItemJson = objectMapper.writeValueAsString(workItem);
-        writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", workItemJson);
-        
-        if(isSimulate.equals("record")) {
-            
+        // ObjectMapper objectMapper = new ObjectMapper();
+        // String workItemJson = objectMapper.writeValueAsString(workItem);
+        writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
+                workItem);
+
+        if (isSimulate.equals("record")) {
+
         } else {
             boolean simulate = Boolean.parseBoolean(isSimulate);
-            if(simulate) {
-                Map<String, Object> readValues = readFromFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json");
-                workItem.setParameterValues(readValues); 
+            if (simulate) {
+                Map<String, Object> readValues = readFromFile(
+                        instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json");
+                workItem.setParameterValues(readValues);
             }
         }
-        
+
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
-            // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json", "result: " + instance.getAll().toString() + "}");
-            // 
+            // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json",
+            // "result: " + instance.getAll().toString() + "}");
+            //
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
@@ -1172,11 +1234,12 @@ public class InstanceServiceImpl implements InstanceService {
                 return null;
 
             String instId = instance.getInstanceId();
-            WorklistEntity worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
+            List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
 
             if (worklistEntity == null)
                 return null;
-            String taskId = worklistEntity.getTaskId().toString();
+            
+            String taskId = worklistEntity.get(0).getTaskId().toString();
 
             if (command.getVariables() != null) {
                 for (String varName : command.getVariables().keySet()) {
@@ -1247,26 +1310,30 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
-    public WorkItemResource getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
+    public List<WorkItemResource> getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
         if (corrKey == null)
             return null;
 
         List<ProcessInstanceEntity> processInstanceList = processInstanceRepository.findByCorrKeyAndStatus(corrKey,
                 "Running");
         for (ProcessInstanceEntity processInstanceEntity : processInstanceList) {
-            WorklistEntity worklistEntity = worklistRepository
+            List<WorklistEntity> worklistEntity = worklistRepository
                     .findCurrentWorkItemByInstId(processInstanceEntity.getInstId());
 
             if (worklistEntity != null) {
-                ProcessDefinition definition = (ProcessDefinition) definitionService
-                        .getDefinition(worklistEntity.getDefId());
-                HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
+                List<WorkItemResource> result = new ArrayList<>();
+                for (WorklistEntity entity : worklistEntity) {
+                    ProcessDefinition definition = (ProcessDefinition) definitionService
+                            .getDefinition(entity.getDefId());
+                    HumanActivity activity = (HumanActivity) definition.getActivity(entity.getTrcTag());
 
-                WorkItemResource workItem = new WorkItemResource();
-                workItem.setActivity(activity);
-                workItem.setWorklist(worklistEntity);
+                    WorkItemResource workItem = new WorkItemResource();
+                    workItem.setActivity(activity);
+                    workItem.setWorklist(entity);
+                    result.add(workItem);
+                }
 
-                return workItem;
+                return result;
             }
         }
         return null;
