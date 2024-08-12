@@ -327,9 +327,11 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/instance/{instanceId}/running", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
-    public ResponseEntity<List<WorklistEntity>> getRunningTaskId(@PathVariable("instanceId") String instanceId) throws Exception {
+    public ResponseEntity<List<WorklistEntity>> getRunningTaskId(@PathVariable("instanceId") String instanceId)
+            throws Exception {
 
-        List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(Long.parseLong(instanceId));
+        List<WorklistEntity> worklistEntity = worklistRepository
+                .findCurrentWorkItemByInstId(Long.parseLong(instanceId));
         return ResponseEntity.ok(worklistEntity);
     }
 
@@ -936,9 +938,10 @@ public class InstanceServiceImpl implements InstanceService {
                 Map<String, Object> existObj = readFromFile(filePath);
                 int index = existObj.size();
                 existObj.put(String.valueOf(index), workItem.getParameterValues());
-                // for (Map.Entry<String, Object> entry : workItem.getParameterValues().entrySet()) {
-                //     // existObj.(entry.getKey(), entry.getValue());
-                    
+                // for (Map.Entry<String, Object> entry :
+                // workItem.getParameterValues().entrySet()) {
+                // // existObj.(entry.getKey(), entry.getValue());
+
                 // }
 
                 objectMapper.writeValue(file, existObj);
@@ -948,14 +951,13 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    
     public Map<String, Object> readFromFile(String filePath) throws IOException {
         File file = new File("test/" + filePath);
         if (!file.exists()) {
             throw new FileNotFoundException("File not found: " + filePath);
         }
         StringBuilder contentBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 contentBuilder.append(line).append(System.lineSeparator());
@@ -963,17 +965,16 @@ public class InstanceServiceImpl implements InstanceService {
         }
         String fileContent = contentBuilder.toString();
         ObjectMapper objectMapper = new ObjectMapper();
-        if(fileContent.length() == 0) {
+        if (fileContent.length() == 0) {
             Map<String, Object> result = new HashMap<>();
             return result;
         } else {
             return objectMapper.readValue(fileContent, new TypeReference<Map<String, Object>>() {
             });
         }
-        
+
     }
 
-    
     @RequestMapping(value = "/test/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Map<String, Object> testList(HttpServletRequest request) throws IOException {
         String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
@@ -989,7 +990,7 @@ public class InstanceServiceImpl implements InstanceService {
             for (File file : files) {
                 if (file.isFile()) {
                     StringBuilder contentBuilder = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             contentBuilder.append(line).append(System.lineSeparator());
@@ -1238,7 +1239,7 @@ public class InstanceServiceImpl implements InstanceService {
 
             if (worklistEntity == null)
                 return null;
-            
+
             String taskId = worklistEntity.get(0).getTaskId().toString();
 
             if (command.getVariables() != null) {
@@ -1310,7 +1311,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/work-item", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
-    public List<WorkItemResource> getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey) throws Exception {
+    public List<WorkItemResource> getCurrentWorkItemByCorrKey(@RequestParam("corrKey") String corrKey)
+            throws Exception {
         if (corrKey == null)
             return null;
 
