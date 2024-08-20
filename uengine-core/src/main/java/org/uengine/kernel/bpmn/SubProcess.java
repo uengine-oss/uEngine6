@@ -501,6 +501,7 @@ public class SubProcess extends ScopeActivity {
 
             ProcessVariableValue pvv = getForEachVariable().getMultiple(instance, "");
             instance.addDebugInfo("  values are: ", pvv);
+            pvv.setCursor(0);
 
             do {
                 Serializable theValue = pvv.getValue();
