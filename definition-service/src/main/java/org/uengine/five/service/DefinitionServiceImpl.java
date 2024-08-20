@@ -386,11 +386,12 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
         // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource;
-        if(definitionRequest.getVersion() != null)
-            resource = new DefaultResource("/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
-        else 
-            resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
+        if(definitionRequest.getVersion() != null) {
+            DefaultResource versionResource = new DefaultResource("/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
+            resourceManager.save(versionResource, definitionRequest.getDefinition());
+        }
+
+        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
         Object definitionDeployed = null;
 
         resourceManager.save(resource, definitionRequest.getDefinition());
