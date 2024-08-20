@@ -1024,17 +1024,18 @@ public class SubProcess extends ScopeActivity {
     // super.stop(instance);
     // }
     //
-    // public void compensate(ProcessInstance instance) throws Exception {
-    // Vector subProcesses = getSubProcesses(instance);
-    //
-    // for(int i = 0; i<subProcesses.size(); i++){
-    // ProcessInstance theSP = (ProcessInstance)subProcesses.get(i);
-    //
-    // theSP.getProcessDefinition().compensate(theSP);
-    // }
-    //
-    // super.compensate(instance);
-    // }
+    
+    public void compensate(ProcessInstance instance) throws Exception {
+        // Vector subProcesses = getSubProcesses(instance);
+
+        // for (int i = 0; i < subProcesses.size(); i++) {
+        //     ProcessInstance theSP = (ProcessInstance) subProcesses.get(i);
+
+        //     theSP.getProcessDefinition().compensate(theSP);
+        // }
+
+        // super.compensate(instance);
+    }
 
     public void attachSubProcess(ProcessInstance instance, String subProcessInstanceId, String label) throws Exception {
         Vector currSubProcessIds = getSubprocessIds(instance);
@@ -1121,15 +1122,5 @@ public class SubProcess extends ScopeActivity {
     // @Range(options={"Parallel", "Loop"}, values = {"parallel", "loop"})
     public String getMultipleInstanceOption() {
         return multipleInstanceOption;
-    }
-
-    public ValidationContext validate(HashMap<String, Object> context) {
-        ValidationContext vc = super.validate(context);
-
-        if (getForEachRole() == null && getForEachVariable() == null) {
-            vc.add("해당 서브 프로세스에 ForEach Role 또는 ForEach Variable이 설정되어 있지 않습니다.");
-        }
-
-        return vc;
     }
 }

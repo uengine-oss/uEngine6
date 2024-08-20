@@ -1,14 +1,21 @@
 package org.uengine.five.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.QueryParam;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,6 +24,10 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 // import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,7 +74,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RestController
 public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLService {
 
-    static protected final String RESOURCE_ROOT = "";
+    static protected final String RESOURCE_ROOT = "definitions";
 
     @Autowired
     ResourceManager resourceManager;
@@ -88,6 +99,33 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @Override
     public CollectionModel<DefinitionResource> listDefinition(String basePath) throws Exception {
         return _listDefinition(RESOURCE_ROOT, basePath);
+    }
+
+    @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
+    @Override
+    public CollectionModel<DefinitionResource> listDefinitionVersions(@PathVariable("defId") String defId) throws Exception {
+        return _listDefinitionVersions(RESOURCE_ROOT, defId);
+    }
+
+    private CollectionModel<DefinitionResource> _listDefinitionVersions(String resourceRoot, String basePath) throws Exception {
+
+        if (basePath == null) {
+            basePath = "";
+        }
+
+        IContainer resource = new ContainerResource();
+        resource.setPath(resourceRoot + "/archive/" + basePath);
+        List<IResource> resources = resourceManager.listFiles(resource);
+
+        List<DefinitionResource> definitions = new ArrayList<DefinitionResource>();
+        for (IResource resource1 : resources) {
+            DefinitionResource definition = new DefinitionResource(resource1);
+            definition.setVersion(definition.name.replace(".bpmn", ""));
+            definitions.add(definition);
+        }
+
+        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
+        return halResources;
     }
 
     private CollectionModel<DefinitionResource> _listDefinition(String resourceRoot, String basePath) throws Exception {
@@ -332,7 +370,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
      * @throws Exception
      */
     @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
-    public DefinitionResource putRawDefinition(@RequestBody String definition, HttpServletRequest request)
+    public DefinitionResource putRawDefinition(@RequestBody DefinitionRequest definitionRequest, HttpServletRequest request)
             throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
@@ -348,11 +386,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
         // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource = new DefaultResource(definitionPath);
-
+        DefaultResource resource;
+        if(definitionRequest.getVersion() != null)
+            resource = new DefaultResource("/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
+        else 
+            resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
         Object definitionDeployed = null;
 
-        resourceManager.save(resource, definition);
+        resourceManager.save(resource, definitionRequest.getDefinition());
         instanceService.postCreatedRawDefinition(resource.getPath());
 
         // TODO: deploy filter 로 등록된 bean 들을 호출:
@@ -374,7 +415,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         }
 
         // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource = new DefaultResource(definitionPath);
+        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
 
         // if(unwrap) {
@@ -516,6 +557,50 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
         return halResources;
+    }
+
+    @RequestMapping(value = DEFINITION + "/release/{releaseVerison}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public ResponseEntity releaseVersions(@PathVariable("releaseVerison") String releaseVerison) throws Exception {
+
+        // // case of directory:
+        // IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
+        // if (resourceManager.exists(resource) && resourceManager.isContainer(resource)) { // is a folder
+        //     return _listSystem(RESOURCE_ROOT, "system");
+        // }
+
+        File resourceDir = new File(RESOURCE_ROOT + "/");
+        if (resourceDir.exists() && resourceDir.isDirectory()) {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
+
+            zipDirectory(resourceDir, resourceDir.getName(), zipOutputStream);
+            
+            zipOutputStream.close();
+            byteArrayOutputStream.close();
+
+            byte[] zipBytes = byteArrayOutputStream.toByteArray();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + releaseVerison + ".zip")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(zipBytes);    
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found or is not a directory");
+
+    }
+
+    private void zipDirectory(File folder, String parentFolder, ZipOutputStream zipOutputStream) throws IOException {
+        for (File file : folder.listFiles()) {
+            if (file.isDirectory()) {
+                zipDirectory(file, parentFolder + "/" + file.getName(), zipOutputStream);
+                continue;
+            }
+            zipOutputStream.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
+            FileInputStream fileInputStream = new FileInputStream(file);
+            IOUtils.copy(fileInputStream, zipOutputStream);
+            fileInputStream.close();
+            zipOutputStream.closeEntry();
+        }
     }
 
     @RequestMapping(value = DEFINITION_SYSTEM

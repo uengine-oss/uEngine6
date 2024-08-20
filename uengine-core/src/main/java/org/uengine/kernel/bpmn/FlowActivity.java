@@ -2,9 +2,13 @@ package org.uengine.kernel.bpmn;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityEventListener;
@@ -173,6 +177,55 @@ public class FlowActivity extends ComplexActivity {
             }
         }
 
+        // List<Activity> sortedChildActivities = new ArrayList<>();
+        // Map<String, Activity> activityMap = new HashMap<>();
+        // Map<String, List<String>> outgoingMap = new HashMap<>();
+        // Map<String, List<String>> incomingMap = new HashMap<>();
+
+        // for (Activity childActivity : getChildActivities()) {
+        //     activityMap.put(childActivity.getTracingTag(), childActivity);
+        //     outgoingMap.put(childActivity.getTracingTag(), new ArrayList<>());
+        //     incomingMap.put(childActivity.getTracingTag(), new ArrayList<>());
+        // }
+
+        // for (SequenceFlow flow : sequenceFlows) {
+        //     String source = flow.getSourceRef();
+        //     String target = flow.getTargetRef();
+        //     if (outgoingMap.containsKey(source)) {
+        //         outgoingMap.get(source).add(target);
+        //     }
+        //     if (incomingMap.containsKey(target)) {
+        //         incomingMap.get(target).add(source);
+        //     }
+        // }
+
+        // Queue<Activity> queue = new LinkedList<>();
+        // for (Activity childActivity : getChildActivities()) {
+        //     if (incomingMap.get(childActivity.getTracingTag()).isEmpty()) {
+        //         if(childActivity instanceof StartEvent)
+        //             queue.add(childActivity);
+        //     }
+        // }
+
+        // while (!queue.isEmpty()) {
+        //     Activity current = queue.poll();
+        //     sortedChildActivities.add(current);
+
+        //     for (String outgoing : outgoingMap.get(current.getTracingTag())) {
+        //         incomingMap.get(outgoing).remove(current.getTracingTag());
+        //         if (incomingMap.get(outgoing).isEmpty()) {
+        //             queue.add(activityMap.get(outgoing));
+        //         }
+        //     }
+        // }
+
+        // for (Activity childActivity : getChildActivities()) {
+        //     if (incomingMap.get(childActivity.getTracingTag()).isEmpty()) {
+        //             queue.add(childActivity);
+        //     }
+        // }
+
+        // setChildActivities(sortedChildActivities.toArray(new Activity[0]));
     }
 
     public List<Activity> getCatchingMessageEvents() {
@@ -253,58 +306,91 @@ public class FlowActivity extends ComplexActivity {
         // for each events: getProcessDefinition().addMessageListener(instance,
         // eventActivity);
 
-        if (getStatus(instance) == STATUS_READY) {
-            // 하위 로직은 첫 실행일때만.
-            for (Activity childActivity : getChildActivities()) {
-                if (childActivity instanceof Event && childActivity instanceof MessageListener
-                        && (childActivity.getIncomingSequenceFlows() == null
-                                || childActivity.getIncomingSequenceFlows().size() == 0)
-                        && ((Event) childActivity).getAttachedToRef() == null) {
-                    getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
-                }
+        for (Activity childActivity : getChildActivities()) {
+            if (childActivity instanceof Event && childActivity instanceof MessageListener
+                    && (childActivity.getIncomingSequenceFlows() == null
+                            || childActivity.getIncomingSequenceFlows().size() == 0)
+                    && ((Event) childActivity).getAttachedToRef() == null) {
+                getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
             }
-
-            // if (getSequenceFlows().size() == 0) {
-            //// System.out.println("This is conventional uengine process - 2");
-            // super.executeActivity(instance);
-            // }else{
-            List<Activity> startActivities = getStartActivities();
-            if (startActivities != null && startActivities.size() > 0) {
-
-                // Execute Event activity first than the regular activities since the first
-                // activity may occur any events.
-                for (Activity startActivity : startActivities) {
-                    if (startActivity instanceof Event)
-                        queueActivity(startActivity, instance);
-                }
-
-                for (Activity startActivity : startActivities) {
-                    if (!(startActivity instanceof Event))
-                        queueActivity(startActivity, instance);
-                }
-            } else {
-                fireComplete(instance); // throw new UEngineException("Can't find start activity");
-            }
-        } else {
-            int currStep = getCurrentStep(instance);
-            if (currStep >= getChildActivities().size()) {
-                fireComplete(instance);
-                return;
-            }
-
-            Activity childActivity = getChildActivities().get(currStep);
-            // if(!childActivity.isBackwardActivity()){
-            queueActivity(childActivity, instance);
-            // }else{//if the activity is a backward activity, which is for compensating and
-            // // only need to be executed in compensation process, skip running the
-            // activity.
-            // currStep++;
-            // setCurrentStep(instance, currStep);
-            // executeActivity(instance);
-            // }
         }
 
+        // if (getSequenceFlows().size() == 0) {
+        //// System.out.println("This is conventional uengine process - 2");
+        // super.executeActivity(instance);
+        // }else{
+        List<Activity> startActivities = getStartActivities();
+        if (startActivities != null && startActivities.size() > 0) {
+
+            // Execute Event activity first than the regular activities since the first
+            // activity may occur any events.
+            for (Activity startActivity : startActivities) {
+                if (startActivity instanceof Event)
+                    queueActivity(startActivity, instance);
+            }
+
+            for (Activity startActivity : startActivities) {
+                if (!(startActivity instanceof Event))
+                    queueActivity(startActivity, instance);
+            }
+        } else {
+            fireComplete(instance); // throw new UEngineException("Can't find start activity");
+        }
         // }
+
+
+        // if (getStatus(instance) == STATUS_READY) {
+        //     // 하위 로직은 첫 실행일때만.
+        //     for (Activity childActivity : getChildActivities()) {
+        //         if (childActivity instanceof Event && childActivity instanceof MessageListener
+        //                 && (childActivity.getIncomingSequenceFlows() == null
+        //                         || childActivity.getIncomingSequenceFlows().size() == 0)
+        //                 && ((Event) childActivity).getAttachedToRef() == null) {
+        //             getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
+        //         }
+        //     }
+
+        //     // if (getSequenceFlows().size() == 0) {
+        //     //// System.out.println("This is conventional uengine process - 2");
+        //     // super.executeActivity(instance);
+        //     // }else{
+        //     List<Activity> startActivities = getStartActivities();
+        //     if (startActivities != null && startActivities.size() > 0) {
+
+        //         // Execute Event activity first than the regular activities since the first
+        //         // activity may occur any events.
+        //         for (Activity startActivity : startActivities) {
+        //             if (startActivity instanceof Event)
+        //                 queueActivity(startActivity, instance);
+        //         }
+
+        //         for (Activity startActivity : startActivities) {
+        //             if (!(startActivity instanceof Event))
+        //                 queueActivity(startActivity, instance);
+        //         }
+        //     } else {
+        //         fireComplete(instance); // throw new UEngineException("Can't find start activity");
+        //     }
+        // } else {    
+        //     int currStep = getCurrentStep(instance);
+        //     if (currStep >= getChildActivities().size()) {
+        //         fireComplete(instance);
+        //         return;
+        //     }
+
+        //     Activity childActivity = getChildActivities().get(currStep);
+        //     // if(!childActivity.isBackwardActivity()){
+        //     queueActivity(childActivity, instance);
+        //     // }else{//if the activity is a backward activity, which is for compensating and
+        //     // // only need to be executed in compensation process, skip running the
+        //     // activity.
+        //     // currStep++;
+        //     // setCurrentStep(instance, currStep);
+        //     // executeActivity(instance);
+        //     // }
+        // }
+
+        // // }
 
     }
 
