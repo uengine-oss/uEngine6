@@ -149,8 +149,10 @@ public class BpmnXMLParser {
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
                     break;
-                case "bpmn:association": break;
-                case "bpmn:textAnnotation": break;
+                case "bpmn:association":
+                    break;
+                case "bpmn:textAnnotation":
+                    break;
                 default:
                     parseNode(element, laneInfo, processDefinition, mainProcessDefinition);
                     break;
@@ -160,13 +162,15 @@ public class BpmnXMLParser {
 
     class LaneInfo {
         public HashMap<String, String> taskToLaneMap;
-        public HashMap<String, Map<String, Integer>> laneCoordinate;
+        public HashMap<String, Map<String, Object>> laneCoordinate;
         public HashMap<String, Integer> laneYValue;
+        public HashMap<String, Integer> laneXValue;
 
         LaneInfo() {
             this.taskToLaneMap = new HashMap<>();
             this.laneCoordinate = new HashMap<>();
             this.laneYValue = new HashMap<>();
+            this.laneXValue = new HashMap<>();
         }
     }
 
@@ -194,8 +198,10 @@ public class BpmnXMLParser {
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
                     break;
-                case "bpmn:association": break;
-                case "bpmn:textAnnotation": break;    
+                case "bpmn:association":
+                    break;
+                case "bpmn:textAnnotation":
+                    break;
                 default:
                     parseNode(element, laneInfo, processDefinition, null);
                     break;
@@ -207,6 +213,7 @@ public class BpmnXMLParser {
             throws Exception {
         laneInfo.laneCoordinate = extractLaneCoordinate(element);
         laneInfo.laneYValue = extractFirstYValueForBPMNDI(element);
+        laneInfo.laneXValue = extractFirstXValueForBPMNDI(element);
         NodeList lanes = element.getElementsByTagName("bpmn:lane");
         for (int k = 0; k < lanes.getLength(); k++) {
             Node laneNode = lanes.item(k);
@@ -252,22 +259,31 @@ public class BpmnXMLParser {
         return new Role(); // Return a default role if no JSON is found
     }
 
-    public String getRoleNameInLocation(Map<String, Map<String, Integer>> laneInfo, int y) {
-        for (Map.Entry<String, Map<String, Integer>> entry : laneInfo.entrySet()) {
-            Map<String, Integer> dimensions = entry.getValue();
+    public String getRoleNameInLocation(Map<String, Map<String, Object>> laneInfo, int x, int y) {
+        for (Map.Entry<String, Map<String, Object>> entry : laneInfo.entrySet()) {
+            Map<String, Object> dimensions = entry.getValue();
+            String isHorizontal = (String) dimensions.get("isHorizontal");
+            int minX = (int) dimensions.get("minX");
+            int maxX = (int) dimensions.get("maxX");
             int minY = (int) dimensions.get("minY");
             int maxY = (int) dimensions.get("maxY");
-            if (y >= minY && y <= maxY) {
-                return entry.getKey();
+            if ("true".equals(isHorizontal)) {
+                if (y >= minY && y <= maxY) {
+                    return entry.getKey();
+                }
+            } else {
+                if (x >= minX && x <= maxX) {
+                    return entry.getKey();
+                }
             }
         }
         return null;
     }
 
-    public HashMap<String, Map<String, Integer>> extractLaneCoordinate(Element element) throws Exception {
+    public HashMap<String, Map<String, Object>> extractLaneCoordinate(Element element) throws Exception {
         Document document = element.getOwnerDocument();
         NodeList lanes = document.getElementsByTagName("bpmndi:BPMNShape");
-        HashMap<String, Map<String, Integer>> laneInfo = new HashMap<>();
+        HashMap<String, Map<String, Object>> laneInfo = new HashMap<>();
 
         Map<String, String> laneIdToNameMap = new HashMap<>();
         NodeList bpmnLanes = document.getElementsByTagName("bpmn:lane");
@@ -283,15 +299,24 @@ public class BpmnXMLParser {
             String bpmnElement = lane.getAttribute("bpmnElement");
             if (laneIdToNameMap.containsKey(bpmnElement)) {
                 Element bounds = (Element) lane.getElementsByTagName("dc:Bounds").item(0);
+                int x = Integer.parseInt(bounds.getAttribute("x"));
                 int y = Integer.parseInt(bounds.getAttribute("y"));
+                int width = Integer.parseInt(bounds.getAttribute("width"));
                 int height = Integer.parseInt(bounds.getAttribute("height"));
+                int minX = x;
+                int maxX = x + width;
+                int minY = y;
                 int maxY = y + height;
+                String isHorizontal = lane.getAttribute("isHorizontal");
 
                 String name = laneIdToNameMap.get(bpmnElement);
 
-                Map<String, Integer> dimensions = new HashMap<>();
-                dimensions.put("minY", y);
+                Map<String, Object> dimensions = new HashMap<>();
+                dimensions.put("minX", minX);
+                dimensions.put("maxX", maxX);
+                dimensions.put("minY", minY);
                 dimensions.put("maxY", maxY);
+                dimensions.put("isHorizontal", isHorizontal);
 
                 laneInfo.put(name, dimensions);
             }
@@ -321,6 +346,29 @@ public class BpmnXMLParser {
         }
 
         return yValues;
+    }
+
+    public HashMap<String, Integer> extractFirstXValueForBPMNDI(Element element) throws Exception {
+        Document document = element.getOwnerDocument();
+        NodeList shapes = document.getElementsByTagName("*");
+        HashMap<String, Integer> xValues = new HashMap<>();
+
+        for (int i = 0; i < shapes.getLength(); i++) {
+            Element shape = (Element) shapes.item(i);
+            if (shape.getNodeName().startsWith("bpmndi:")) {
+                String bpmnElement = shape.getAttribute("bpmnElement");
+                if (bpmnElement == null || bpmnElement.isEmpty()) {
+                    continue;
+                }
+                Element bounds = (Element) shape.getElementsByTagName("dc:Bounds").item(0);
+                if (bounds != null) {
+                    int x = Integer.parseInt(bounds.getAttribute("x"));
+                    xValues.put(bpmnElement, x);
+                }
+            }
+        }
+
+        return xValues;
     }
 
     private void parseExtensionElements(Element element, ScopeActivity processDefinition) throws Exception {
@@ -371,7 +419,7 @@ public class BpmnXMLParser {
                 ObjectNode jsonVariableNode = (ObjectNode) objectMapper.readTree(jsonText);
                 jsonVariableNode.remove("datasource");
                 jsonVariableNode.remove("type");
-                
+
                 jsonText = objectMapper.writeValueAsString(jsonVariableNode);
 
                 variable = objectMapper.readValue(jsonText, ProcessVariable.class);
@@ -507,15 +555,15 @@ public class BpmnXMLParser {
         if (task instanceof Gateway) {
             String defaultSequence = element.getAttribute("default");
             // SequenceFlow defaultSequenceFlow = Arrays
-            //         .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
-            //         .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
-            //         .findFirst()
-            //         .orElse(null);
+            // .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
+            // .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
+            // .findFirst()
+            // .orElse(null);
             // if (defaultSequenceFlow != null) {
-            //     defaultSequenceFlow.setCondition(new Otherwise());
-            //     defaultSequenceFlow.setOtherwise(true);
+            // defaultSequenceFlow.setCondition(new Otherwise());
+            // defaultSequenceFlow.setOtherwise(true);
             // }
-            ((Gateway)task).setDefaultFlow(defaultSequence);
+            ((Gateway) task).setDefaultFlow(defaultSequence);
         }
 
         task.setTracingTag(id);
@@ -546,7 +594,8 @@ public class BpmnXMLParser {
                         if (eventType.equals("error")) {
                             return "org.uengine.kernel.bpmn.CatchingErrorEvent";
                         } else {
-                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
+                                    + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
                         }
                     })
                     .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
@@ -607,7 +656,8 @@ public class BpmnXMLParser {
                         if (eventType.equals("error")) {
                             return "org.uengine.kernel.SendErrorEvent";
                         } else {
-                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
+                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
+                                    + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
                         }
                     })
                     .orElse("org.uengine.kernel.bpmn." + className);
@@ -972,9 +1022,10 @@ public class BpmnXMLParser {
     public Role createRoleInLane(LaneInfo laneInfo, String id) {
         Role role = new Role();
         String laneRoleName = laneInfo.taskToLaneMap.get(id);
+        int xValue = laneInfo.laneXValue.get(id);
+        int yValue = laneInfo.laneYValue.get(id);
         if (laneRoleName == null || laneRoleName.equals("")) {
-            int yValue = laneInfo.laneYValue.get(id);
-            laneRoleName = getRoleNameInLocation(laneInfo.laneCoordinate, yValue);
+            laneRoleName = getRoleNameInLocation(laneInfo.laneCoordinate, xValue, yValue);
         }
         role.setName(laneRoleName);
         return role;
