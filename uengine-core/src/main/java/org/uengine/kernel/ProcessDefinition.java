@@ -315,15 +315,25 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 			id = string;
 		}
 		
-	int version;
-		public int getVersion() {
+	String version;
+		public String getVersion() {
 			return version;
 		}
-		public void setVersion(int i) {
+		public void setVersion(String i) {
 			version = i;
 		}
+
+    String definitionName;    
 	
-	String belongingDefinitionId;
+	public String getDefinitionName() {
+        return definitionName;
+    }
+
+    public void setDefinitionName(String definitionName) {
+        this.definitionName = definitionName;
+    }
+
+    String belongingDefinitionId;
 		public String getBelongingDefinitionId() {
 			return belongingDefinitionId;
 		}
@@ -400,7 +410,9 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 		public void setAdhoc(boolean b) {
 			isAdhoc = b;
 		}
-		
+	
+    
+
     TextContext shortDescription = null;
         //@Name
         //@Face(displayName="Description")       
@@ -1314,5 +1326,6 @@ System.out.println("ProcessDefinition::addMessageListener.message = " + message)
     //     }
        
     // }
+
 }
 

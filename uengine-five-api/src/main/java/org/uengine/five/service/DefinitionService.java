@@ -44,5 +44,8 @@ public interface DefinitionService {
 
     @RequestMapping(value = DEFINITION_MAP + "/{defPath}", method = RequestMethod.GET)
     public Object getRawDefinitionMap() throws Exception;    
+
+    @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
+    public RepresentationModel listDefinitionVersions(String basePath) throws Exception;
 }
 

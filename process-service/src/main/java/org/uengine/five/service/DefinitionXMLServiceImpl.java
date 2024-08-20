@@ -30,8 +30,10 @@ public class DefinitionXMLServiceImpl implements DefinitionXMLService {
             System.out.println(
                     new File(definitionPath).getAbsolutePath());
 
+            // definitions 경로에서 bpmn 찾도록 처리하였음. 
+            // => definitions/ 하드코딩
             IResource resource = new DefaultResource(
-                    (definitionPath.startsWith(RESOURCE_ROOT) ? definitionPath : RESOURCE_ROOT + "/" + definitionPath));
+                    (definitionPath.startsWith(RESOURCE_ROOT) ? "definitions/" + definitionPath : RESOURCE_ROOT + "/definitions/" + definitionPath));
             InputStream inputStream = resourceManager.getInputStream(resource);
 
             StringBuilder xmlStringBuilder = new StringBuilder();

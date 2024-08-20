@@ -7,7 +7,7 @@ spring:
 
 uengine:
   definition:
-    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions
+    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6
         
 spring:
   profiles: default
@@ -16,6 +16,7 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
   cloud:
     stream:
       kafka:
