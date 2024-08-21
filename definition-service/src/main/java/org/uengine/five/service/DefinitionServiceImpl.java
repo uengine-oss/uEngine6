@@ -1,14 +1,21 @@
 package org.uengine.five.service;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.annotation.PostConstruct;
@@ -35,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 // import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.DeployFilter;
@@ -75,6 +83,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLService {
 
     static protected final String RESOURCE_ROOT = "definitions";
+    static protected final String ARCHIVE_ROOT = "archive";
 
     @Autowired
     ResourceManager resourceManager;
@@ -103,11 +112,13 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
     @Override
-    public CollectionModel<DefinitionResource> listDefinitionVersions(@PathVariable("defId") String defId) throws Exception {
+    public CollectionModel<DefinitionResource> listDefinitionVersions(@PathVariable("defId") String defId)
+            throws Exception {
         return _listDefinitionVersions(RESOURCE_ROOT, defId);
     }
 
-    private CollectionModel<DefinitionResource> _listDefinitionVersions(String resourceRoot, String basePath) throws Exception {
+    private CollectionModel<DefinitionResource> _listDefinitionVersions(String resourceRoot, String basePath)
+            throws Exception {
 
         if (basePath == null) {
             basePath = "";
@@ -370,7 +381,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
      * @throws Exception
      */
     @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
-    public DefinitionResource putRawDefinition(@RequestBody DefinitionRequest definitionRequest, HttpServletRequest request)
+    public DefinitionResource putRawDefinition(@RequestBody DefinitionRequest definitionRequest,
+            HttpServletRequest request)
             throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
@@ -386,8 +398,9 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
         // 무조건 xml 파일로 결국 저장됨.
-        if(definitionRequest.getVersion() != null) {
-            DefaultResource versionResource = new DefaultResource("/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
+        if (definitionRequest.getVersion() != null) {
+            DefaultResource versionResource = new DefaultResource(
+                    "/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
             resourceManager.save(versionResource, definitionRequest.getDefinition());
         }
 
@@ -560,13 +573,15 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         return halResources;
     }
 
-    @RequestMapping(value = DEFINITION + "/release/{releaseVerison}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = DEFINITION
+            + "/release/{releaseVerison}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public ResponseEntity releaseVersions(@PathVariable("releaseVerison") String releaseVerison) throws Exception {
 
         // // case of directory:
         // IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
-        // if (resourceManager.exists(resource) && resourceManager.isContainer(resource)) { // is a folder
-        //     return _listSystem(RESOURCE_ROOT, "system");
+        // if (resourceManager.exists(resource) &&
+        // resourceManager.isContainer(resource)) { // is a folder
+        // return _listSystem(RESOURCE_ROOT, "system");
         // }
 
         File resourceDir = new File(RESOURCE_ROOT + "/");
@@ -575,7 +590,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
 
             zipDirectory(resourceDir, resourceDir.getName(), zipOutputStream);
-            
+
             zipOutputStream.close();
             byteArrayOutputStream.close();
 
@@ -583,7 +598,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + releaseVerison + ".zip")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(zipBytes);    
+                    .body(zipBytes);
         }
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found or is not a directory");
@@ -601,6 +616,97 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             IOUtils.copy(fileInputStream, zipOutputStream);
             fileInputStream.close();
             zipOutputStream.closeEntry();
+        }
+    }
+
+    public void unzipDirectory(InputStream inputStream, String releaseName) throws IOException {
+        byte[] buffer = new byte[1024];
+
+        try (ZipInputStream zis = new ZipInputStream(inputStream, StandardCharsets.UTF_8)) {
+            ZipEntry zipEntry = zis.getNextEntry();
+
+            while (zipEntry != null) {
+                String fileName = zipEntry.getName();
+                String filePath = fileName;
+                File newFile = new File(filePath);
+
+                System.out.println("Processing file: " + newFile.getAbsolutePath());
+
+                if (zipEntry.isDirectory()) {
+                    if (!newFile.isDirectory() && !newFile.mkdirs()) {
+                        throw new IOException("Failed to create directory: " + newFile);
+                    }
+                } else {
+                    File parent = newFile.getParentFile();
+                    if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                        throw new IOException("Failed to create directory: " + parent);
+                    }
+
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
+                    }
+                }
+                addArchive(fileName, releaseName, filePath);
+
+                zipEntry = zis.getNextEntry();
+            }
+
+            zis.closeEntry();
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error processing ZIP entry: " + e.getMessage());
+            throw new IOException("Error processing ZIP entry", e);
+        }
+    }
+
+    private void addArchive(String fileName, String releaseName, String filePath) throws IOException {
+        if (fileName.lastIndexOf('.') == -1)
+            return;
+        String extension = fileName.substring(fileName.lastIndexOf('.'));
+        String uploadPath = ARCHIVE_ROOT + File.separator;
+        if (".bpmn".equals(extension) || ".form".equals(extension)) {
+            String folderName = fileName.replace(RESOURCE_ROOT + "/", "");
+            File folder = new File(uploadPath, folderName);
+
+            if (!folder.exists() && !folder.mkdirs()) {
+                throw new IOException("폴더 생성 실패: " + folder.getAbsolutePath());
+            }
+            File sourceFile = new File(filePath);
+            File targetReleaseFile = new File(uploadPath + folderName, releaseName + extension);
+            byte[] buffer = new byte[1024];
+            try (FileInputStream fis = new FileInputStream(sourceFile);
+                    FileOutputStream fos = new FileOutputStream(targetReleaseFile)) {
+                int length;
+                while ((length = fis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+            }
+        }
+    }
+
+    @RequestMapping(value = "/definition/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadDefinition(@RequestParam("file") MultipartFile file) {
+        try {
+            String uploadPath = RESOURCE_ROOT + File.separator;
+            File targetFile = new File(uploadPath);
+
+            if (!targetFile.exists()) {
+                targetFile.mkdirs();
+            }
+
+            if (targetFile.exists()) {
+                String releaseNameWithoutExtension = file.getOriginalFilename().substring(0,
+                        file.getOriginalFilename().lastIndexOf('.'));
+                unzipDirectory(file.getInputStream(), releaseNameWithoutExtension);
+            }
+
+            return ResponseEntity.ok("파일이 성공적으로 업로드되었습니다.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("파일 업로드 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
