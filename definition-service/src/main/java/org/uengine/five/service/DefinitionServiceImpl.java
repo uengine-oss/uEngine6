@@ -104,7 +104,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
     @Override
     public CollectionModel<DefinitionResource> listDefinitionVersions(@PathVariable("defId") String defId) throws Exception {
-        return _listDefinitionVersions(RESOURCE_ROOT, defId);
+        return _listDefinitionVersions("archive/", defId);
     }
 
     private CollectionModel<DefinitionResource> _listDefinitionVersions(String resourceRoot, String basePath) throws Exception {
@@ -114,7 +114,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         }
 
         IContainer resource = new ContainerResource();
-        resource.setPath(resourceRoot + "/archive/" + basePath);
+        resource.setPath(resourceRoot + basePath);
         List<IResource> resources = resourceManager.listFiles(resource);
 
         List<DefinitionResource> definitions = new ArrayList<DefinitionResource>();
@@ -142,6 +142,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         for (IResource resource1 : resources) {
             DefinitionResource definition = new DefinitionResource(resource1);
             definitions.add(definition);
+            definition.path = definition.path.replace("definitions/", "");
         }
 
         CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
@@ -414,9 +415,11 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (definitionPath.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         }
-
-        // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
+        if(!(definitionPath.startsWith(RESOURCE_ROOT) || definitionPath.startsWith("archive"))) {
+            definitionPath = RESOURCE_ROOT + "/" + definitionPath;
+        }
+        // 무조건 xml 파일로 결국 저장됨.   
+        DefaultResource resource = new DefaultResource(definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
 
         // if(unwrap) {
@@ -688,7 +691,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             }
 
             IResource resource = new DefaultResource(
-                    (definitionPath.startsWith(RESOURCE_ROOT) ? definitionPath : RESOURCE_ROOT + "/" + definitionPath));
+                    definitionPath);
             Object definition = resourceManager.getObject(resource);
 
             // TODO: move to framework
