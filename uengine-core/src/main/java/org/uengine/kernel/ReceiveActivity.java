@@ -166,7 +166,15 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                         } else {
                             value = instance.getBeanProperty(srcVariableName);
                         }
-                        instance.setBeanProperty(targetFieldName, (Serializable) value);    
+                        if (value instanceof ArrayList) {
+                            ProcessVariableValue pvv = new ProcessVariableValue();
+                            for (Serializable obj : (ArrayList<Serializable>) value) {
+                                pvv.setValue(obj);
+                                pvv.moveToAdd();
+                            }
+                            value = pvv;
+                        }
+                        instance.setBeanProperty(targetFieldName, (Serializable) value);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -193,13 +201,18 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
             return mappingInValues;
 
         ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
-
         Object value = null;
         if (params == null)
             return mappingInValues;
 
         for (FieldDescriptor field : getEventSynchronization().getAttributes()) {
-            mappingInValues.put(field.getName(), null);
+            boolean isArray = "Array".equals(field.getClassName());
+            if (isArray) {
+                ArrayList<Object> mappingInValue = new ArrayList<>();
+                mappingInValues.put(field.getName(), mappingInValue);
+            } else {
+                mappingInValues.put(field.getName(), null);
+            }
         }
         for (ParameterContext param : params) {
             try {

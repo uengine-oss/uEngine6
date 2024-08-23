@@ -345,9 +345,11 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 
 		if (sourceValue instanceof IndexedProcessVariableMap) {
 			ProcessVariableValue pvv = getMultiple(scopeByTracingTag, key);
-			int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
-			if (executionOrder > -1) {
-				pvv.setCursor(executionOrder);
+			if (getExecutionScopeContextTree().getExecutionScope() != null) {
+				int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
+				if (executionOrder > -1) {
+					pvv.setCursor(executionOrder);
+				}
 			}
 			sourceValue = pvv.getValue();
 		} else if (sourceValue == null) {
