@@ -1038,12 +1038,12 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         return vtSpIds;
     }
 
-    protected void setSubprocessIds(ProcessInstance instance, Vector<String> spIds, String space) throws Exception {
+    protected void setSubprocessIds(ProcessInstance instance, Vector<Object> spIds, String space) throws Exception {
         StringBuffer spId = new StringBuffer();
         for (int i = 0; i < spIds.size(); i++) {
             if (spId.length() > 0)
                 spId.append(",");
-            spId.append(spIds.elementAt(i));
+            spId.append(spIds.elementAt(i).toString());
         }
         instance.setProperty(getTracingTag(), space, spId.toString());
     }

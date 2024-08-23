@@ -76,10 +76,13 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 	private void alignProcessVariables() {
 		processVariableDescriptorsHT = new Hashtable();
 		if (processVariableDescriptors != null) {
-			for (int i = 0; i < processVariableDescriptors.length; i++)
+			for (int i = 0; i < processVariableDescriptors.length; i++) {
+				if (processVariableDescriptors[i].getName() == null)
+					continue;
 				processVariableDescriptorsHT.put(
 						processVariableDescriptors[i].getName().toLowerCase(),
 						processVariableDescriptors[i]);
+			}
 			firePropertyChangeEvent(new PropertyChangeEvent(this, "processVariables", processVariableDescriptors,
 					processVariableDescriptors));
 		}
