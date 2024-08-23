@@ -166,7 +166,7 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                         } else {
                             value = instance.getBeanProperty(srcVariableName);
                         }
-                        instance.setBeanProperty(targetFieldName, (Serializable) value);
+                        instance.setBeanProperty(targetFieldName, (Serializable) value);    
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

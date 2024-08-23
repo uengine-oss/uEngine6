@@ -96,13 +96,13 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         this.versionSelectOption = versionSelectOption;
     }
 
-    ParameterContext[] variableBindings;
+    SubProcessParameterContext[] variableBindings;
 
-    public ParameterContext[] getVariableBindings() {
+    public SubProcessParameterContext[] getVariableBindings() {
         return variableBindings;
     }
 
-    public void setVariableBindings(ParameterContext[] contexts) {
+    public void setVariableBindings(SubProcessParameterContext[] contexts) {
         variableBindings = contexts;
     }
 
