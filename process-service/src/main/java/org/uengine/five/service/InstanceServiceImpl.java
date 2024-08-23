@@ -942,11 +942,33 @@ public class InstanceServiceImpl implements InstanceService {
                 // workItem.getParameterValues().entrySet()) {
                 // // existObj.(entry.getKey(), entry.getValue());
 
-                // }
+                // Remove entries with "_type" as key
+                // existObj.entrySet().removeIf(entry -> "_type".equals(entry.getKey()));
+                // Remove "_type" key from each value map
+                for (Map.Entry<String, Object> entry : existObj.entrySet()) {
+                    if (entry.getValue() instanceof Map) {
+                        ((Map) entry.getValue()).remove("_type");
+                    }
+                }
 
+                // Remove duplicates from existObj
+                Map<String, Object> uniqueObj = new HashMap<>();
+                for (Map.Entry<String, Object> entry : existObj.entrySet()) {
+                    if (!uniqueObj.containsValue(entry.getValue())) {
+                        uniqueObj.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                existObj = uniqueObj;
+
+                // Remove duplicates from existObj
+                // Map<String, Object> uniqueObj = new HashMap<>();
+                // for (   Map.Entry<String, Object> entry : existObj.entrySet()) {
+                //     if (!uniqueObj.containsValue(entry.getValue())) {
+                //         uniqueObj.put(entry.getKey(), entry.getValue());
+                //     }
+                // }
+                // existObj = uniqueObj;
                 objectMapper.writeValue(file, existObj);
-                // String result = objectMapper.writeValueAsString(existObj);
-                // writer.write(result);
             }
         }
     }
@@ -983,7 +1005,7 @@ public class InstanceServiceImpl implements InstanceService {
         Map<String, Object> result = new HashMap<>();
         File folder = new File("test/" + folderPath);
         if (!folder.exists() || !folder.isDirectory()) {
-            throw new FileNotFoundException("Folder not found: " + folderPath);
+                    throw new FileNotFoundException("Folder not found: " + folderPath);
         }
         File[] files = folder.listFiles();
         if (files != null) {
@@ -1031,16 +1053,16 @@ public class InstanceServiceImpl implements InstanceService {
         writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
                 workItem);
 
-        if (isSimulate.equals("record")) {
+        // if (isSimulate.equals("record")) {
 
-        } else {
-            boolean simulate = Boolean.parseBoolean(isSimulate);
-            if (simulate) {
-                Map<String, Object> readValues = readFromFile(
-                        instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json");
-                workItem.setParameterValues(readValues);
-            }
-        }
+        // } else {
+        //     boolean simulate = Boolean.parseBoolean(isSimulate);
+        //     if (simulate) {
+        //         Map<String, Object> readValues = readFromFile(
+        //                 instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json");
+        //         workItem.setParameterValues(readValues);
+        //     }
+        // }
 
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
