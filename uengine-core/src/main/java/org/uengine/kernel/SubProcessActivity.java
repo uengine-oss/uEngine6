@@ -621,70 +621,61 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
     protected void applyVariableBindings(ProcessInstance instance, Vector spIds, Map subProcesses, Map options)
             throws Exception {
 
-        /*
-         * for(int i=0; i<variableBindings.length; i++){
-         * ParameterContext vb = variableBindings[i];
-         * if(vb.getVariable()==null ||
-         * (vb.getDirection()!=null &&
-         * vb.getDirection().equals(ParameterContext.DIRECTION_IN))
-         * ) continue;
-         * 
-         * instance.set("", vb.getVariable().getName(), null);
-         * }
-         * 
-         * 
-         * for(int indexOfSP=0; indexOfSP<spIds.size(); indexOfSP++){
-         * String subProcessId = (String)spIds.elementAt(indexOfSP);
-         * 
-         * ParameterContext[] variableBindings = getVariableBindings();
-         * if(variableBindings!=null)
-         * for(int i=0; i<variableBindings.length; i++){
-         * ParameterContext vb = variableBindings[i];
-         * if(vb.getVariable()==null ||
-         * (vb.getDirection()!=null &&
-         * vb.getDirection().equals(ParameterContext.DIRECTION_IN))
-         * ) continue;
-         * 
-         * if(!subProcesses.containsKey(subProcessId)){
-         * ProcessInstance sp = ProcessInstance.create().getInstance(subProcessId,
-         * options);
-         * subProcesses.put(subProcessId, sp);
-         * }
-         * ProcessInstance subProcessInstance =
-         * (ProcessInstance)subProcesses.get(subProcessId);
-         * 
-         * try{
-         * boolean join = false;
-         * if(vb instanceof SubProcessParameterContext){
-         * SubProcessParameterContext spParameterContext =
-         * (SubProcessParameterContext)vb;
-         * join = spParameterContext.isSplit();
-         * }
-         * 
-         * join = join || vb.getVariable() == getForEachVariable();
-         * 
-         * if(join){
-         * Serializable valueOfSP = subProcessInstance.get("",
-         * vb.getArgument().getText());
-         * instance.add("", vb.getVariable().getName(), valueOfSP, indexOfSP);//process
-         * multiple pv
-         * }else{
-         * ProcessVariableValue valueOfSP = subProcessInstance.getMultiple("",
-         * vb.getArgument().getText());
-         * valueOfSP.setName(vb.getVariable().getName());
-         * instance.set("", valueOfSP);
-         * }
-         * }catch(Exception e){
-         * UEngineException richException = new
-         * UEngineException("Error when to set the value ["+vb.getVariable()
-         * +"] from returned subprocess", e);
-         * richException.setActivity(this);
-         * richException.setInstance(instance);
-         * throw richException;
-         * }
-         * }
-         * }
-         */
+        for (int i = 0; i < variableBindings.length; i++) {
+            ParameterContext vb = variableBindings[i];
+            if (vb.getVariable() == null
+                    || (vb.getDirection() != null && vb.getDirection().equals(ParameterContext.DIRECTION_IN)))
+                continue;
+            instance.set("", vb.getVariable().getName(), null);
+        }
+
+        for (int indexOfSP = 0; indexOfSP < spIds.size(); indexOfSP++) {
+            String subProcessId = (String) spIds.elementAt(indexOfSP);
+
+            ParameterContext[] variableBindings = getVariableBindings();
+            if (variableBindings != null)
+                for (int i = 0; i < variableBindings.length; i++) {
+                    ParameterContext vb = variableBindings[i];
+                    if (vb.getVariable() == null
+                            || (vb.getDirection() != null && vb.getDirection().equals(ParameterContext.DIRECTION_IN))) {
+                        continue;
+                    }
+
+                    if (!subProcesses.containsKey(subProcessId)) {
+                        ProcessInstance sp = AbstractProcessInstance.create().getInstance(subProcessId, options);
+                        subProcesses.put(subProcessId, sp);
+                    }
+                    ProcessInstance subProcessInstance = (ProcessInstance) subProcesses.get(subProcessId);
+
+                    try {
+                        boolean join = false;
+                        if (vb instanceof SubProcessParameterContext) {
+                            SubProcessParameterContext spParameterContext = (SubProcessParameterContext) vb;
+                            join = spParameterContext.isSplit();
+                        }
+
+                        join = join || vb.getVariable() == getForEachVariable();
+
+                        if (join) {
+                            Serializable valueOfSP = subProcessInstance.get("", vb.getArgument().getText());
+                            instance.add("", vb.getVariable().getName(), valueOfSP, indexOfSP);// process
+                            // multiple pv
+                        } else {
+                            ProcessVariableValue valueOfSP = subProcessInstance.getMultiple("",
+                                    vb.getArgument().getText());
+                            valueOfSP.setName(vb.getVariable().getName());
+                            instance.set("", valueOfSP);
+                        }
+                    } catch (Exception e) {
+                        UEngineException richException = new UEngineException(
+                                "Error when to set the value [" + vb.getVariable() + "] from returned subprocess", e);
+                        richException.setActivity(this);
+                        richException.setInstance(instance);
+                        throw richException;
+                    }
+                }
+        }
+
     }
 
     protected void afterComplete(ProcessInstance instance) throws Exception {

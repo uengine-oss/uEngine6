@@ -38,16 +38,6 @@ public class ParameterContext implements Serializable {
         argument = string;
     }
 
-    // Boolean split;
-
-    // public Boolean getSplit() {
-    //     return split;
-    // }
-
-    // public void setSplit(Boolean split) {
-    //     this.split = split;
-    // }
-
     // MappingElement - Source
     // ParameterContext - Target
     ProcessVariable variable;
@@ -74,7 +64,10 @@ public class ParameterContext implements Serializable {
 
     // @Range(options={"IN-OUT", "IN", "OUT", }, values={ "in-out", "in", "out",})
     public String getDirection() {
-        return direction;
+        if (direction == null)
+            return direction;
+
+        return direction.toLowerCase();
     }
 
     public void setDirection(String i) {
