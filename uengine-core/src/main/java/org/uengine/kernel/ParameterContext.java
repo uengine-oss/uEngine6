@@ -38,15 +38,15 @@ public class ParameterContext implements Serializable {
         argument = string;
     }
 
-    Boolean split;
+    // Boolean split;
 
-    public Boolean getSplit() {
-        return split;
-    }
+    // public Boolean getSplit() {
+    //     return split;
+    // }
 
-    public void setSplit(Boolean split) {
-        this.split = split;
-    }
+    // public void setSplit(Boolean split) {
+    //     this.split = split;
+    // }
 
     // MappingElement - Source
     // ParameterContext - Target

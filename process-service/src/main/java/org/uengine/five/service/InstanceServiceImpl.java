@@ -182,6 +182,8 @@ public class InstanceServiceImpl implements InstanceService {
 
     }
 
+
+
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
     @ProcessTransactional
     public InstanceResource stop(@PathVariable("instanceId") String instanceId) throws Exception {
@@ -325,6 +327,29 @@ public class InstanceServiceImpl implements InstanceService {
         return variables;
     }
 
+    @RequestMapping(value = "/instance/{instanceId}/status", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public Map getActivitiesStatus(@PathVariable("instanceId") String instanceId)
+            throws Exception {
+            ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+            Map variables = ((DefaultProcessInstance) instance).getVariables();
+            Map<String, Object> filteredVariables = new HashMap<>();
+            for (Object key : variables.keySet()) {
+                if (key instanceof String) {
+                    String keyStr = (String) key;
+                    if (keyStr.matches("Activity_\\w+:_status:prop")) {
+                        String newKey = keyStr.replace(":_status:prop", "");
+                        filteredVariables.put(newKey, variables.get(key));
+                    }
+                }
+            }
+            variables = filteredVariables;
+
+            
+            return variables;
+    }
+
     @RequestMapping(value = "/instance/{instanceId}/running", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
     public ResponseEntity<List<WorklistEntity>> getRunningTaskId(@PathVariable("instanceId") String instanceId)
@@ -332,6 +357,16 @@ public class InstanceServiceImpl implements InstanceService {
 
         List<WorklistEntity> worklistEntity = worklistRepository
                 .findCurrentWorkItemByInstId(Long.parseLong(instanceId));
+        return ResponseEntity.ok(worklistEntity);
+    }
+
+    @RequestMapping(value = "/instance/{instanceId}/completed", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public ResponseEntity<List<WorklistEntity>> getCompletedTaskId(@PathVariable("instanceId") String instanceId)
+            throws Exception {
+
+        List<WorklistEntity> worklistEntity = worklistRepository
+                .findWorkListByInstId(Long.parseLong(instanceId));
         return ResponseEntity.ok(worklistEntity);
     }
 
@@ -1255,11 +1290,10 @@ public class InstanceServiceImpl implements InstanceService {
 
             if (instance == null)
                 return null;
-
             String instId = instance.getInstanceId();
-            List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(new Long(instId));
+            List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(Long.parseLong(instId));
 
-            if (worklistEntity == null)
+            if (worklistEntity == null || worklistEntity.isEmpty())
                 return null;
 
             String taskId = worklistEntity.get(0).getTaskId().toString();
@@ -1342,7 +1376,7 @@ public class InstanceServiceImpl implements InstanceService {
                 "Running");
         for (ProcessInstanceEntity processInstanceEntity : processInstanceList) {
             List<WorklistEntity> worklistEntity = worklistRepository
-                    .findCurrentWorkItemByInstId(processInstanceEntity.getInstId());
+                    .findCurrentWorkItemByInstId(processInstanceEntity.getRootInstId());
 
             if (worklistEntity != null) {
                 List<WorkItemResource> result = new ArrayList<>();

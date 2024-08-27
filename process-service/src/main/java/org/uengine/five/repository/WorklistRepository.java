@@ -43,11 +43,12 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
             "and (pi.status = 'COMPLETED')" )
     Page<WorklistEntity> findCompleted(Pageable pageable);
 
-    @Query("select wl from WorklistEntity wl where (wl.instId = :instId and wl.status = 'COMPLETED') order by wl.endDate ")
-    public List<WorklistEntity> findWorkListByInstId(@Param(value = "instId") Long instId);
+    @Query("select wl from WorklistEntity wl where (wl.rootInstId = :rootInstId and wl.status = 'COMPLETED') order by wl.endDate ")
+    public List<WorklistEntity> findWorkListByInstId(@Param(value = "rootInstId") Number rootInstId);
 
-    @Query("select wl from WorklistEntity wl where (wl.instId = :instId and (wl.status = 'NEW' or wl.status = 'RUNNING')) order by wl.endDate ")
-    public List<WorklistEntity> findCurrentWorkItemByInstId(@Param(value = "instId") Long instId);
+    @Query("select wl from WorklistEntity wl where (wl.rootInstId = :rootInstId and (wl.status = 'NEW' or wl.status = 'RUNNING')) order by wl.endDate ")
+    public List<WorklistEntity> findCurrentWorkItemByInstId(@Param(value = "rootInstId") Number rootInstId);
+    
 
     // // // TEST
     // @Query("select wl from WorklistEntity wl")
