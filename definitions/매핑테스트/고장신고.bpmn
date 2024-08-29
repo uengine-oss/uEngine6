@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" name="매핑테스트/고장신고" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
   <bpmn:collaboration id="Collaboration_0nayosu">
     <bpmn:participant id="Participant_1bbd9y5" name="고장신고" processRef="Process_1oscmbn">
       <bpmn:extensionElements>
@@ -47,19 +47,7 @@
         <bpmn:flowNodeRef>Activity_0ozgz09</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:startEvent id="Event_01as277">
-      <bpmn:outgoing>Flow_01lfhh6</bpmn:outgoing>
-    </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_01lfhh6" sourceRef="Event_01as277" targetRef="Activity_01n3x3h" />
-    <bpmn:userTask id="Activity_01n3x3h" name="고장신고">
-      <bpmn:extensionElements>
-        <uengine:properties>
-          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"고장내용","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.ConcatTransformer","name":"Concat","location":{"x":406,"y":302.09375},"argumentSourceMap":{"str1":"[Arguments].고장내용"}},"linkedArgumentName":"고장"},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
-        </uengine:properties>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_01lfhh6</bpmn:incoming>
-      <bpmn:outgoing>Flow_0kavghk</bpmn:outgoing>
-    </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_0kavghk" sourceRef="Activity_01n3x3h" targetRef="Activity_0ozgz09" />
     <bpmn:userTask id="Activity_0ozgz09" name="고장접수">
       <bpmn:extensionElements>
@@ -90,9 +78,21 @@
       <bpmn:incoming>Flow_0u410ci</bpmn:incoming>
       <bpmn:outgoing>Flow_0abbf6p</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:userTask id="Activity_01n3x3h" name="고장신고">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"고장내용","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","transformerMapping":{"transformer":{"_type":"org.uengine.processdesigner.mapper.transformers.ConcatTransformer","name":"Concat","location":{"x":406,"y":302.09375},"argumentSourceMap":{"str1":"[Arguments].고장내용"}},"linkedArgumentName":"고장"},"isKey":false},{"argument":{"text":"[Arguments].고장내용"},"direction":"out","variable":{"name":"고장","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01lfhh6</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kavghk</bpmn:outgoing>
+    </bpmn:userTask>
     <bpmn:endEvent id="Event_1pjcjl8">
       <bpmn:incoming>Flow_0abbf6p</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:startEvent id="Event_01as277">
+      <bpmn:outgoing>Flow_01lfhh6</bpmn:outgoing>
+    </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_0abbf6p" sourceRef="Activity_0123mrh" targetRef="Event_1pjcjl8" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -113,13 +113,6 @@
         <dc:Bounds x="240" y="305" width="760" height="155" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_01as277_di" bpmnElement="Event_01as277">
-        <dc:Bounds x="282" y="102" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_13qasg7_di" bpmnElement="Activity_01n3x3h">
-        <dc:Bounds x="370" y="80" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0nsjynf_di" bpmnElement="Activity_0ozgz09">
         <dc:Bounds x="530" y="200" width="100" height="80" />
         <bpmndi:BPMNLabel />
@@ -132,8 +125,15 @@
         <dc:Bounds x="770" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13qasg7_di" bpmnElement="Activity_01n3x3h">
+        <dc:Bounds x="370" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1pjcjl8_di" bpmnElement="Event_1pjcjl8">
         <dc:Bounds x="922" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01as277_di" bpmnElement="Event_01as277">
+        <dc:Bounds x="282" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_01lfhh6_di" bpmnElement="Flow_01lfhh6">
         <di:waypoint x="318" y="120" />

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:uengine="http://uengine" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0bfky9r" name="test/test" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="16.4.0">
+  <bpmn:collaboration id="Collaboration_1h6tb6w">
+    <bpmn:participant id="Participant_165r4td" name="고장신고" processRef="Process_1oscmbn">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1oscmbn" isExecutable="true">
+    <bpmn:extensionElements>
+      <uengine:properties>
+        <uengine:json>{"definitionName":"test/test","version":null}</uengine:json>
+        <uengine:variable name="임시저장변수" type="Text">
+          <uengine:json>{"defaultValue":"","name":"임시저장변수","type":"Text"}</uengine:json>
+        </uengine:variable>
+        <uengine:variable name="테스트 폼" type="Form">
+          <uengine:json>{"defaultValue":{"_type":"org.uengine.contexts.HtmlFormContext","formDefId":"서브프로세스 활용/고장내용M","filePath":"서브프로세스 활용/고장내용M.form"}}</uengine:json>
+        </uengine:variable>
+      </uengine:properties>
+    </bpmn:extensionElements>
+    <bpmn:laneSet id="LaneSet_01dabo1">
+      <bpmn:lane id="Lane_0c5r2nv" name="신고자">
+        <bpmn:extensionElements>
+          <uengine:properties>
+            <uengine:json>{"roleResolutionContext":{"_type":"org.uengine.five.overriding.IAMRoleResolutionContext","scope":"manager"}}</uengine:json>
+          </uengine:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>Event_0ny0on5</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1gsxyw5</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_0297msh</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_0kydkeu" name="관리자">
+        <bpmn:extensionElements>
+          <uengine:properties>
+            <uengine:json>{"roleResolutionContext":{"_type":"org.uengine.five.overriding.IAMRoleResolutionContext","scope":"manager"}}</uengine:json>
+          </uengine:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>Event_0tu0p27</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1qpz5ts</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Event_0ny0on5">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_1g0lk2g</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0f5cvw2" sourceRef="Activity_1gsxyw5" targetRef="Activity_1qpz5ts" />
+    <bpmn:userTask id="Activity_1gsxyw5" name="고장신고">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"신고내용","className":"Array","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"임시저장변수"},"direction":"out","variable":{"name":"[Arguments].신고내용","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1g0lk2g</bpmn:incoming>
+      <bpmn:outgoing>Flow_0f5cvw2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_15nhx2x" sourceRef="Activity_1qpz5ts" targetRef="Activity_0297msh" />
+    <bpmn:endEvent id="Event_0tu0p27">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0tw2fiq</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0tw2fiq" sourceRef="Activity_0297msh" targetRef="Event_0tu0p27" />
+    <bpmn:userTask id="Activity_0297msh" name="처리확인">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"처리결과","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"[Arguments].처리결과"},"direction":"out","variable":{"name":"임시저장변수","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_15nhx2x</bpmn:incoming>
+      <bpmn:outgoing>Flow_0tw2fiq</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:callActivity id="Activity_1qpz5ts" name="고장접수">
+      <bpmn:extensionElements>
+        <uengine:properties>
+          <uengine:json>{"variableBindings":[{"direction":"IN-OUT","variable":{"name":"임시저장변수"},"argument":{"text":"고장"},"split":false}],"roleBindings":[],"definitionId":"매핑테스트/고장신고.bpmn","forEachVariable":{"defaultValue":"","name":"임시저장변수","type":"java.lang.String"}}</uengine:json>
+        </uengine:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0f5cvw2</bpmn:incoming>
+      <bpmn:outgoing>Flow_15nhx2x</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_1g0lk2g" sourceRef="Event_0ny0on5" targetRef="Activity_1gsxyw5" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1h6tb6w">
+      <bpmndi:BPMNShape id="Participant_165r4td_di" bpmnElement="Participant_165r4td" isHorizontal="false">
+        <dc:Bounds x="390" y="130" width="300" height="698" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0kydkeu_di" bpmnElement="Lane_0kydkeu" isHorizontal="false">
+        <dc:Bounds x="540" y="160" width="150" height="668" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0c5r2nv_di" bpmnElement="Lane_0c5r2nv" isHorizontal="false">
+        <dc:Bounds x="390" y="160" width="150" height="668" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ny0on5_di" bpmnElement="Event_0ny0on5">
+        <dc:Bounds x="442" y="212" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0gsjof1_di" bpmnElement="Activity_1gsxyw5">
+        <dc:Bounds x="410" y="300" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0tu0p27_di" bpmnElement="Event_0tu0p27">
+        <dc:Bounds x="602" y="732" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_10kz2t9_di" bpmnElement="Activity_0297msh">
+        <dc:Bounds x="410" y="590" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zflmsd_di" bpmnElement="Activity_1qpz5ts">
+        <dc:Bounds x="570" y="450" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0f5cvw2_di" bpmnElement="Flow_0f5cvw2">
+        <di:waypoint x="460" y="380" />
+        <di:waypoint x="460" y="415" />
+        <di:waypoint x="620" y="415" />
+        <di:waypoint x="620" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15nhx2x_di" bpmnElement="Flow_15nhx2x">
+        <di:waypoint x="620" y="530" />
+        <di:waypoint x="620" y="560" />
+        <di:waypoint x="460" y="560" />
+        <di:waypoint x="460" y="590" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tw2fiq_di" bpmnElement="Flow_0tw2fiq">
+        <di:waypoint x="460" y="670" />
+        <di:waypoint x="460" y="701" />
+        <di:waypoint x="620" y="701" />
+        <di:waypoint x="620" y="732" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g0lk2g_di" bpmnElement="Flow_1g0lk2g">
+        <di:waypoint x="478" y="230" />
+        <di:waypoint x="620" y="230" />
+        <di:waypoint x="620" y="340" />
+        <di:waypoint x="510" y="340" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
