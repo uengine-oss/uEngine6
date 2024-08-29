@@ -363,11 +363,29 @@ public class FormActivity extends HumanActivity {
 				if (value instanceof HtmlFormContext) {
 					formData = (HtmlFormContext) value;
 				} else {
-					formData.setBeanProperty(key, value);
+					if (value instanceof ProcessVariableValue) {
+						ProcessVariableValue pvv = (ProcessVariableValue) value;
+						pvv.beforeFirst();
+						ArrayList<Serializable> list = new ArrayList<Serializable>();
+						do {
+							Serializable pvvValue = pvv.getValue();
+							if (pvvValue instanceof HtmlFormContext) {
+								HtmlFormContext formContext = (HtmlFormContext) pvvValue;
+								list.add((Serializable) formContext.getValueMap());
+							} else {
+								list.add(pvvValue);
+							}
+						} while (pvv.next());
+						formData.setBeanProperty(key, list);
+					} else {
+						formData.setBeanProperty(key, value);
+					}
 				}
-				Object formValueInMulti = formData.getBeanProperty("고장확인폼");
+				Object formValueInMulti = formData.getBeanProperty(firstPart);
 				if (formValueInMulti != null) {
-					formData.setValueMap((Map) formValueInMulti);
+					if (formValueInMulti instanceof Map) {
+						formData.setValueMap((Map) formValueInMulti);
+					}
 				}
 
 				mappingInValues.put(firstPart, formData);

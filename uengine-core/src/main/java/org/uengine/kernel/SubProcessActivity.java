@@ -654,17 +654,22 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
                             join = spParameterContext.isSplit();
                         }
 
-                        join = join || vb.getVariable() == getForEachVariable();
+                        join = join || vb.getVariable().equals(getForEachVariable());
 
                         if (join) {
                             Serializable valueOfSP = subProcessInstance.get("", vb.getArgument().getText());
                             instance.add("", vb.getVariable().getName(), valueOfSP, indexOfSP);// process
                             // multiple pv
                         } else {
-                            ProcessVariableValue valueOfSP = subProcessInstance.getMultiple("",
-                                    vb.getArgument().getText());
-                            valueOfSP.setName(vb.getVariable().getName());
-                            instance.set("", valueOfSP);
+                            if (getForEachVariable() != null && vb.getVariable().equals(getForEachVariable())) {
+                                ProcessVariableValue valueOfSP = subProcessInstance.getMultiple("",
+                                        vb.getArgument().getText());
+                                valueOfSP.setName(vb.getVariable().getName());
+                                instance.set("", valueOfSP);
+                            } else {
+                                Serializable valueOfSP = subProcessInstance.get("", vb.getArgument().getText());
+                                instance.set("", vb.getVariable().getName(), valueOfSP);
+                            }
                         }
                     } catch (Exception e) {
                         UEngineException richException = new UEngineException(

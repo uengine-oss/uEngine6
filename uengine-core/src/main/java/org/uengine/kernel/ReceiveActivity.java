@@ -242,6 +242,14 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
                     value = instance.getBeanProperty(srcVariableName);
                 }
 
+                if (value instanceof ProcessVariableValue) {
+                    ArrayList<Object> valueList = new ArrayList<>();
+                    do {
+                        valueList.add(((ProcessVariableValue) value).getValue());
+                    } while (((ProcessVariableValue) value).next());
+                    value = valueList;
+                }
+
                 if (mappingInValues.containsKey(key)) {
                     mappingInValues.put(key, value);
                 }

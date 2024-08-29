@@ -73,7 +73,7 @@
     <bpmn:userTask id="Activity_0297msh" name="처리확인">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"eventSynchronization":{"eventType":"","attributes":[{"name":"처리결과","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"[Arguments].처리결과"},"direction":"out","variable":{"name":"임시저장변수","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.HumanActivity"}</uengine:json>
+          <uengine:json>{"variableForHtmlFormContext":{"name":"테스트 폼"},"eventSynchronization":{"eventType":"","attributes":[{"name":"처리결과","className":"String","isKey":false,"isCorrKey":false}],"mappingContext":{"mappingElements":[{"argument":{"text":"테스트 폼.고장목록"},"direction":"out","variable":{"name":"임시저장변수","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_15nhx2x</bpmn:incoming>
@@ -82,7 +82,7 @@
     <bpmn:callActivity id="Activity_1qpz5ts" name="고장접수">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableBindings":[{"direction":"IN-OUT","variable":{"name":"임시저장변수"},"argument":{"text":"고장"},"split":false}],"roleBindings":[],"definitionId":"매핑테스트/고장신고.bpmn","forEachVariable":{"defaultValue":"","name":"임시저장변수","type":"java.lang.String"}}</uengine:json>
+          <uengine:json>{"variableBindings":[{"direction":"IN-OUT","variable":{"name":"임시저장변수"},"argument":{"text":"고장"},"split":false}],"roleBindings":[],"definitionId":"test/testCall.bpmn","forEachVariable":{"defaultValue":"","name":"임시저장변수","type":"java.lang.String"}}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0f5cvw2</bpmn:incoming>
