@@ -1,5 +1,7 @@
 package org.uengine.five.service;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.MediaType;
@@ -58,6 +60,6 @@ public interface DefinitionService {
     @RequestMapping(value = "/definition/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadDefinition(@RequestParam("file") MultipartFile file);
 
-    @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
-    public RepresentationModel listDefinitionVersions(String basePath) throws Exception;
+    @RequestMapping(value = "versions/**", method = RequestMethod.GET)
+    public RepresentationModel listDefinitionVersions(HttpServletRequest request) throws Exception;
 }

@@ -106,14 +106,23 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     }
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
-    @Override
+    @Override   
     public CollectionModel<DefinitionResource> listDefinition(String basePath) throws Exception {
         return _listDefinition(RESOURCE_ROOT, basePath);
     }
 
-    @RequestMapping(value = DEFINITION + "/{defId:.+}/versions", method = RequestMethod.GET)
-    @Override
-    public CollectionModel<DefinitionResource> listDefinitionVersions(@PathVariable("defId") String defId) throws Exception {
+    @RequestMapping(value = "/versions/**", method = RequestMethod.GET)
+    public CollectionModel<DefinitionResource> listDefinitionVersions(HttpServletRequest request) throws Exception {
+        String fullPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String basePath = "/versions/";
+        String defId = fullPath.substring(basePath.length());
+        
+        // 디버깅 로그 추가
+        System.out.println("fullPath: " + fullPath);
+        System.out.println("basePath: " + basePath);
+        System.out.println("defId: " + defId);
+        // relativePath를 사용하여 버전을 가져오는 로직
+        // String versions = getVersionsForPath(relativePath);
         return _listDefinitionVersions("archive/", defId);
     }
 
