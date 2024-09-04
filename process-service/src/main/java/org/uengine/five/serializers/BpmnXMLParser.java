@@ -398,6 +398,9 @@ public class BpmnXMLParser {
                         if (processDefinition instanceof ProcessDefinition) {
                             ((ProcessDefinition) processDefinition)
                                     .setInstanceNamePattern(definition.getInstanceNamePattern());
+                            processDefinition.setName(definition.getDefinitionName());
+                            ((ProcessDefinition)processDefinition).setVersion(definition.getVersion());
+                            
                         }
                     }
                 }

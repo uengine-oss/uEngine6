@@ -496,8 +496,7 @@ public class SubProcess extends ScopeActivity {
 
         } else if (getForEachVariable() != null) {
 
-            instance.addDebugInfo("[SubProcessActivity] Splitting multiple instances by Variable: ",
-                    getForEachVariable());
+            instance.addDebugInfo("[SubProcessActivity] Splitting multiple instances by Variable: ", getForEachVariable());
 
             ProcessVariableValue pvv = getForEachVariable().getMultiple(instance, "");
             instance.addDebugInfo("  values are: ", pvv);
@@ -815,21 +814,22 @@ public class SubProcess extends ScopeActivity {
             }
     }
 
+    // TODO: 제거 해야 함 - 메서드 변경경
     public Vector getSubProcesses(ProcessInstance instance) throws Exception {
         Hashtable options = new Hashtable();
         options.put("ptc", instance.getProcessTransactionContext());
 
         Vector spIds = getSubprocessIds(instance, SUBPROCESS_INST_ID);
         Vector subProcesses = new Vector();
-
+        ProcessInstance pi = AbstractProcessInstance.create();
         for (int indexOfSP = 0; indexOfSP < spIds.size(); indexOfSP++) {
             String subProcessId = (String) spIds.elementAt(indexOfSP);
-
-            ProcessInstance sp = AbstractProcessInstance.create().getInstance(subProcessId, options);
-            subProcesses.add(sp);
+            ProcessInstance spInstance = pi.getInstance(subProcessId);
+            subProcesses.add(spInstance);
         }
 
         return subProcesses;
+        // return Collections.unmodifiableVector(subProcesses);
     }
 
     protected ProcessInstance initiateSubProcess(ProcessInstance instance, RoleMapping currentRoleMapping,
@@ -1027,13 +1027,19 @@ public class SubProcess extends ScopeActivity {
     //
     
     public void compensate(ProcessInstance instance) throws Exception {
+        Vector subProcesses = getSubprocessIds(instance);
+        // getSubProcesses methods 확인 필요.
         // Vector subProcesses = getSubProcesses(instance);
-
-        // for (int i = 0; i < subProcesses.size(); i++) {
-        //     ProcessInstance theSP = (ProcessInstance) subProcesses.get(i);
-
-        //     theSP.getProcessDefinition().compensate(theSP);
-        // }
+        for (int i = 0; i < subProcesses.size(); i++) {
+            String theSP = (String) subProcesses.get(i);
+            List<Activity> childActivities = getChildActivities();
+            for (int y = 0; y < childActivities.size(); y++) {
+                Activity act = childActivities.get(y);
+                ProcessInstance pi = AbstractProcessInstance.create().getInstance(theSP);
+                instance.setExecutionScopeContext(pi.getExecutionScopeContext());
+                act.compensate(instance);
+            }
+        }
 
         // super.compensate(instance);
     }

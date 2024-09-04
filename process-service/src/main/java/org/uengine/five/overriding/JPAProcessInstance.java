@@ -201,12 +201,14 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
         // applicationEventPublisher.publishEvent(new ProcessInstanceChangeEvent(this));
     }
 
+
+
     @Override
     public ProcessDefinition getProcessDefinition() throws Exception {
         ProcessDefinition definition = super.getProcessDefinition();
         if (definition == null) {
-            setProcessDefinition((ProcessDefinition) definitionService.getDefinition(processInstanceEntity.getDefId()));
-        }
+            setProcessDefinition((ProcessDefinition) definitionService.getDefinition(processInstanceEntity.getDefId(),processInstanceEntity.getDefVerId()));
+        }   
         return super.getProcessDefinition();
     }
 

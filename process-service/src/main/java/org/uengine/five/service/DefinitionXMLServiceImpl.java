@@ -19,17 +19,20 @@ public class DefinitionXMLServiceImpl implements DefinitionXMLService {
     ResourceManager resourceManager;
 
     @Override
-    public String getXMLDefinition(String definitionPath, boolean includeDependencies) {
+    public String getXMLDefinition(String definitionPath, String version) {
         final String RESOURCE_ROOT = "definitions";
 
         try {
-            if (definitionPath.indexOf(".") == -1) {
+            if (!definitionPath.endsWith(".bpmn")) {
                 definitionPath = definitionPath + ".bpmn";
             }
-
-            if(!(definitionPath.startsWith(RESOURCE_ROOT) || definitionPath.startsWith("/archive"))) {
-                definitionPath = RESOURCE_ROOT + "/" + definitionPath;
+            if(version != null && !version.equals("dev")) {
+                definitionPath = "/archive/" + definitionPath + "/" + version + ".bpmn";
+            } else {
+                if(!definitionPath.startsWith(RESOURCE_ROOT))
+                    definitionPath = RESOURCE_ROOT + "/" + definitionPath;
             }
+            
 
             System.out.println(
                     new File(definitionPath).getAbsolutePath());

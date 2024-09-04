@@ -22,6 +22,6 @@ public interface DefinitionXMLService {
     // @RequestMapping(value = DefinitionService.DEFINITION + "/xml/{defPath}",
     // method = RequestMethod.GET, produces = "application/xml;charset=UTF-8")
     public String getXMLDefinition(@PathVariable("defPath") String definitionPath,
-            @RequestParam("production") boolean production) throws Exception;
+            @RequestParam("production") String version) throws Exception;
 
 }

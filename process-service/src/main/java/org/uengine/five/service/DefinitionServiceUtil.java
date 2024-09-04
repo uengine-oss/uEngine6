@@ -17,15 +17,16 @@ public class DefinitionServiceUtil {
     static BpmnXMLParser bpmnXMLParser = new BpmnXMLParser();
 
     public Object getDefinition(String defPath) throws Exception {
-        return getDefinition(defPath, false);
+        return getDefinition(defPath, null);
     }
 
-    public Object getDefinition(String defPath, boolean production) throws Exception {
+    public Object getDefinition(String defPath, String version) throws Exception {
 
-        if (defPath.indexOf(".bpmn") == -1) {
+        if (!defPath.endsWith(".bpmn")) {
             defPath = defPath + ".bpmn";
         }
-        Object returned = definitionService.getXMLDefinition(defPath, production);
+        
+        Object returned = definitionService.getXMLDefinition(defPath, version);
         String xml = (String) returned;
 
         ProcessDefinition processDefinition = bpmnXMLParser.parse(xml);

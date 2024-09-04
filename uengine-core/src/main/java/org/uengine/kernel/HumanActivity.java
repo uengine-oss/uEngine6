@@ -442,6 +442,11 @@ public class HumanActivity extends ReceiveActivity {
 
 		if (instance != null) {
 			kpv.setProperty(KeyedParameter.INSTRUCTION, getExtraMessage(instance));
+            if(instance.getProcessDefinition().getVersion() == null) {
+                kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, "dev");
+            } else {
+                kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, instance.getProcessDefinition().getVersion());
+            }
 			kpv.setProperty(KeyedParameter.INSTANCEID, instance.getInstanceId());
 			kpv.setProperty(KeyedParameter.ROOTINSTANCEID, instance.getRootProcessInstanceId());
 			kpv.setProperty(KeyedParameter.PROCESSDEFINITION, instance.getProcessDefinition().getId());

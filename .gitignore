@@ -1,7 +1,7 @@
 target/
 !.mvn/wrapper/maven-wrapper.jar
 back-office/node_modules/
-definitions/instances/
+definitions/
 ### STS ###
 .apt_generated
 .classpath
@@ -9,7 +9,9 @@ definitions/instances/
 .project
 .settings
 .springBeans
-
+instances/
+archive/
+test/
 ### IntelliJ IDEA ###
 .idea
 *.iws

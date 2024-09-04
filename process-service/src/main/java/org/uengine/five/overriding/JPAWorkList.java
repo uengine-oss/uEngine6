@@ -132,7 +132,7 @@ public class JPAWorkList implements WorkList {
             wl.setRoleName(""+parameterMap.get("roleName"));
             wl.setRefRoleName(""+parameterMap.get("referenceRoleName"));
             wl.setResName(""+parameterMap.get("resourceName"));
-
+            wl.setDefVerId(""+parameterMap.get(KeyedParameter.PROCESSDEFINITIONVERSION));
 //            int i=1;
 //            while(parameterMap.containsKey("dispatchParam" + i)){
 //                wl.setDispatchParam(" +i, ""+parameterMap.get("dispatchParam" + i));

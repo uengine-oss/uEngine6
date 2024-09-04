@@ -48,6 +48,9 @@ public class WorklistEntity {//implements WorkListDAO {
     String refRoleName;
     String resName;
     String defId;
+    String defVerId;
+    
+
     String defName;
     String trcTag;
     String tool;
@@ -142,7 +145,12 @@ public class WorklistEntity {//implements WorkListDAO {
         this.resName = resName;
     }
 
-
+    public String getDefVerId() {
+        return defVerId;
+    }
+    public void setDefVerId(String defVerId) {
+        this.defVerId = defVerId;
+    }
 
     public String getDefId() {
         return defId;

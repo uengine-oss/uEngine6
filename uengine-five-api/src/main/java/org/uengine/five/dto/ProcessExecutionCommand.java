@@ -9,14 +9,13 @@ public class ProcessExecutionCommand implements Serializable {
     private String processDefinitionId;
 
     private String instanceName;
-    private boolean isSimulation;
+    private boolean simulation;
 
     private RoleMapping[] roleMappings;
     private ProcessVariableValue[] processVariableValues;
 
     private String correlationKeyValue;
 
-  
     public String getCorrelationKeyValue() {
         return correlationKeyValue;
     }
@@ -57,12 +56,12 @@ public class ProcessExecutionCommand implements Serializable {
         this.instanceName = instanceName;
     }
 
-    public boolean isSimulation() {
-        return isSimulation;
+    public boolean getSimulation() {
+        return simulation;
     }
 
-    public void setSimulation(boolean isSimulation) {
-        this.isSimulation = isSimulation;
+    public void setSimulation(boolean simulation) {
+        this.simulation = simulation;
     }
 
 }

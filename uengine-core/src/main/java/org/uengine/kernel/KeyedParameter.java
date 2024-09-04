@@ -29,6 +29,7 @@ public class KeyedParameter implements Serializable{
 	public final static String DISPATCHINGOPTION 				= "dispatchingOption";
 	public final static String PARTYPE 									= "parType";
 	public final static String CO2EMISSION  						= "co2Emission";
+    public final static String PROCESSDEFINITIONVERSION  						= "version";
 	
 	String key;
 	Object value;

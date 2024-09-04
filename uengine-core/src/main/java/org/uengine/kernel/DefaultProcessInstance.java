@@ -898,7 +898,10 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		throw new UEngineException("You can't access root process in in-memory process.");
 	}
 
+    String definitionVersionId;
+
 	public void setDefinitionVersionId(String verId) throws Exception {
+        definitionVersionId = verId;
 	}
 
 	public boolean isNew() {

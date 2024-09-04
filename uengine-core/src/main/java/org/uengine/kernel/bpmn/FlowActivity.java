@@ -499,7 +499,19 @@ public class FlowActivity extends ComplexActivity {
         } else if (command.equals(CHILD_STOPPED)) {
             System.out.println(command);
         } else if (command.equals(CHILD_RESUMED)) {
-            super.onEvent(command, instance, payload);
+            // super.onEvent(command, instance, payload);
+            ComplexActivity parentActivity = (ComplexActivity)this;
+            do{
+                parentActivity.setStatus(instance, Activity.STATUS_RUNNING);
+                parentActivity = (ComplexActivity)parentActivity.getParentActivity();
+            }while(parentActivity!=null);
+            //
+
+            Activity childActivity = (Activity)payload;
+
+            // executeActivity(instance); //resume flow control from the suspended step
+            queueActivity(childActivity, instance);
+            // super.onEvent(command, instance, payload);//replicate this msg to the super class
         } else if (command.equals(CHILD_FAULT) || command.equals(ACTIVITY_FAULT)) {
             super.onEvent(command, instance, payload);
         }

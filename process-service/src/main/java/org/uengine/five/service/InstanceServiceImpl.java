@@ -13,9 +13,12 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -128,16 +131,20 @@ public class InstanceServiceImpl implements InstanceService {
         // FIXME: remove me
         String userId = SecurityAwareServletFilter.getUserId();
         GlobalContext.setUserId(userId);
-        //
 
-        boolean simulation = command.isSimulation();
+        boolean simulation = command.getSimulation();
         String filePath = command.getProcessDefinitionId();
         String corrKeyValue = command.getCorrelationKeyValue();
 
         Object definition;
         try {
             String defPath = java.net.URLDecoder.decode(filePath, "UTF-8");
-            definition = definitionService.getDefinition(defPath, !simulation); // if simulation time, use the version
+            if(simulation) {
+                definition = definitionService.getDefinition(defPath, null); // if simulation time, use the version
+            } else {
+                String version = findHighestNumberedFileName(defPath);
+                definition = definitionService.getDefinition(defPath, version);
+            } 
                                                                                 // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
@@ -168,7 +175,8 @@ public class InstanceServiceImpl implements InstanceService {
                 if (corrKeyValue != null) {
                     ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKeyValue);
                 }
-
+                ((JPAProcessInstance) instance).getProcessInstanceEntity().setDefVerId(processDefinition.getVersion());
+                // instance.setDefinitionVersionId(processDefinition.getVersion());
                 instance.execute();
                 return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
             } catch (Exception e) {
@@ -176,13 +184,42 @@ public class InstanceServiceImpl implements InstanceService {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error executing process instance: " + e.getMessage(), e);
             }
-
         }
         return null;
-
     }
 
+    private String findHighestNumberedFileName(String defPath) {
+        if(!defPath.endsWith(".bpmn")) {
+            defPath = defPath + ".bpmn";
+        }
+        File dir = new File("archive/" + defPath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
 
+        File[] files = dir.listFiles();
+        if (files == null || files.length == 0) {
+            return null;
+        }
+
+        String highestNumberedFileName = null;
+        int highestNumber = -1;
+
+        for (File file : files) {
+            String fileName = file.getName();
+            try {
+                int number = Integer.parseInt(fileName.replaceAll("\\D", ""));
+                if (number > highestNumber) {
+                    highestNumber = number;
+                    highestNumberedFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+                }
+            } catch (NumberFormatException e) {
+                // Ignore files that do not contain a number
+            }
+        }
+
+        return highestNumberedFileName;
+    }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
     @ProcessTransactional
@@ -760,7 +797,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         } else { // if no instances running, create new instance:
             Object definition = definitionService.getDefinition(serviceEndpointEntity.getEvents().get(0).getDefId(),
-                    true);
+                    null);
 
             ProcessDefinition processDefinition = (ProcessDefinition) definition;
 
@@ -857,7 +894,7 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         String defId = worklistEntity.getDefId();
-        ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defId);
+        ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defId, worklistEntity.getDefVerId());
         HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
 
         WorkItemResource workItem = new WorkItemResource();
@@ -970,45 +1007,27 @@ public class InstanceServiceImpl implements InstanceService {
                 writer.write(workItemJson);
             } else {
 
-                Map<String, Object> existObj = readFromFile(filePath);
-                int index = existObj.size();
-                existObj.put(String.valueOf(index), workItem.getParameterValues());
-                // for (Map.Entry<String, Object> entry :
-                // workItem.getParameterValues().entrySet()) {
-                // // existObj.(entry.getKey(), entry.getValue());
+                Set<Object> existObj = readFromFile(filePath);
+                existObj.removeIf(obj -> obj instanceof Map && ((Map) obj).containsKey("_type"));
+                // Ensure no duplicate data
+                existObj.add(workItem.getParameterValues());
+                Set<Object> uniqueValues = new LinkedHashSet<>(existObj);
 
-                // Remove entries with "_type" as key
-                // existObj.entrySet().removeIf(entry -> "_type".equals(entry.getKey()));
-                // Remove "_type" key from each value map
-                for (Map.Entry<String, Object> entry : existObj.entrySet()) {
-                    if (entry.getValue() instanceof Map) {
-                        ((Map) entry.getValue()).remove("_type");
-                    }
-                }
+                // Clear the existing set and add back the unique values
+                existObj.clear();
+                existObj.addAll(uniqueValues);
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(file, existObj);
 
-                // Remove duplicates from existObj
-                Map<String, Object> uniqueObj = new HashMap<>();
-                for (Map.Entry<String, Object> entry : existObj.entrySet()) {
-                    if (!uniqueObj.containsValue(entry.getValue())) {
-                        uniqueObj.put(entry.getKey(), entry.getValue());
-                    }
-                }
-                existObj = uniqueObj;
+                // "errorList" : [ "java.util.ArrayList", [ "aa", "bb" ] ]
+                
 
-                // Remove duplicates from existObj
-                // Map<String, Object> uniqueObj = new HashMap<>();
-                // for (   Map.Entry<String, Object> entry : existObj.entrySet()) {
-                //     if (!uniqueObj.containsValue(entry.getValue())) {
-                //         uniqueObj.put(entry.getKey(), entry.getValue());
-                //     }
-                // }
-                // existObj = uniqueObj;
-                objectMapper.writeValue(file, existObj);
+                // objectMapper.writeValue(file, existObj);
             }
         }
     }
 
-    public Map<String, Object> readFromFile(String filePath) throws IOException {
+    public Set<Object> readFromFile(String filePath) throws IOException {
         File file = new File("test/" + filePath);
         if (!file.exists()) {
             throw new FileNotFoundException("File not found: " + filePath);
@@ -1023,10 +1042,10 @@ public class InstanceServiceImpl implements InstanceService {
         String fileContent = contentBuilder.toString();
         ObjectMapper objectMapper = new ObjectMapper();
         if (fileContent.length() == 0) {
-            Map<String, Object> result = new HashMap<>();
+            Set<Object> result = new HashSet<>();
             return result;
         } else {
-            return objectMapper.readValue(fileContent, new TypeReference<Map<String, Object>>() {
+            return objectMapper.readValue(fileContent, new TypeReference<Set<Object>>() {
             });
         }
 
@@ -1201,7 +1220,8 @@ public class InstanceServiceImpl implements InstanceService {
 
         Object definition;
         try {
-            definition = definitionService.getDefinition(defId, false);
+            String version = findHighestNumberedFileName(defId);
+            definition = definitionService.getDefinition(defId, version);
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -1286,6 +1306,7 @@ public class InstanceServiceImpl implements InstanceService {
             @RequestHeader("isSimulate") String isSimulate) throws Exception {
         try {
             ProcessExecutionCommand processExecutionCommand = command.getProcessExecutionCommand();
+            processExecutionCommand.setSimulation(false);
             InstanceResource instance = start(processExecutionCommand);
 
             if (instance == null)
