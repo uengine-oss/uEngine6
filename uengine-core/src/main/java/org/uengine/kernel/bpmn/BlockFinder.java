@@ -74,10 +74,20 @@ public class BlockFinder {
         this.startEvent = findStartEvent(joinActivity);
     }
 
-    public static Activity findStartEvent(Activity activity) {
-        if (activity == null) {
+    public Activity findStartEvent(Activity activity) {
+        return findStartEventRecursive(activity, new HashSet<>());
+    }
+
+    private Activity findStartEventRecursive(Activity activity, Set<String> visited) {
+        if (this.startEvent != null) {
+            return this.startEvent;
+        }
+
+        if (activity == null || visited.contains(activity.getTracingTag())) {
             return null;
         }
+
+        visited.add(activity.getTracingTag());
 
         if (activity instanceof StartEvent) {
             return activity;
@@ -85,7 +95,7 @@ public class BlockFinder {
 
         for (SequenceFlow incomingFlow : activity.getIncomingSequenceFlows()) {
             Activity sourceActivity = incomingFlow.getSourceActivity();
-            Activity startEvent = findStartEvent(sourceActivity);
+            Activity startEvent = findStartEventRecursive(sourceActivity, visited);
             if (startEvent != null)
                 return startEvent;
         }
