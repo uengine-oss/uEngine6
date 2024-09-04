@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -133,6 +134,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definition.setVersion(definition.name.replace(".bpmn", ""));
             definitions.add(definition);
         }
+
+        definitions.sort(Comparator.comparing(DefinitionResource::getVersion));
 
         CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
         return halResources;
@@ -755,14 +758,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = DEFINITION
             + "/xml/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public String getXMLDefinition(@PathVariable("defPath") String definitionPath,
-            @RequestParam("production") boolean production) throws Exception {
+            @RequestParam("version") String version) throws Exception {
 
         definitionPath = definitionPath.startsWith(RESOURCE_ROOT) ? definitionPath.replace(RESOURCE_ROOT, "")
                 : definitionPath;
         definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
 
         // replace to production version if requested:
-        if (production) {
+        if (version != null) {
             VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
             versionManager.load("codi", null);
 
@@ -782,9 +785,9 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String definitionPath = path.substring((DEFINITION + "/xml").length() + 1);
 
-        boolean production = "true".equals(request.getParameter("production"));
+        String version = request.getParameter("version");
 
-        return getXMLDefinition(definitionPath, production);
+        return getXMLDefinition(definitionPath, version);
 
     }
 
