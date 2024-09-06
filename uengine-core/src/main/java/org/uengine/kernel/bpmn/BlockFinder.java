@@ -107,12 +107,18 @@ public class BlockFinder {
         if (startEvent == null)
             return -1;
 
-        return calculateDepth(startEvent, activity, 0, new HashSet<>());
+        Map<Activity, Integer> depthCache = new HashMap<>();
+        return calculateDepth(startEvent, activity, 0, new HashSet<>(), depthCache);
     }
 
-    private int calculateDepth(Activity current, Activity target, int depth, Set<String> visited) {
+    private int calculateDepth(Activity current, Activity target, int depth, Set<String> visited,
+            Map<Activity, Integer> depthCache) {
         if (current == null || visited.contains(current.getTracingTag())) {
             return -1;
+        }
+
+        if (depthCache.containsKey(current)) {
+            return depthCache.get(current);
         }
 
         if (current.equals(target))
@@ -124,11 +130,15 @@ public class BlockFinder {
 
         for (SequenceFlow outgoingFlow : current.getOutgoingSequenceFlows()) {
             Activity nextActivity = outgoingFlow.getTargetActivity();
-            int result = calculateDepth(nextActivity, target, depth + 1, new HashSet<>(visited));
+            int result = calculateDepth(nextActivity, target, depth + 1, visited, depthCache);
             if (result > maxDepth) {
                 maxDepth = result;
             }
         }
+
+        depthCache.put(current, maxDepth);
+
+        visited.remove(current.getTracingTag());
 
         return maxDepth;
     }
@@ -138,7 +148,6 @@ public class BlockFinder {
     Map<String, Integer> distancesByActivity = new HashMap<String, Integer>();
     Map<String, Integer> visitCount = new HashMap<String, Integer>();
     Stack<Activity> visitActivityStack = new Stack<Activity>();
-    Map<String, Boolean> isFeedbackMap = new HashMap<String, Boolean>();// 피드백 체크용 맵
 
     protected void visitForDepthAndVisitCountSetting(Activity activity) {
 
@@ -158,11 +167,12 @@ public class BlockFinder {
 
                     // find out which link is the feedback link
                     for (SequenceFlow sequenceFlowToSourceActivity : stackActivity.getOutgoingSequenceFlows()) {
+                        if (sequenceFlowToSourceActivity.isFeedback())
+                            continue;
                         if (getDepthFromStartEvent(
                                 sequenceFlowToSourceActivity.getSourceActivity()) > getDepthFromStartEvent(
                                         sequenceFlowToSourceActivity.getTargetActivity())) {
                             sequenceFlowToSourceActivity.setFeedback(true); // mark as feedback link
-                            isFeedbackMap.put(sequenceFlowToSourceActivity.getTracingTag(), true);
                         }
                     }
                 }
@@ -203,8 +213,6 @@ public class BlockFinder {
         visitedActivities.add(activity);
 
         for (SequenceFlow sequenceFlow : activity.getIncomingSequenceFlows()) {
-            // if (sequenceFlow.isFeedback() && !(activity instanceof Gateway))
-            // continue;
             if (sequenceFlow.isFeedback())
                 continue;
 
