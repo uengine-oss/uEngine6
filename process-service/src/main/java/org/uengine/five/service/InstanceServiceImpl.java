@@ -139,13 +139,13 @@ public class InstanceServiceImpl implements InstanceService {
         Object definition;
         try {
             String defPath = java.net.URLDecoder.decode(filePath, "UTF-8");
-            if(simulation) {
+            if (simulation) {
                 definition = definitionService.getDefinition(defPath, null); // if simulation time, use the version
             } else {
                 String version = findHighestNumberedFileName(defPath);
                 definition = definitionService.getDefinition(defPath, version);
-            } 
-                                                                                // under construction
+            }
+            // under construction
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -189,7 +189,7 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     private String findHighestNumberedFileName(String defPath) {
-        if(!defPath.endsWith(".bpmn")) {
+        if (!defPath.endsWith(".bpmn")) {
             defPath = defPath + ".bpmn";
         }
         File dir = new File("archive/" + defPath);
@@ -368,23 +368,22 @@ public class InstanceServiceImpl implements InstanceService {
     @ProcessTransactional(readOnly = true)
     public Map getActivitiesStatus(@PathVariable("instanceId") String instanceId)
             throws Exception {
-            ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
-            Map variables = ((DefaultProcessInstance) instance).getVariables();
-            Map<String, Object> filteredVariables = new HashMap<>();
-            for (Object key : variables.keySet()) {
-                if (key instanceof String) {
-                    String keyStr = (String) key;
-                    if (keyStr.matches("Activity_\\w+:_status:prop")) {
-                        String newKey = keyStr.replace(":_status:prop", "");
-                        filteredVariables.put(newKey, variables.get(key));
-                    }
+        Map variables = ((DefaultProcessInstance) instance).getVariables();
+        Map<String, Object> filteredVariables = new HashMap<>();
+        for (Object key : variables.keySet()) {
+            if (key instanceof String) {
+                String keyStr = (String) key;
+                if (keyStr.matches("Activity_\\w+:_status:prop")) {
+                    String newKey = keyStr.replace(":_status:prop", "");
+                    filteredVariables.put(newKey, variables.get(key));
                 }
             }
-            variables = filteredVariables;
+        }
+        variables = filteredVariables;
 
-            
-            return variables;
+        return variables;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/running", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
@@ -894,7 +893,8 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         String defId = worklistEntity.getDefId();
-        ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defId, worklistEntity.getDefVerId());
+        ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defId,
+                worklistEntity.getDefVerId());
         HumanActivity activity = (HumanActivity) definition.getActivity(worklistEntity.getTrcTag());
 
         WorkItemResource workItem = new WorkItemResource();
@@ -916,8 +916,6 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
 
-        // TODO: mappingIn의 결과가 나와야 함
-
         if (workItem.getWorklist().getExecScope() != null) {
             if (instance.getExecutionScopeContext() == null) {
                 ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
@@ -937,6 +935,12 @@ public class InstanceServiceImpl implements InstanceService {
 
         if (parameterValues.size() > 0) {
             workItem.setParameterValues(parameterValues);
+        }
+
+        if (activity.getStatus(instance).equals(Activity.STATUS_COMPLETED)) {
+            if (workItem.getWorklist().getPayload() instanceof Map) {
+                workItem.setParameterValues((Map<String, Object>) workItem.getWorklist().getPayload());
+            }
         }
 
         workItem.getWorklist().setProcessInstance(null); // disconnect recursive json path
@@ -1020,7 +1024,6 @@ public class InstanceServiceImpl implements InstanceService {
                 objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(file, existObj);
 
                 // "errorList" : [ "java.util.ArrayList", [ "aa", "bb" ] ]
-                
 
                 // objectMapper.writeValue(file, existObj);
             }
@@ -1059,7 +1062,7 @@ public class InstanceServiceImpl implements InstanceService {
         Map<String, Object> result = new HashMap<>();
         File folder = new File("test/" + folderPath);
         if (!folder.exists() || !folder.isDirectory()) {
-                    throw new FileNotFoundException("Folder not found: " + folderPath);
+            throw new FileNotFoundException("Folder not found: " + folderPath);
         }
         File[] files = folder.listFiles();
         if (files != null) {
@@ -1110,12 +1113,13 @@ public class InstanceServiceImpl implements InstanceService {
         // if (isSimulate.equals("record")) {
 
         // } else {
-        //     boolean simulate = Boolean.parseBoolean(isSimulate);
-        //     if (simulate) {
-        //         Map<String, Object> readValues = readFromFile(
-        //                 instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json");
-        //         workItem.setParameterValues(readValues);
-        //     }
+        // boolean simulate = Boolean.parseBoolean(isSimulate);
+        // if (simulate) {
+        // Map<String, Object> readValues = readFromFile(
+        // instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag()
+        // + ".json");
+        // workItem.setParameterValues(readValues);
+        // }
         // }
 
         // map the argument list to variables change list
@@ -1123,6 +1127,7 @@ public class InstanceServiceImpl implements InstanceService {
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
+            worklistEntity.setPayload((Serializable) parameterValues);
             // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json",
             // "result: " + instance.getAll().toString() + "}");
             //
@@ -1312,7 +1317,8 @@ public class InstanceServiceImpl implements InstanceService {
             if (instance == null)
                 return null;
             String instId = instance.getInstanceId();
-            List<WorklistEntity> worklistEntity = worklistRepository.findCurrentWorkItemByInstId(Long.parseLong(instId));
+            List<WorklistEntity> worklistEntity = worklistRepository
+                    .findCurrentWorkItemByInstId(Long.parseLong(instId));
 
             if (worklistEntity == null || worklistEntity.isEmpty())
                 return null;
