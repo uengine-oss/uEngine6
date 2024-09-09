@@ -72,6 +72,7 @@ public class BlockFinder {
 
     public void setStartEvent(Activity joinActivity) {
         this.startEvent = findStartEvent(joinActivity);
+        calculateDistancesFromStartEvent();
     }
 
     public Activity findStartEvent(Activity activity) {
@@ -103,44 +104,41 @@ public class BlockFinder {
         return null;
     }
 
-    public int getDepthFromStartEvent(Activity activity) {
-        if (startEvent == null)
-            return -1;
+    private Map<String, Integer> distancesFromStartEvent;
 
-        Map<Activity, Integer> depthCache = new HashMap<>();
-        return calculateDepth(startEvent, activity, 0, new HashSet<>(), depthCache);
+    private void calculateDistancesFromStartEvent() {
+        if (startEvent == null) {
+            return;
+        }
+
+        distancesFromStartEvent = new HashMap<>();
+        calculateDistanceRecursive(startEvent, 0, new HashSet<>());
     }
 
-    private int calculateDepth(Activity current, Activity target, int depth, Set<String> visited,
-            Map<Activity, Integer> depthCache) {
-        if (current == null || visited.contains(current.getTracingTag())) {
+    private void calculateDistanceRecursive(Activity activity, int distance, Set<String> visited) {
+        if (activity == null || visited.contains(activity.getTracingTag())) {
+            return;
+        }
+
+        visited.add(activity.getTracingTag());
+
+        if (!distancesFromStartEvent.containsKey(activity.getTracingTag())
+                || distancesFromStartEvent.get(activity.getTracingTag()) < distance) {
+            distancesFromStartEvent.put(activity.getTracingTag(), distance);
+        }
+
+        for (SequenceFlow outgoingFlow : activity.getOutgoingSequenceFlows()) {
+            Activity targetActivity = outgoingFlow.getTargetActivity();
+            calculateDistanceRecursive(targetActivity, distance + 1, visited);
+        }
+    }
+
+    public int getDepthFromStartEvent(Activity activity) {
+        if (startEvent == null || distancesFromStartEvent == null)
             return -1;
-        }
 
-        if (depthCache.containsKey(current)) {
-            return depthCache.get(current);
-        }
-
-        if (current.equals(target))
-            return depth;
-
-        visited.add(current.getTracingTag());
-
-        int maxDepth = -1;
-
-        for (SequenceFlow outgoingFlow : current.getOutgoingSequenceFlows()) {
-            Activity nextActivity = outgoingFlow.getTargetActivity();
-            int result = calculateDepth(nextActivity, target, depth + 1, visited, depthCache);
-            if (result > maxDepth) {
-                maxDepth = result;
-            }
-        }
-
-        depthCache.put(current, maxDepth);
-
-        visited.remove(current.getTracingTag());
-
-        return maxDepth;
+        Integer depth = distancesFromStartEvent.get(activity.getTracingTag());
+        return depth != null ? depth : -1;
     }
 
     Integer depth = 0;
