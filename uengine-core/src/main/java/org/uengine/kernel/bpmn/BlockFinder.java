@@ -72,6 +72,7 @@ public class BlockFinder {
 
     public void setStartEvent(Activity joinActivity) {
         this.startEvent = findStartEvent(joinActivity);
+        calculateDistancesFromStartEvent();
     }
 
     public Activity findStartEvent(Activity activity) {
@@ -103,34 +104,41 @@ public class BlockFinder {
         return null;
     }
 
-    public int getDepthFromStartEvent(Activity activity) {
-        if (startEvent == null)
-            return -1;
+    private Map<String, Integer> distancesFromStartEvent;
 
-        return calculateDepth(startEvent, activity, 0, new HashSet<>());
+    private void calculateDistancesFromStartEvent() {
+        if (startEvent == null) {
+            return;
+        }
+
+        distancesFromStartEvent = new HashMap<>();
+        calculateDistanceRecursive(startEvent, 0, new HashSet<>());
     }
 
-    private int calculateDepth(Activity current, Activity target, int depth, Set<String> visited) {
-        if (current == null || visited.contains(current.getTracingTag())) {
+    private void calculateDistanceRecursive(Activity activity, int distance, Set<String> visited) {
+        if (activity == null || visited.contains(activity.getTracingTag())) {
+            return;
+        }
+
+        visited.add(activity.getTracingTag());
+
+        if (!distancesFromStartEvent.containsKey(activity.getTracingTag())
+                || distancesFromStartEvent.get(activity.getTracingTag()) < distance) {
+            distancesFromStartEvent.put(activity.getTracingTag(), distance);
+        }
+
+        for (SequenceFlow outgoingFlow : activity.getOutgoingSequenceFlows()) {
+            Activity targetActivity = outgoingFlow.getTargetActivity();
+            calculateDistanceRecursive(targetActivity, distance + 1, visited);
+        }
+    }
+
+    public int getDepthFromStartEvent(Activity activity) {
+        if (startEvent == null || distancesFromStartEvent == null)
             return -1;
-        }
 
-        if (current.equals(target))
-            return depth;
-
-        visited.add(current.getTracingTag());
-
-        int maxDepth = -1;
-
-        for (SequenceFlow outgoingFlow : current.getOutgoingSequenceFlows()) {
-            Activity nextActivity = outgoingFlow.getTargetActivity();
-            int result = calculateDepth(nextActivity, target, depth + 1, new HashSet<>(visited));
-            if (result > maxDepth) {
-                maxDepth = result;
-            }
-        }
-
-        return maxDepth;
+        Integer depth = distancesFromStartEvent.get(activity.getTracingTag());
+        return depth != null ? depth : -1;
     }
 
     Integer depth = 0;
@@ -138,7 +146,6 @@ public class BlockFinder {
     Map<String, Integer> distancesByActivity = new HashMap<String, Integer>();
     Map<String, Integer> visitCount = new HashMap<String, Integer>();
     Stack<Activity> visitActivityStack = new Stack<Activity>();
-    Map<String, Boolean> isFeedbackMap = new HashMap<String, Boolean>();// 피드백 체크용 맵
 
     protected void visitForDepthAndVisitCountSetting(Activity activity) {
 
@@ -158,11 +165,12 @@ public class BlockFinder {
 
                     // find out which link is the feedback link
                     for (SequenceFlow sequenceFlowToSourceActivity : stackActivity.getOutgoingSequenceFlows()) {
+                        if (sequenceFlowToSourceActivity.isFeedback())
+                            continue;
                         if (getDepthFromStartEvent(
                                 sequenceFlowToSourceActivity.getSourceActivity()) > getDepthFromStartEvent(
                                         sequenceFlowToSourceActivity.getTargetActivity())) {
                             sequenceFlowToSourceActivity.setFeedback(true); // mark as feedback link
-                            isFeedbackMap.put(sequenceFlowToSourceActivity.getTracingTag(), true);
                         }
                     }
                 }
@@ -203,8 +211,6 @@ public class BlockFinder {
         visitedActivities.add(activity);
 
         for (SequenceFlow sequenceFlow : activity.getIncomingSequenceFlows()) {
-            // if (sequenceFlow.isFeedback() && !(activity instanceof Gateway))
-            // continue;
             if (sequenceFlow.isFeedback())
                 continue;
 
