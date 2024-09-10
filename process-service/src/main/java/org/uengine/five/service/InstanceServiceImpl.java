@@ -1051,6 +1051,42 @@ public class InstanceServiceImpl implements InstanceService {
 
     }
 
+    @RequestMapping(value = "/test/**", method = RequestMethod.DELETE, produces = "application/json;charset=UTF-8")
+    public void deleteTest(HttpServletRequest request, @RequestBody Map<String, Object> testData) throws IOException {
+        System.out.println(testData);
+        String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        folderPath = folderPath.substring("/test/".length());
+        String filePath = folderPath + "/" + testData.get("tracingTag") + ".json";
+        Set<Object> tmp = readFromFile(filePath);
+        
+        int indexToRemove = (int) testData.get("idx");
+        if (indexToRemove >= 0 && indexToRemove < tmp.size()) {
+            Iterator<Object> iterator = tmp.iterator();
+            int currentIndex = 0;
+            while (iterator.hasNext()) {
+                iterator.next();
+                if (currentIndex == indexToRemove) {
+                    iterator.remove();
+                    break;
+                }
+                currentIndex++;
+            }
+        }
+        
+        File file = new File("test/" + filePath);
+        file.getParentFile().mkdirs(); // Ensure the parent directories exist
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+            if (!file.exists()) {
+                String workItemJson = objectMapper.writeValueAsString(tmp);
+                writer.write(workItemJson);
+            } else {
+                objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(file, tmp);
+            }
+        }
+
+        System.out.println(tmp);
+    }
+
     @RequestMapping(value = "/test/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Map<String, Object> testList(HttpServletRequest request) throws IOException {
         String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
