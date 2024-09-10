@@ -1,9 +1,12 @@
 package org.uengine.five.entity;
 
-
 //import org.metaworks.annotation.RestAssociation;
 
 import javax.persistence.*;
+
+import org.uengine.kernel.ParameterContext;
+
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -11,34 +14,38 @@ import java.util.Date;
  */
 @Entity
 @Table(name = "BPM_WORKLIST")
-public class WorklistEntity {//implements WorkListDAO {
+public class WorklistEntity {// implements WorkListDAO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long taskId;
 
-
     Long instId;
+
     @PrimaryKeyJoinColumn
-        public Long getInstId() {
-            return instId;
-        }
-        public void setInstId(Long instId) {
-            this.instId = instId;
-        }
+    public Long getInstId() {
+        return instId;
+    }
+
+    public void setInstId(Long instId) {
+        this.instId = instId;
+    }
 
     @ManyToOne
-    @PrimaryKeyJoinColumn(name="instId")
+    @PrimaryKeyJoinColumn(name = "instId")
     ProcessInstanceEntity processInstance;
-        public ProcessInstanceEntity getProcessInstance() {
-            return processInstance;
-        }
-        public void setProcessInstance(ProcessInstanceEntity processInstance) {
-            this.processInstance = processInstance;
-        }
+
+    public ProcessInstanceEntity getProcessInstance() {
+        return processInstance;
+    }
+
+    public void setProcessInstance(ProcessInstanceEntity processInstance) {
+        this.processInstance = processInstance;
+    }
 
     @Transient
-    //@RestAssociation(path="/work-item/{taskId}")   //TODO: need to add Resource Link
+    // @RestAssociation(path="/work-item/{taskId}") //TODO: need to add Resource
+    // Link
     String workItem;
 
     String title;
@@ -49,35 +56,34 @@ public class WorklistEntity {//implements WorkListDAO {
     String resName;
     String defId;
     String defVerId;
-    
 
     String defName;
     String trcTag;
     String tool;
     String parameter;
     Number priority;
-    
+
     @Temporal(TemporalType.DATE)
     Date startDate;
-    
+
     @Temporal(TemporalType.DATE)
     Date endDate;
-    
+
     @Temporal(TemporalType.DATE)
     Date saveDate;
-    
+
     @Temporal(TemporalType.DATE)
     Date dueDate;
-    
+
     String status;
     int dispatchOption;
     String dispatchParam1;
     String prevUserName;
     Number rootInstId;
-    
-    @Temporal(TemporalType.DATE)    
+
+    @Temporal(TemporalType.DATE)
     Date readDate;
-    
+
     String actType;
     String absTrcTag;
     Boolean delegated;
@@ -148,6 +154,7 @@ public class WorklistEntity {//implements WorkListDAO {
     public String getDefVerId() {
         return defVerId;
     }
+
     public void setDefVerId(String defVerId) {
         this.defVerId = defVerId;
     }
@@ -360,5 +367,14 @@ public class WorklistEntity {//implements WorkListDAO {
         this.ext5 = ext5;
     }
 
+    Serializable payload;
+
+    public Serializable getPayload() {
+        return payload;
+    }
+
+    public void setPayload(Serializable payload) {
+        this.payload = payload;
+    }
 
 }
