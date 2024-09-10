@@ -1,6 +1,7 @@
 package org.uengine.kernel.bpmn;
 
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
 import java.util.*;
@@ -8,7 +9,7 @@ import java.util.*;
 public class BlockFinder {
 
     Activity joinActivity;
-    Activity startEvent;
+    ProcessDefinition processDefinition;
 
     public Activity getJoinActivity() {
         return joinActivity;
@@ -28,10 +29,14 @@ public class BlockFinder {
 
     private BlockFinder(Activity joinActivity) {
         setJoinActivity(joinActivity);
-        setStartEvent(joinActivity);
+        setProcessDefinition(joinActivity);
         visitForDepthAndVisitCountSetting(joinActivity);
         visitToLineUp(joinActivity);
         findBlockMembers();
+    }
+
+    private void setProcessDefinition(Activity joinActivity) {
+        this.processDefinition = joinActivity.getProcessDefinition();
     }
 
     // protected void find(Activity activity){
@@ -70,77 +75,6 @@ public class BlockFinder {
     //
     // }
 
-    public void setStartEvent(Activity joinActivity) {
-        this.startEvent = findStartEvent(joinActivity);
-        calculateDistancesFromStartEvent();
-    }
-
-    public Activity findStartEvent(Activity activity) {
-        return findStartEventRecursive(activity, new HashSet<>());
-    }
-
-    private Activity findStartEventRecursive(Activity activity, Set<String> visited) {
-        if (this.startEvent != null) {
-            return this.startEvent;
-        }
-
-        if (activity == null || visited.contains(activity.getTracingTag())) {
-            return null;
-        }
-
-        visited.add(activity.getTracingTag());
-
-        if (activity instanceof StartEvent) {
-            return activity;
-        }
-
-        for (SequenceFlow incomingFlow : activity.getIncomingSequenceFlows()) {
-            Activity sourceActivity = incomingFlow.getSourceActivity();
-            Activity startEvent = findStartEventRecursive(sourceActivity, visited);
-            if (startEvent != null)
-                return startEvent;
-        }
-
-        return null;
-    }
-
-    private Map<String, Integer> distancesFromStartEvent;
-
-    private void calculateDistancesFromStartEvent() {
-        if (startEvent == null) {
-            return;
-        }
-
-        distancesFromStartEvent = new HashMap<>();
-        calculateDistanceRecursive(startEvent, 0, new HashSet<>());
-    }
-
-    private void calculateDistanceRecursive(Activity activity, int distance, Set<String> visited) {
-        if (activity == null || visited.contains(activity.getTracingTag())) {
-            return;
-        }
-
-        visited.add(activity.getTracingTag());
-
-        if (!distancesFromStartEvent.containsKey(activity.getTracingTag())
-                || distancesFromStartEvent.get(activity.getTracingTag()) < distance) {
-            distancesFromStartEvent.put(activity.getTracingTag(), distance);
-        }
-
-        for (SequenceFlow outgoingFlow : activity.getOutgoingSequenceFlows()) {
-            Activity targetActivity = outgoingFlow.getTargetActivity();
-            calculateDistanceRecursive(targetActivity, distance + 1, visited);
-        }
-    }
-
-    public int getDepthFromStartEvent(Activity activity) {
-        if (startEvent == null || distancesFromStartEvent == null)
-            return -1;
-
-        Integer depth = distancesFromStartEvent.get(activity.getTracingTag());
-        return depth != null ? depth : -1;
-    }
-
     Integer depth = 0;
     Map<Integer, List<Activity>> activitiesByDistanceMap = new HashMap<Integer, List<Activity>>();
     Map<String, Integer> distancesByActivity = new HashMap<String, Integer>();
@@ -159,17 +93,19 @@ public class BlockFinder {
                 continue;
 
             if (visitActivityStack.contains(sourceActivity)) { // there are some feedback activity!
-                if (startEvent == null)
-                    continue;
                 for (Activity stackActivity : visitActivityStack) {
 
                     // find out which link is the feedback link
                     for (SequenceFlow sequenceFlowToSourceActivity : stackActivity.getOutgoingSequenceFlows()) {
                         if (sequenceFlowToSourceActivity.isFeedback())
                             continue;
-                        if (getDepthFromStartEvent(
-                                sequenceFlowToSourceActivity.getSourceActivity()) > getDepthFromStartEvent(
-                                        sequenceFlowToSourceActivity.getTargetActivity())) {
+
+                        int sourceDepth = processDefinition
+                                .getDepthFromStartEvent(sequenceFlowToSourceActivity.getSourceActivity());
+                        int targetDepth = processDefinition
+                                .getDepthFromStartEvent(sequenceFlowToSourceActivity.getTargetActivity());
+
+                        if (sourceDepth > targetDepth) {
                             sequenceFlowToSourceActivity.setFeedback(true); // mark as feedback link
                         }
                     }
