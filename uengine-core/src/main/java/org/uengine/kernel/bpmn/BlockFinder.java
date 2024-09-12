@@ -93,24 +93,6 @@ public class BlockFinder {
                 continue;
 
             if (visitActivityStack.contains(sourceActivity)) { // there are some feedback activity!
-                for (Activity stackActivity : visitActivityStack) {
-
-                    // find out which link is the feedback link
-                    for (SequenceFlow sequenceFlowToSourceActivity : stackActivity.getOutgoingSequenceFlows()) {
-                        if (sequenceFlowToSourceActivity.isFeedback())
-                            continue;
-
-                        int sourceDepth = processDefinition
-                                .getDepthFromStartEvent(sequenceFlowToSourceActivity.getSourceActivity());
-                        int targetDepth = processDefinition
-                                .getDepthFromStartEvent(sequenceFlowToSourceActivity.getTargetActivity());
-
-                        if (sourceDepth > targetDepth) {
-                            sequenceFlowToSourceActivity.setFeedback(true); // mark as feedback link
-                        }
-                    }
-                }
-
                 continue; // cancel the already visited previous activity (feedback)
             }
 

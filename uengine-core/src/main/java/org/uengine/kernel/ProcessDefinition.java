@@ -714,72 +714,6 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 
 	// -------------- private method -----------------------
 
-	private Map<String, StartEvent> startEventMap = new HashMap<>();
-	private ArrayList<Map<String, Integer>> distancesFromStartEvents = new ArrayList<>();
-
-	public ArrayList<Map<String, Integer>> getDistancesFromStartEvents() {
-		return distancesFromStartEvents;
-	}
-
-	public void setStartEvent() {
-		if (wholeChildActivities != null) {
-			for (Object activityObj : wholeChildActivities.values()) {
-				if (activityObj instanceof StartEvent) {
-					if (activityObj instanceof EndEvent)
-						continue;
-
-					StartEvent startEvent = (StartEvent) activityObj;
-					startEventMap.put(startEvent.getTracingTag(), startEvent);
-					distancesFromStartEvents.add(calculateDistancesFromStartEvent(startEvent));
-				}
-			}
-		}
-	}
-
-	private Map<String, Integer> calculateDistancesFromStartEvent(StartEvent startEvent) {
-		if (startEvent == null) {
-			return null;
-		}
-
-		Map<String, Integer> distancesFromStartEvent = new HashMap<>();
-		calculateDistanceRecursive(distancesFromStartEvent, startEvent, 0, new HashSet<>());
-		return distancesFromStartEvent;
-	}
-
-	private void calculateDistanceRecursive(Map<String, Integer> distancesFromStartEvent, Activity activity,
-			int distance, Set<String> visited) {
-		if (activity == null || visited.contains(activity.getTracingTag())) {
-			return;
-		}
-
-		visited.add(activity.getTracingTag());
-
-		if (!distancesFromStartEvent.containsKey(activity.getTracingTag())
-				|| distancesFromStartEvent.get(activity.getTracingTag()) < distance) {
-			distancesFromStartEvent.put(activity.getTracingTag(), distance);
-		}
-
-		for (SequenceFlow outgoingFlow : activity.getOutgoingSequenceFlows()) {
-			Activity targetActivity = outgoingFlow.getTargetActivity();
-			calculateDistanceRecursive(distancesFromStartEvent, targetActivity, distance + 1, visited);
-		}
-	}
-
-	public int getDepthFromStartEvent(Activity activity) {// 시작이벤트로부터의 깊이 체크
-		if (getDistancesFromStartEvents() == null)
-			return -1;
-
-		for (Map<String, Integer> distances : getDistancesFromStartEvents()) {
-			if (distances.containsKey(activity.getTracingTag())) {
-				Integer depth = distances.get(activity.getTracingTag());
-				if (depth != null) {
-					return depth;
-				}
-			}
-		}
-		return -1;
-	}
-
 	protected boolean registerActivity(Activity act, boolean autoTagging) {
 		return registerActivity(act, autoTagging, false);
 	}
@@ -1106,8 +1040,6 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 		super.afterDeserialization();
 		// TODO: tuning point : does it need to load the hashmap again?
 		registerToProcessDefinition(false, false);
-
-		setStartEvent();
 
 		// healTracingTagCollision();
 
