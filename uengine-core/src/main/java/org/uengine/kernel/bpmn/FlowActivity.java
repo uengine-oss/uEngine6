@@ -3,12 +3,14 @@ package org.uengine.kernel.bpmn;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityEventListener;
@@ -57,6 +59,72 @@ public class FlowActivity extends ComplexActivity {
 
     public void addSequenceFlow(SequenceFlow trasition) {
         this.getSequenceFlows().add(trasition);
+    }
+
+    private Map<String, StartEvent> startEventMap = new HashMap<>();
+    private ArrayList<Map<String, Integer>> distancesFromStartEvents = new ArrayList<>();
+
+    public ArrayList<Map<String, Integer>> getDistancesFromStartEvents() {
+        return distancesFromStartEvents;
+    }
+
+    public void setStartEvent() {
+        if (getChildActivities() != null) {
+            for (Object activityObj : getChildActivities()) {
+                if (activityObj instanceof StartEvent) {
+                    if (activityObj instanceof EndEvent)
+                        continue;
+
+                    StartEvent startEvent = (StartEvent) activityObj;
+                    startEventMap.put(startEvent.getTracingTag(), startEvent);
+                    distancesFromStartEvents.add(calculateDistancesFromStartEvent(startEvent));
+                }
+            }
+        }
+    }
+
+    private Map<String, Integer> calculateDistancesFromStartEvent(StartEvent startEvent) {
+        if (startEvent == null) {
+            return null;
+        }
+
+        Map<String, Integer> distancesFromStartEvent = new HashMap<>();
+        calculateDistanceRecursive(distancesFromStartEvent, startEvent, 0, new HashSet<>());
+        return distancesFromStartEvent;
+    }
+
+    private void calculateDistanceRecursive(Map<String, Integer> distancesFromStartEvent, Activity activity,
+            int distance, Set<String> visited) {
+        if (activity == null || visited.contains(activity.getTracingTag())) {
+            return;
+        }
+
+        visited.add(activity.getTracingTag());
+
+        if (!distancesFromStartEvent.containsKey(activity.getTracingTag())
+                || distancesFromStartEvent.get(activity.getTracingTag()) < distance) {
+            distancesFromStartEvent.put(activity.getTracingTag(), distance);
+        }
+
+        for (SequenceFlow outgoingFlow : activity.getOutgoingSequenceFlows()) {
+            Activity targetActivity = outgoingFlow.getTargetActivity();
+            calculateDistanceRecursive(distancesFromStartEvent, targetActivity, distance + 1, visited);
+        }
+    }
+
+    public int getDepthFromStartEvent(Activity activity) {// 시작이벤트로부터의 깊이 체크
+        if (getDistancesFromStartEvents() == null)
+            return -1;
+
+        for (Map<String, Integer> distances : getDistancesFromStartEvents()) {
+            if (distances.containsKey(activity.getTracingTag())) {
+                Integer depth = distances.get(activity.getTracingTag());
+                if (depth != null) {
+                    return depth;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -133,6 +201,22 @@ public class FlowActivity extends ComplexActivity {
 
                 sequenceFlow.afterDeserialization();
             }
+        }
+
+        setStartEvent();
+
+        for (SequenceFlow sequence : getSequenceFlows()) {
+            if (sequence.getSourceActivity() == null)
+                continue;
+
+            ProcessDefinition processDefinition = sequence.getSourceActivity().getProcessDefinition();
+
+            int sourceDepth = processDefinition
+                    .getDepthFromStartEvent(sequence.getSourceActivity());
+            int targetDepth = processDefinition
+                    .getDepthFromStartEvent(sequence.getTargetActivity());
+
+            sequence.setFeedback(sourceDepth > targetDepth);
         }
 
         // for each events: getProcessDefinition().addMessageListener(instance,
