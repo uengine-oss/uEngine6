@@ -355,9 +355,9 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     public void deleteDefinition(HttpServletRequest request) throws Exception {
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        String definitionPath = path.substring(DEFINITION_RAW.length());
+        String definitionPath = path.substring(DEFINITION.length());
         if (definitionPath.indexOf(".") != -1) {
-            definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
+            definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "bpmn");
         }
         IResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
         resourceManager.delete(resource);
@@ -436,15 +436,21 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                                                                                   * , @RequestParam(value = "unwrap",
                                                                                   * required = false) boolean unwrap
                                                                                   */) throws Exception {
+        String version = null;
+        if(definitionPath.contains("/version/")) {
+            String[] parts = definitionPath.split("/version/");
+            definitionPath = parts[0];
+            version = parts[1];
+        }
         if (definitionPath.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         }
-        if(!(definitionPath.startsWith(RESOURCE_ROOT) || definitionPath.startsWith("archive"))) {
+        if(!(definitionPath.startsWith(RESOURCE_ROOT))) {
             definitionPath = RESOURCE_ROOT + "/" + definitionPath;
         }
         // 무조건 xml 파일로 결국 저장됨.   
         DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
+        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), version);
 
         // if(unwrap) {
         // return objectMapper.writeValueAsString(definition);
@@ -733,7 +739,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String definitionPath = RESOURCE_ROOT + "/system" + name + ".json";
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
+        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
 
         // if(unwrap) {
         // return objectMapper.writeValueAsString(definition);
@@ -751,7 +757,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String definitionPath = RESOURCE_ROOT + "/" + "map.json";
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath());
+        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
 
         // if(unwrap) {
         // return objectMapper.writeValueAsString(definition);
@@ -781,7 +787,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definitionPath = versionManager.getProductionResourcePath(definitionPath);
         }
 
-        Serializable definition = (Serializable) getDefinitionLocal(definitionPath);
+        Serializable definition = (Serializable) getDefinitionLocal(definitionPath, null);
         String uEngineProcessXML = Serializer.serialize(definition);
         return uEngineProcessXML;
 
@@ -800,13 +806,16 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     }
 
-    public Object getDefinitionLocal(String definitionPath) throws Exception {
+    public Object getDefinitionLocal(String definitionPath, String version) throws Exception {
 
         try {
             if (definitionPath.indexOf(".") == -1) {
                 definitionPath = definitionPath + ".xml";
             }
-
+            if(version != null) {
+                definitionPath = definitionPath.replace("definitions/", "archive/");
+                definitionPath = definitionPath + "/" + version + ".bpmn";
+            }
             IResource resource = new DefaultResource(
                     definitionPath);
             Object definition = resourceManager.getObject(resource);

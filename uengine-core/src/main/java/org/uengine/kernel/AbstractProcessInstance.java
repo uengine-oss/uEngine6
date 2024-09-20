@@ -231,23 +231,24 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
         if (!"".equals(tracingTag))
             addDebugInfo(activity);
 
-        if (Activity.STATUS_READY.equals(activity.getStatus(this)) && activity.getStartedTime(this) != null) { // means
-                                                                                                               // the
-                                                                                                               // activity
-                                                                                                               // is
-                                                                                                               // future
-                                                                                                               // activity
-                                                                                                               // that
-                                                                                                               // needed
-                                                                                                               // to be
-                                                                                                               // notified
-                                                                                                               // to be
-                                                                                                               // started
-                                                                                                               // later.
-            activity.reserveActivity(this);
+        // if (Activity.STATUS_READY.equals(activity.getStatus(this)) && activity.getStartedTime(this) != null) { // means
+        //                                                                                                        // the
+        //                                                                                                        // activity
+        //                                                                                                        // is
+        //                                                                                                        // future
+        //                                                                                                        // activity
+        //                                                                                                        // that
+        //                                                                                                        // needed
+        //                                                                                                        // to be
+        //                                                                                                        // notified
+        //                                                                                                        // to be
+        //                                                                                                        // started
+        //                                                                                                        // later.
+        //     activity.reserveActivity(this);
 
-            return;
-        }
+        //     return;
+        
+        // }
 
         activity.beforeExecute(this);
 

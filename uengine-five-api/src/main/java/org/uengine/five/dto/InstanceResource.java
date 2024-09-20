@@ -52,6 +52,16 @@ public class InstanceResource extends RepresentationModel {
         public InstanceResource() {
         }
 
+        public String defVer;
+
+        public String getDefVer() {
+            return defVer;
+        }
+
+        public void setDefVer(String defVer) {
+            this.defVer = defVer;
+        }
+
         public InstanceResource(ProcessInstance processInstance) throws Exception {
                 setName(processInstance.getName());
                 setInstanceId(processInstance.getInstanceId());

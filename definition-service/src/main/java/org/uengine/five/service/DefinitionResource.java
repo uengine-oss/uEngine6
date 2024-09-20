@@ -26,19 +26,9 @@ public class DefinitionResource extends RepresentationModel {
     }
 
     public DefinitionResource(IResource resource1) throws Exception {
-        if(resource1.getName().contains("@")) {
-            String[] splitName = resource1.getName().split("@");
-            String id = splitName[0];
-            String name = splitName[1].split("\\.")[0];
-
-            setName(name);
-            setDirectory(resource1 instanceof IContainer);
-            setPath(resource1.getPath());
-        } else {
-            setName(resource1.getName());
-            setDirectory(resource1 instanceof IContainer);
-            setPath(resource1.getPath());
-        }
+        setName(resource1.getName());
+        setDirectory(resource1 instanceof IContainer);
+        setPath(resource1.getPath());
         
         
         add(

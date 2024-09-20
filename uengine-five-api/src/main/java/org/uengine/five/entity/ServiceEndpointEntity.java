@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Created by uengine on 2018. 1. 5..
  */
 @Entity
-@Table(name = "bpm_service")
+@Table(name = "BPM_SERVICE")
 @EntityListeners(ServiceEndpointEntityListener.class)
 public class ServiceEndpointEntity {
 

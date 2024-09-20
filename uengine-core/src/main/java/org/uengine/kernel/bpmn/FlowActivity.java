@@ -177,55 +177,6 @@ public class FlowActivity extends ComplexActivity {
             }
         }
 
-        // List<Activity> sortedChildActivities = new ArrayList<>();
-        // Map<String, Activity> activityMap = new HashMap<>();
-        // Map<String, List<String>> outgoingMap = new HashMap<>();
-        // Map<String, List<String>> incomingMap = new HashMap<>();
-
-        // for (Activity childActivity : getChildActivities()) {
-        //     activityMap.put(childActivity.getTracingTag(), childActivity);
-        //     outgoingMap.put(childActivity.getTracingTag(), new ArrayList<>());
-        //     incomingMap.put(childActivity.getTracingTag(), new ArrayList<>());
-        // }
-
-        // for (SequenceFlow flow : sequenceFlows) {
-        //     String source = flow.getSourceRef();
-        //     String target = flow.getTargetRef();
-        //     if (outgoingMap.containsKey(source)) {
-        //         outgoingMap.get(source).add(target);
-        //     }
-        //     if (incomingMap.containsKey(target)) {
-        //         incomingMap.get(target).add(source);
-        //     }
-        // }
-
-        // Queue<Activity> queue = new LinkedList<>();
-        // for (Activity childActivity : getChildActivities()) {
-        //     if (incomingMap.get(childActivity.getTracingTag()).isEmpty()) {
-        //         if(childActivity instanceof StartEvent)
-        //             queue.add(childActivity);
-        //     }
-        // }
-
-        // while (!queue.isEmpty()) {
-        //     Activity current = queue.poll();
-        //     sortedChildActivities.add(current);
-
-        //     for (String outgoing : outgoingMap.get(current.getTracingTag())) {
-        //         incomingMap.get(outgoing).remove(current.getTracingTag());
-        //         if (incomingMap.get(outgoing).isEmpty()) {
-        //             queue.add(activityMap.get(outgoing));
-        //         }
-        //     }
-        // }
-
-        // for (Activity childActivity : getChildActivities()) {
-        //     if (incomingMap.get(childActivity.getTracingTag()).isEmpty()) {
-        //             queue.add(childActivity);
-        //     }
-        // }
-
-        // setChildActivities(sortedChildActivities.toArray(new Activity[0]));
     }
 
     public List<Activity> getCatchingMessageEvents() {
@@ -338,56 +289,59 @@ public class FlowActivity extends ComplexActivity {
         }
         // }
 
-
         // if (getStatus(instance) == STATUS_READY) {
-        //     // 하위 로직은 첫 실행일때만.
-        //     for (Activity childActivity : getChildActivities()) {
-        //         if (childActivity instanceof Event && childActivity instanceof MessageListener
-        //                 && (childActivity.getIncomingSequenceFlows() == null
-        //                         || childActivity.getIncomingSequenceFlows().size() == 0)
-        //                 && ((Event) childActivity).getAttachedToRef() == null) {
-        //             getProcessDefinition().addMessageListener(instance, (MessageListener) childActivity);
-        //         }
-        //     }
+        // // 하위 로직은 첫 실행일때만.
+        // for (Activity childActivity : getChildActivities()) {
+        // if (childActivity instanceof Event && childActivity instanceof
+        // MessageListener
+        // && (childActivity.getIncomingSequenceFlows() == null
+        // || childActivity.getIncomingSequenceFlows().size() == 0)
+        // && ((Event) childActivity).getAttachedToRef() == null) {
+        // getProcessDefinition().addMessageListener(instance, (MessageListener)
+        // childActivity);
+        // }
+        // }
 
-        //     // if (getSequenceFlows().size() == 0) {
-        //     //// System.out.println("This is conventional uengine process - 2");
-        //     // super.executeActivity(instance);
-        //     // }else{
-        //     List<Activity> startActivities = getStartActivities();
-        //     if (startActivities != null && startActivities.size() > 0) {
+        // // if (getSequenceFlows().size() == 0) {
+        // //// System.out.println("This is conventional uengine process - 2");
+        // // super.executeActivity(instance);
+        // // }else{
+        // List<Activity> startActivities = getStartActivities();
+        // if (startActivities != null && startActivities.size() > 0) {
 
-        //         // Execute Event activity first than the regular activities since the first
-        //         // activity may occur any events.
-        //         for (Activity startActivity : startActivities) {
-        //             if (startActivity instanceof Event)
-        //                 queueActivity(startActivity, instance);
-        //         }
+        // // Execute Event activity first than the regular activities since the first
+        // // activity may occur any events.
+        // for (Activity startActivity : startActivities) {
+        // if (startActivity instanceof Event)
+        // queueActivity(startActivity, instance);
+        // }
 
-        //         for (Activity startActivity : startActivities) {
-        //             if (!(startActivity instanceof Event))
-        //                 queueActivity(startActivity, instance);
-        //         }
-        //     } else {
-        //         fireComplete(instance); // throw new UEngineException("Can't find start activity");
-        //     }
-        // } else {    
-        //     int currStep = getCurrentStep(instance);
-        //     if (currStep >= getChildActivities().size()) {
-        //         fireComplete(instance);
-        //         return;
-        //     }
+        // for (Activity startActivity : startActivities) {
+        // if (!(startActivity instanceof Event))
+        // queueActivity(startActivity, instance);
+        // }
+        // } else {
+        // fireComplete(instance); // throw new UEngineException("Can't find start
+        // activity");
+        // }
+        // } else {
+        // int currStep = getCurrentStep(instance);
+        // if (currStep >= getChildActivities().size()) {
+        // fireComplete(instance);
+        // return;
+        // }
 
-        //     Activity childActivity = getChildActivities().get(currStep);
-        //     // if(!childActivity.isBackwardActivity()){
-        //     queueActivity(childActivity, instance);
-        //     // }else{//if the activity is a backward activity, which is for compensating and
-        //     // // only need to be executed in compensation process, skip running the
-        //     // activity.
-        //     // currStep++;
-        //     // setCurrentStep(instance, currStep);
-        //     // executeActivity(instance);
-        //     // }
+        // Activity childActivity = getChildActivities().get(currStep);
+        // // if(!childActivity.isBackwardActivity()){
+        // queueActivity(childActivity, instance);
+        // // }else{//if the activity is a backward activity, which is for compensating
+        // and
+        // // // only need to be executed in compensation process, skip running the
+        // // activity.
+        // // currStep++;
+        // // setCurrentStep(instance, currStep);
+        // // executeActivity(instance);
+        // // }
         // }
 
         // // }
@@ -500,18 +454,19 @@ public class FlowActivity extends ComplexActivity {
             System.out.println(command);
         } else if (command.equals(CHILD_RESUMED)) {
             // super.onEvent(command, instance, payload);
-            ComplexActivity parentActivity = (ComplexActivity)this;
-            do{
+            ComplexActivity parentActivity = (ComplexActivity) this;
+            do {
                 parentActivity.setStatus(instance, Activity.STATUS_RUNNING);
-                parentActivity = (ComplexActivity)parentActivity.getParentActivity();
-            }while(parentActivity!=null);
+                parentActivity = (ComplexActivity) parentActivity.getParentActivity();
+            } while (parentActivity != null);
             //
 
-            Activity childActivity = (Activity)payload;
+            Activity childActivity = (Activity) payload;
 
             // executeActivity(instance); //resume flow control from the suspended step
             queueActivity(childActivity, instance);
-            // super.onEvent(command, instance, payload);//replicate this msg to the super class
+            // super.onEvent(command, instance, payload);//replicate this msg to the super
+            // class
         } else if (command.equals(CHILD_FAULT) || command.equals(ACTIVITY_FAULT)) {
             super.onEvent(command, instance, payload);
         }
@@ -583,9 +538,18 @@ public class FlowActivity extends ComplexActivity {
                 List<SequenceFlow> outgoings = parent.getOutgoingSequenceFlows();
 
                 List<Activity> outgoingActivities = new ArrayList<Activity>();
-
                 for (SequenceFlow sequenceFlow : outgoings) {
-                    outgoingActivities.add(sequenceFlow.getTargetActivity());
+                    // if (sequenceFlow.isFeedback())
+                    // continue;
+
+                    // int sourceDepth = getProcessDefinition()
+                    // .getDepthFromStartEvent(sequenceFlow.getSourceActivity());
+                    // int targetDepth = getProcessDefinition()
+                    // .getDepthFromStartEvent(sequenceFlow.getTargetActivity());
+
+                    if (!sequenceFlow.isFeedback()) {
+                        outgoingActivities.add(sequenceFlow.getTargetActivity());
+                    }
                 }
 
                 return outgoingActivities;

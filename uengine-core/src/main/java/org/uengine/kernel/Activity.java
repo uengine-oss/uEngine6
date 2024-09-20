@@ -786,6 +786,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
         // Activity returningActivity = definition.getActivity(tracingTag);
 
         // returningActivity.compensateToThis(instance);
+        
         definition.gatherPropagatedActivitiesOf(instance, this, list);
 
         Activity proActiviy;
@@ -794,8 +795,8 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
             // compensate
             proActiviy.compensate(instance);
         }
-
-        this.resume(instance);
+        compensate(instance);
+        resume(instance);
         /*
          * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
          * List list = new ArrayList();

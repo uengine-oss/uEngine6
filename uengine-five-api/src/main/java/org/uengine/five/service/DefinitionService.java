@@ -60,6 +60,10 @@ public interface DefinitionService {
     @RequestMapping(value = "/definition/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadDefinition(@RequestParam("file") MultipartFile file);
 
-    @RequestMapping(value = "versions/**", method = RequestMethod.GET)
+    @RequestMapping(value = "/versions/**", method = RequestMethod.GET)
     public RepresentationModel listDefinitionVersions(HttpServletRequest request) throws Exception;
+    // definiton/test.bpmn
+    // definiton/test.bpmn/versions
+    // version/test.bpmn
+
 }

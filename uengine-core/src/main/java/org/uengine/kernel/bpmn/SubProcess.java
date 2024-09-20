@@ -143,10 +143,11 @@ public class SubProcess extends ScopeActivity {
             }
         }
 
-        Vector subprocessInstanceList = getSubProcesses(instance);
+        Vector subprocessInstanceList = getSubprocessIds(instance);
         Hashtable boundRoleMappings = new Hashtable();
         for (int i = 0; i < subprocessInstanceList.size(); i++) {
-            ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+            String spId = (String) subprocessInstanceList.elementAt(i);
+            ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
             if (thePI.isRunning("")) {
                 RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
                 boundRoleMappings.put(subRoleMapping.getEndpoint(), subRoleMapping);
@@ -176,12 +177,15 @@ public class SubProcess extends ScopeActivity {
             }
         }
 
-        Vector subprocessInstanceList = getSubProcesses(instance);
+        Vector subprocessInstanceList = getSubprocessIds(instance);
         Hashtable boundRoleMappings = new Hashtable();
         for (int i = 0; i < subprocessInstanceList.size(); i++) {
-            ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
-            RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
-            boundRoleMappings.put(subRoleMapping.getEndpoint(), subRoleMapping);
+            String spId = (String) subprocessInstanceList.elementAt(i);
+            ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
+            if (thePI.isRunning("")) {
+                RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
+                boundRoleMappings.put(subRoleMapping.getEndpoint(), subRoleMapping);
+            }
         }
 
         do {
@@ -203,11 +207,18 @@ public class SubProcess extends ScopeActivity {
             return;
         }
 
-        Vector subprocessInstanceList = getSubProcesses(instance);
+        Vector subprocessInstanceList = getSubprocessIds(instance);
         for (int i = 0; i < subprocessInstanceList.size(); i++) {
-            ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+            String spId = (String) subprocessInstanceList.elementAt(i);
+            ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
             super.stop(thePI, status);
         }
+
+        // Vector subprocessInstanceList = getSubProcesses(instance);
+        // for (int i = 0; i < subprocessInstanceList.size(); i++) {
+        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+            
+        // }
     }
 
     private void stopSubProcessInstance(ProcessInstance instance, Hashtable deletedRoleMappings) throws Exception {
@@ -221,17 +232,27 @@ public class SubProcess extends ScopeActivity {
 
         Vector spInstIds = getSubprocessIds(instance);
         Vector spInstLabels = getSubprocessIds(instance, SUBPROCESS_INST_LABELS);
-        Vector subprocessInstanceList = getSubProcesses(instance);
-        for (int i = 0; i < subprocessInstanceList.size(); i++) {
-            ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+        // Vector subprocessInstanceList = getSubProcesses(instance);
+        for (int i = 0; i < spInstIds.size(); i++) {
+            String spId = (String) spInstIds.elementAt(i);
+            ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
             RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
             if (deletedRoleMappings.containsKey(subRoleMapping.getEndpoint())) {
                 thePI.stop();
                 spInstIds.remove(i);
                 spInstLabels.remove(i);
             }
-
         }
+        // for (int i = 0; i < subprocessInstanceList.size(); i++) {
+        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+        //     RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
+        //     if (deletedRoleMappings.containsKey(subRoleMapping.getEndpoint())) {
+        //         thePI.stop();
+        //         spInstIds.remove(i);
+        //         spInstLabels.remove(i);
+        //     }
+
+        // }
 
         setSubprocessIds(instance, spInstIds, SUBPROCESS_INST_ID);
         setSubprocessIds(instance, spInstLabels, SUBPROCESS_INST_LABELS);
@@ -346,14 +367,25 @@ public class SubProcess extends ScopeActivity {
             }
         }
 
-        Vector subprocessInstanceList = getSubProcesses(instance);
+        Vector subprocessInstanceList = getSubprocessIds(instance);
         for (int i = 0; i < subprocessInstanceList.size(); i++) {
-            ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+            String spId = (String) subprocessInstanceList.elementAt(i);
+            ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
+            // ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
             RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
 
             subprocessInstanceIds.add(thePI.getInstanceId());
             subprocessLabels.add(subRoleMapping.getResourceName());
         }
+
+        // Vector subprocessInstanceList = getSubProcesses(instance);
+        // for (int i = 0; i < subprocessInstanceList.size(); i++) {
+        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+        //     RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
+
+        //     subprocessInstanceIds.add(thePI.getInstanceId());
+        //     subprocessLabels.add(subRoleMapping.getResourceName());
+        // }
 
         setSubprocessIds(instance, subprocessInstanceIds, SUBPROCESS_INST_ID);
         setSubprocessIds(instance, subprocessLabels, SUBPROCESS_INST_LABELS);
@@ -1040,8 +1072,6 @@ public class SubProcess extends ScopeActivity {
                 act.compensate(instance);
             }
         }
-
-        // super.compensate(instance);
     }
 
     public void attachSubProcess(ProcessInstance instance, String subProcessInstanceId, String label) throws Exception {

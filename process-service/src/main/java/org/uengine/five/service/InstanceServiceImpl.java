@@ -279,8 +279,9 @@ public class InstanceServiceImpl implements InstanceService {
 
         if (instance == null)
             throw new ResourceNotFoundException(); // make 404 error
-
-        return new InstanceResource(instance);
+        InstanceResource ir = new InstanceResource(instance);
+        ir.setDefVer(instance.getProcessDefinition().getVersion());
+        return ir;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/eventList")

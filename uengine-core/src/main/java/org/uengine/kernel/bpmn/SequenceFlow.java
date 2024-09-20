@@ -21,7 +21,17 @@ public class SequenceFlow extends AbstractFlow
 	}
 
 	public boolean isFeedback() {
-		return feedback;
+        // Serialization
+        // return feedback;
+        if(getSourceActivity() == null) {
+            return false;
+        }
+        int sourceDepth = getSourceActivity().getProcessDefinition()
+                .getDepthFromStartEvent(getSourceActivity());
+        int targetDepth = getSourceActivity().getProcessDefinition()
+                .getDepthFromStartEvent(getTargetActivity());
+
+        return sourceDepth > targetDepth;
 	}
 
 	int priority;
