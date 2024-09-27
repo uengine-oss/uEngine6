@@ -2,6 +2,7 @@ package org.uengine.five.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.ProcessDefinition;
 
@@ -21,15 +22,21 @@ public class DefinitionServiceUtil {
     }
 
     public Object getDefinition(String defPath, String version) throws Exception {
-
         if (!defPath.endsWith(".bpmn")) {
             defPath = defPath + ".bpmn";
         }
-        
-        Object returned = definitionService.getXMLDefinition(defPath, version);
-        String xml = (String) returned;
 
-        ProcessDefinition processDefinition = bpmnXMLParser.parse(xml);
+        ProcessTransactionContext tc = ProcessTransactionContext.getThreadLocalInstance();
+
+        ProcessDefinition processDefinition = (ProcessDefinition) tc.getSharedContext("def" + version + ":" + defPath);
+        if (processDefinition == null) {
+            Object returned = definitionService.getXMLDefinition(defPath, version);
+            String xml = (String) returned;
+
+            processDefinition = bpmnXMLParser.parse(xml);
+
+            tc.setSharedContext("def" + version + ":" + defPath, processDefinition);
+        }
 
         int extIndex = defPath.lastIndexOf(".");
         if (extIndex != -1) {
