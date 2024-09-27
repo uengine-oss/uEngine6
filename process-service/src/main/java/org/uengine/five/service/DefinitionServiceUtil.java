@@ -28,14 +28,14 @@ public class DefinitionServiceUtil {
 
         ProcessTransactionContext tc = ProcessTransactionContext.getThreadLocalInstance();
 
-        ProcessDefinition processDefinition = (ProcessDefinition) tc.getSharedContext("def" + version + ":" + defPath);
+        ProcessDefinition processDefinition = (ProcessDefinition) tc.getSharedContext("def:" + defPath + "@" + version);
         if (processDefinition == null) {
             Object returned = definitionService.getXMLDefinition(defPath, version);
             String xml = (String) returned;
 
             processDefinition = bpmnXMLParser.parse(xml);
 
-            tc.setSharedContext("def" + version + ":" + defPath, processDefinition);
+            tc.setSharedContext("def:" + defPath + "@" + version, processDefinition);
         }
 
         int extIndex = defPath.lastIndexOf(".");
