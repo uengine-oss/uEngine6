@@ -376,7 +376,8 @@ public class InstanceServiceImpl implements InstanceService {
         for (Object key : variables.keySet()) {
             if (key instanceof String) {
                 String keyStr = (String) key;
-                if (keyStr.matches("Activity_\\w+:_status:prop")) {
+                if (keyStr.matches("Activity_\\w+:_status:prop") || keyStr.matches("Gateway_\\w+:_status:prop")
+                        || keyStr.matches("Event_\\w+:_status:prop")) {
                     String newKey = keyStr.replace(":_status:prop", "");
                     filteredVariables.put(newKey, variables.get(key));
                 }
@@ -939,8 +940,13 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         if (activity.getStatus(instance).equals(Activity.STATUS_COMPLETED)) {
-            if (workItem.getWorklist().getPayload() instanceof Map) {
-                workItem.setParameterValues((Map<String, Object>) workItem.getWorklist().getPayload());
+            if (workItem.getWorklist().getPayload() != null) {
+                String payload = workItem.getWorklist().getPayload();
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> payloadMap = objectMapper.readValue(payload,
+                        new TypeReference<Map<String, Object>>() {
+                        });
+                workItem.setParameterValues(payloadMap);
             }
         }
 
@@ -1062,7 +1068,7 @@ public class InstanceServiceImpl implements InstanceService {
         folderPath = folderPath.substring("/test/".length());
         String filePath = folderPath + "/" + testData.get("tracingTag") + ".json";
         Set<Object> tmp = readFromFile(filePath);
-        
+
         int indexToRemove = (int) testData.get("idx");
         if (indexToRemove >= 0 && indexToRemove < tmp.size()) {
             Iterator<Object> iterator = tmp.iterator();
@@ -1076,7 +1082,7 @@ public class InstanceServiceImpl implements InstanceService {
                 currentIndex++;
             }
         }
-        
+
         File file = new File("test/" + filePath);
         file.getParentFile().mkdirs(); // Ensure the parent directories exist
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
@@ -1164,7 +1170,9 @@ public class InstanceServiceImpl implements InstanceService {
 
         try {
             humanActivity.fireReceived(instance, parameterValues);
-            worklistEntity.setPayload((Serializable) parameterValues);
+            ObjectMapper objectMapper = new ObjectMapper();
+            String payload = objectMapper.writeValueAsString(parameterValues);
+            worklistEntity.setPayload(payload);
             // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json",
             // "result: " + instance.getAll().toString() + "}");
             //

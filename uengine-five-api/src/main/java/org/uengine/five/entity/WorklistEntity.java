@@ -367,13 +367,15 @@ public class WorklistEntity {// implements WorkListDAO {
         this.ext5 = ext5;
     }
 
-    Serializable payload;
+    @Lob
+    @Column(name = "payload", columnDefinition = "CLOB")
+    private String payload;
 
-    public Serializable getPayload() {
+    public String getPayload() {
         return payload;
     }
 
-    public void setPayload(Serializable payload) {
+    public void setPayload(String payload) {
         this.payload = payload;
     }
 
