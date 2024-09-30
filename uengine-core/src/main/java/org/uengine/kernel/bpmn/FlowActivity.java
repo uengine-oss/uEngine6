@@ -521,9 +521,16 @@ public class FlowActivity extends ComplexActivity {
                 }
 
                 // if there are no gateway but if it look like a join, apply inclusive gateway.
-                if (activity.getIncomingSequenceFlows().size() == 1
-                        || hasToken)
+                if (activity.getIncomingSequenceFlows().size() == 1 || hasToken) {
+                    for (SequenceFlow flow : activity.getIncomingSequenceFlows()) {
+                        if (currentActivity.getTracingTag().equals(flow.getSourceActivity().getTracingTag()) &&
+                                activity.getTracingTag().equals(flow.getTargetActivity().getTracingTag())) {
+                            instance.setStatus(flow.getTracingTag(), STATUS_COMPLETED);
+                        }
+                    }
+
                     queueActivity(activity, instance);
+                }
             }
 
         } else if (command.equals(ACTIVITY_DONE)) {

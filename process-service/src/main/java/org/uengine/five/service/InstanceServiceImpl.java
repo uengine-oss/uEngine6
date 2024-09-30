@@ -376,8 +376,10 @@ public class InstanceServiceImpl implements InstanceService {
         for (Object key : variables.keySet()) {
             if (key instanceof String) {
                 String keyStr = (String) key;
-                if (keyStr.matches("Activity_\\w+:_status:prop") || keyStr.matches("Gateway_\\w+:_status:prop")
-                        || keyStr.matches("Event_\\w+:_status:prop")) {
+                if (keyStr.matches("Activity_\\w+:_status:prop") 
+                || keyStr.matches("Gateway_\\w+:_status:prop")
+                        || keyStr.matches("Event_\\w+:_status:prop")
+                        || keyStr.matches("Flow_\\w+:_status:prop")) {
                     String newKey = keyStr.replace(":_status:prop", "");
                     filteredVariables.put(newKey, variables.get(key));
                 }

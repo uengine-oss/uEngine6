@@ -743,13 +743,13 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 				getParentActivity().onEvent(CHILD_SKIPPED, instance, payload);
 		} else if (command.equals(ACTIVITY_RESUMED)) {
 			if (getParentActivity() != null) {
-                // Test -> workitem에 정상적으로 추가 안됨.
-                // String status = getParentActivity().getStatus(instance);
-                // if (!status.equals(Activity.STATUS_RUNNING)) {
-                //     getParentActivity().onEvent(CHILD_RESUMED, instance, payload);
-                // }
+				// Test -> workitem에 정상적으로 추가 안됨.
+				// String status = getParentActivity().getStatus(instance);
+				// if (!status.equals(Activity.STATUS_RUNNING)) {
+				// getParentActivity().onEvent(CHILD_RESUMED, instance, payload);
+				// }
 				getParentActivity().onEvent(CHILD_RESUMED, instance, payload);
-            }
+			}
 		} else if (command.equals(ACTIVITY_STOPPED)) {
 			instance.setStatus(getTracingTag(), Activity.STATUS_STOPPED);
 
@@ -764,70 +764,103 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	}
 
-    
+	public void backToHere(ProcessInstance instance) throws Exception {
+		// ProcessInstance instance = getProcessInstanceLocal(instanceId);
+		String execScope = null;
+		if (tracingTag.contains(":")) {
+			execScope = tracingTag.split(":")[1];
+			tracingTag = tracingTag.split(":")[0];
+		}
+		if (execScope != null) {
+			instance.setExecutionScope(execScope);
+		}
+		System.out.println("**********************");
+		System.out.println("getInstanceId : " + instance.getInstanceId());
+		System.out.println("getExecutionScopeContext : " + instance.getExecutionScopeContext());
+		System.out.println("**********************");
 
-    public void backToHere(ProcessInstance instance) throws Exception {
-        // ProcessInstance instance = getProcessInstanceLocal(instanceId);
-        String execScope = null;
-        if (tracingTag.contains(":")) {
-            execScope = tracingTag.split(":")[1];
-            tracingTag = tracingTag.split(":")[0];
-        }
-        if (execScope != null) {
-            instance.setExecutionScope(execScope);
-        }
-        System.out.println("**********************");
-        System.out.println("getInstanceId : " + instance.getInstanceId());
-        System.out.println("getExecutionScopeContext : " + instance.getExecutionScopeContext());
-        System.out.println("**********************");
-        
-        List<ProcessInstance> list = new ArrayList<ProcessInstance>();
-        Map<String,List<Activity>> map = new HashMap<String,List<Activity>>();
-        recursivePropagatedActivities(instance, this, map, list);
-        ProcessInstance proInstance;
-        for (int i = list.size() - 1; i >= 0; i--) {
-            proInstance = list.get(i);
-        
-            List<Activity> activities = map.get(proInstance.getInstanceId());
-            Activity proActivity;
-            for(int y = activities.size() -1; y >= 0; y--) {
-                proActivity = activities.get(y);
-                proActivity.compensate(proInstance);
-            }
-        }
-        
-        compensateToThis(instance);
-        resume(instance);
-        /*
-         * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
-         * List list = new ArrayList();
-         * definition.gatherPropagatedActivitiesOf(instance,
-         * definition.getWholeChildActivity(tracingTag), list);
-         * 
-         * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
-         */
+		List<ProcessInstance> list = new ArrayList<ProcessInstance>();
+		Map<String, List<Activity>> map = new HashMap<String, List<Activity>>();
+		recursivePropagatedActivities(instance, this, map, list);
+		ProcessInstance proInstance;
+		for (int i = list.size() - 1; i >= 0; i--) {
+			proInstance = list.get(i);
 
-        // return new InstanceResource(instance);
-    }
+			List<Activity> activities = map.get(proInstance.getInstanceId());
+			Activity proActivity;
+			for (int y = activities.size() - 1; y >= 0; y--) {
+				proActivity = activities.get(y);
+				proActivity.compensate(proInstance);
+				proActivity.resetFlow(proInstance);
+			}
+		}
 
-    public void recursivePropagatedActivities(ProcessInstance instance, Activity activity, Map<String,List<Activity>> map, List<ProcessInstance> list) throws Exception {
-        ProcessDefinition definition = instance.getProcessDefinition();
-        List<Activity> activities = new ArrayList<Activity>();
-        definition.gatherPropagatedActivitiesOf(instance, activity, activities);
-    
-        map.put(instance.getInstanceId(), activities);
-        list.add(instance);
-        if(instance.isSubProcess()) {
-            String tracingTag = instance.getMainActivityTracingTag();
-            ProcessInstance pi = instance.getMainProcessInstance();
-            ProcessDefinition def = pi.getProcessDefinition();
-            Activity act = def.getActivity(tracingTag);
-            recursivePropagatedActivities(pi, act, map, list);
-        }
-    }
+		compensateToThis(instance);
+		resetFlowToThis(instance);
+		resume(instance);
+		/*
+		 * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
+		 * List list = new ArrayList();
+		 * definition.gatherPropagatedActivitiesOf(instance,
+		 * definition.getWholeChildActivity(tracingTag), list);
+		 * 
+		 * list 를 역순으로 하여 발견된 각 activity 들에 대해 compensate() 호출
+		 */
 
-    // definition.getActivity()
-    // ㅁ-ㅁ
+		// return new InstanceResource(instance);
+	}
+
+	public void resetFlow(ProcessInstance instance) throws Exception {
+		if (getIncomingSequenceFlows().size() > 0) {
+			for (SequenceFlow flow : getIncomingSequenceFlows()) {
+				instance.setStatus(flow.getTracingTag(), STATUS_READY);
+			}
+		}
+	}
+
+	public void resetFlowToThis(ProcessInstance instance) throws Exception {
+		if (instance.isSubProcess()) {
+			String instanceStatus = instance.getStatus();
+
+			if (instanceStatus.equals(Activity.STATUS_COMPLETED) || instanceStatus.equals(Activity.STATUS_SKIPPED)
+					|| instanceStatus.equals(Activity.STATUS_FAULT)) {
+
+				String returningTracingTag = (String) instance.getMainActivityTracingTag();
+				String returningInstanceId = (String) instance.getMainProcessInstanceId();
+
+				Hashtable options = new Hashtable();
+				options.put("ptc", instance.getProcessTransactionContext());
+
+				ProcessInstance returningInstance = AbstractProcessInstance.create().getInstance(returningInstanceId,
+						options);
+				ProcessDefinition returningDefinition = returningInstance.getProcessDefinition();
+				SubProcessActivity returningActivity = (SubProcessActivity) returningDefinition
+						.getActivity(returningTracingTag);
+
+				returningActivity.resetFlow(returningInstance);
+			}
+		}
+	}
+
+	public void recursivePropagatedActivities(ProcessInstance instance, Activity activity,
+			Map<String, List<Activity>> map, List<ProcessInstance> list) throws Exception {
+		ProcessDefinition definition = instance.getProcessDefinition();
+		List<Activity> activities = new ArrayList<Activity>();
+		definition.gatherPropagatedActivitiesOf(instance, activity, activities);
+
+		map.put(instance.getInstanceId(), activities);
+		list.add(instance);
+		if (instance.isSubProcess()) {
+			String tracingTag = instance.getMainActivityTracingTag();
+			ProcessInstance pi = instance.getMainProcessInstance();
+			ProcessDefinition def = pi.getProcessDefinition();
+			Activity act = def.getActivity(tracingTag);
+			recursivePropagatedActivities(pi, act, map, list);
+		}
+	}
+
+	// definition.getActivity()
+	// ㅁ-ㅁ
 
 	/**
 	 * only when needed to reserve activity before running, it stores the runner
@@ -1756,9 +1789,10 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 				returningActivity.setStatus(returningInstance, Activity.STATUS_RUNNING);
 
-                Vector completedSpIds = returningActivity.getSubprocessIds(returningInstance, "completedInstanceIdOfSPs");
-                completedSpIds.remove(instance.getInstanceId());
-                returningActivity.setSubprocessIds(returningInstance, completedSpIds, "completedInstanceIdOfSPs");
+				Vector completedSpIds = returningActivity.getSubprocessIds(returningInstance,
+						"completedInstanceIdOfSPs");
+				completedSpIds.remove(instance.getInstanceId());
+				returningActivity.setSubprocessIds(returningInstance, completedSpIds, "completedInstanceIdOfSPs");
 
 				// TODO: should be moved to SubProcessActivity?
 				// returningDefinition.compensateOneStep(returningInstance);
