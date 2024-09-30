@@ -2,8 +2,8 @@ package org.uengine.kernel.test;
 
 import java.util.HashMap;
 
+import org.junit.Test;
 import org.uengine.contexts.HtmlFormContext;
-import org.uengine.contexts.MappingContext;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.FormActivity;
 import org.uengine.kernel.MappingElement;
@@ -48,10 +48,21 @@ public class FormActivityTest extends UEngineTest {
         formActivity.setVariableForHtmlFormContext(formVariable);
         formActivity.setRole(processDefinition.getRole("reporter"));
 
-        MappingElement parameterContext = new MappingElement();
-        parameterContext.setArgument(TextContext.createInstance());
-        parameterContext.getArgument().setText("troubleType");
-        parameterContext.setTransformerMapping(new TransformerMapping());
+        // MappingElement parameterContext = new MappingElement();
+        // parameterContext.setArgument(TextContext.createInstance());
+        // parameterContext.getArgument().setText("troubleType");
+        // parameterContext.setTransformerMapping(new TransformerMapping());
+
+        ParameterContext[] parameterContext = new ParameterContext[1];
+        parameterContext[0] = new ParameterContext();
+        parameterContext[0].setArgument(TextContext.createInstance());
+        parameterContext[0].getArgument().setText("troubleType");
+        parameterContext[0].setTransformerMapping(new TransformerMapping());
+
+
+        // parameterContext.setArgument(TextContext.createInstance());
+        // parameterContext.getArgument().setText("troubleType");
+        // parameterContext.setTransformerMapping(new TransformerMapping());
 
         DirectValueTransformer directValueTransformer = new DirectValueTransformer();
         directValueTransformer.setValue("[PREFIX]");
@@ -65,12 +76,11 @@ public class FormActivityTest extends UEngineTest {
         concatTransformer.setArgumentSourceMap(new HashMap<>());
         concatTransformer.getArgumentSourceMap().put("str1", transformerMapping);
         concatTransformer.getArgumentSourceMap().put("str2", "form.troubleType");
-        parameterContext.getTransformerMapping().setTransformer(concatTransformer);
+        parameterContext[0].getTransformerMapping().setTransformer(concatTransformer);
 
         // formActivity.setMappingContexts(new ParameterContext[] { parameterContext });
-        MappingContext mappingContext = new MappingContext();
-        mappingContext.setMappingElements(new MappingElement[] { parameterContext });
-        formActivity.setMappingContext(mappingContext);
+        // ParameterContext[] parameterContexts = new ParameterContext[] { parameterContext };
+        formActivity.setParameters(parameterContext);
 
         Event startEvent = new StartEvent();
         startEvent.setTracingTag("startEvent");
@@ -84,6 +94,7 @@ public class FormActivityTest extends UEngineTest {
         processDefinition.afterDeserialization();
     }
 
+    @Test
     public void testFormDataMapping() throws Exception {
         ProcessInstance instance = processDefinition.createInstance();
 
@@ -99,7 +110,6 @@ public class FormActivityTest extends UEngineTest {
         // Step 3: Set the ProcessVariableValue to the process instance
         instance.set("", "form", htmlFormContext);
 
-        // 서브프로세스 내에서 취소 이벤트 발생
         String message = ((FormActivity) instance.getCurrentRunningActivity().getActivity()).getMessage();
         instance.getProcessDefinition().fireMessage(message, instance, "test");
 

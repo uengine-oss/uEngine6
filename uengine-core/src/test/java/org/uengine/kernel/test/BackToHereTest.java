@@ -5,12 +5,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.uengine.contexts.EventSynchronization;
+import org.uengine.contexts.MappingContext;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
-import org.uengine.kernel.DefaultActivity;
-import org.uengine.kernel.ExecutionScopeContext;
+import org.uengine.kernel.Evaluate;
 import org.uengine.kernel.HumanActivity;
+import org.uengine.kernel.MappingElement;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
@@ -18,11 +20,10 @@ import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ProcessVariableValue;
 import org.uengine.kernel.Role;
 import org.uengine.kernel.SensitiveActivityFilter;
-import org.uengine.kernel.bpmn.EndEvent;
 import org.uengine.kernel.bpmn.Event;
+import org.uengine.kernel.bpmn.ExclusiveGateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.StartEvent;
-import org.uengine.kernel.bpmn.SubProcess;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration
@@ -59,8 +60,8 @@ public class BackToHereTest extends UEngineTest {
         processDefinition.setRoles(new Role[] { new Role("reporter") });
         processDefinition.setId("testId");
         // 서브프로세스 및 이벤트 구성
-        SubProcess subProcess = new SubProcess();
-        subProcess.setTracingTag("subProcess");
+        // SubProcess subProcess = new SubProcess();
+        // processDefinition.setTracingTag("subProcess");
 
         // Step 1: Declare a ProcessVariable
         ProcessVariable myVariable = new ProcessVariable();
@@ -72,13 +73,13 @@ public class BackToHereTest extends UEngineTest {
         // executed
 
         // Step 4: Set the ProcessVariable as the forEachVariable of the SubProcess
-        subProcess.setForEachVariable(myVariable);
+        // processDefinition.setForEachVariable(myVariable);
 
         Event startEvent = new StartEvent();
         startEvent.setTracingTag("startEvent");
         // startEvent를 processDefinition의 첫 번째 요소로 추가
         processDefinition.addChildActivity(startEvent);
-
+        
         ParameterContext parameterContext = new ParameterContext();
         parameterContext.setDirection("OUT");
         TextContext textContext = new TextContext();
@@ -87,18 +88,36 @@ public class BackToHereTest extends UEngineTest {
         parameterContext.setType("java.lang.String");
         parameterContext.setVariable(myVariable);
         ParameterContext[] parameters = new ParameterContext[] { parameterContext };
+        ProcessVariable pv = new ProcessVariable();
+        pv.setName("myVar");
+        ProcessVariable[] pvs = new ProcessVariable[] {pv};
+        processDefinition.setProcessVariables(pvs);
+        MappingElement mappingElement = new MappingElement();
+        mappingElement.setDirection("OUT");
+        textContext.setText("error");
+        mappingElement.setArgument(textContext);
+        mappingElement.setType("java.lang.String");
+        mappingElement.setVariable(myVariable);
+        MappingContext mc = new MappingContext();
+        mc.setMappingElements(new MappingElement[] {mappingElement});
+        EventSynchronization es = new EventSynchronization();
+        es.setMappingContext(mc);
+        
 
         HumanActivity activityBeforeSubProcess = new HumanActivity();
         activityBeforeSubProcess.setRole(processDefinition.getRole("reporter"));
         activityBeforeSubProcess.setTracingTag("activityBeforeSubProcess");
-        activityBeforeSubProcess.setParameters(parameters);
+        activityBeforeSubProcess.setEventSynchronization(es);
         activityBeforeSubProcess.setMessage("receive"); // 이벤트를 받기 위한 설정
         
         processDefinition.addChildActivity(activityBeforeSubProcess);
 
+        SequenceFlow activityBeforeSubProcessSequenceFlow = new SequenceFlow("startEvent", "activityBeforeSubProcess");
+        activityBeforeSubProcessSequenceFlow.setTracingTag("activityBeforeSubProcessSequenceFlow");
+        processDefinition.addSequenceFlow(activityBeforeSubProcessSequenceFlow);
         // subProcess를 processDefinition의 두 번째 요소로 추가
         
-        processDefinition.addChildActivity(subProcess);
+        // processDefinition.addChildActivity(subProcess);
 
         // Event cancelEvent = new Event();
         // cancelEvent.setTracingTag("cancelEvent");
@@ -106,48 +125,98 @@ public class BackToHereTest extends UEngineTest {
         // // cancelEvent를 processDefinition의 요소로 추가
         // processDefinition.addChildActivity(cancelEvent);
 
-        Event subStartEvent = new StartEvent();
-        subStartEvent.setTracingTag("subStartEvent");
-        subProcess.addChildActivity(subStartEvent);
+        // Event subStartEvent = new StartEvent();
+        // subStartEvent.setTracingTag("subStartEvent");
+        // processDefinition.addChildActivity(subStartEvent);
         // DefaultActivity를 ReceiveActivity로 변경
         
         HumanActivity activityWithinSubProcess = new HumanActivity();
         activityWithinSubProcess.setRole(processDefinition.getRole("reporter"));
         activityWithinSubProcess.setTracingTag("activityWithinSubProcess");
-        activityWithinSubProcess.setParameters(parameters);
+        activityWithinSubProcess.setEventSynchronization(es);
         activityWithinSubProcess.setMessage("receive"); // 이벤트를 받기 위한 설정
-        subProcess.addSequenceFlow(new SequenceFlow("subStartEvent", "activityWithinSubProcess"));
-        subProcess.addChildActivity(activityWithinSubProcess);
+        // SequenceFlow activityWithinSubProcessSequenceFlow = new SequenceFlow("subStartEvent", "activityWithinSubProcess");
+        // activityWithinSubProcessSequenceFlow.setTracingTag("activityWithinSubProcessSequenceFlow");
+        // processDefinition.addSequenceFlow(activityWithinSubProcessSequenceFlow);
+        processDefinition.addChildActivity(activityWithinSubProcess);
 
         HumanActivity activityWithinSubProcess2 = new HumanActivity();
         activityWithinSubProcess2.setRole(processDefinition.getRole("reporter"));
         activityWithinSubProcess2.setTracingTag("activityWithinSubProcess2");
-        activityWithinSubProcess2.setParameters(parameters);
+        activityWithinSubProcess2.setEventSynchronization(es);
         activityWithinSubProcess2.setMessage("receive"); // 이벤트를 받기 위한 설정
-        subProcess.addChildActivity(activityWithinSubProcess2);
-        subProcess.addSequenceFlow(new SequenceFlow("activityWithinSubProcess", "activityWithinSubProcess2"));
+        processDefinition.addChildActivity(activityWithinSubProcess2);
+        SequenceFlow activityWithinSubProcess2SequenceFlow = new SequenceFlow("activityWithinSubProcess", "activityWithinSubProcess2");
+        activityWithinSubProcess2SequenceFlow.setTracingTag("activityWithinSubProcess2SequenceFlow");
+        processDefinition.addSequenceFlow(activityWithinSubProcess2SequenceFlow);
 
         HumanActivity activityWithinSubProcess3 = new HumanActivity();
         activityWithinSubProcess3.setRole(processDefinition.getRole("reporter"));
         activityWithinSubProcess3.setTracingTag("activityWithinSubProcess3");
-        activityWithinSubProcess3.setParameters(parameters);
+        activityWithinSubProcess3.setEventSynchronization(es);
         activityWithinSubProcess3.setMessage("receive"); // 이벤트를 받기 위한 설정
-        subProcess.addChildActivity(activityWithinSubProcess3);
-        subProcess.addSequenceFlow(new SequenceFlow("activityWithinSubProcess2", "activityWithinSubProcess3"));
+        processDefinition.addChildActivity(activityWithinSubProcess3);
+        SequenceFlow activityWithinSubProcess3SequenceFlow = new SequenceFlow("activityWithinSubProcess2", "activityWithinSubProcess3");
+        activityWithinSubProcess3SequenceFlow.setTracingTag("activityWithinSubProcess3SequenceFlow");
+        processDefinition.addSequenceFlow(activityWithinSubProcess3SequenceFlow);
 
-        Event subEndEvent = new EndEvent();
-        subEndEvent.setTracingTag("subEndEvent");
-        subProcess.addSequenceFlow(new SequenceFlow("activityWithinSubProcess3", "subEndEvent"));
-        subProcess.addChildActivity(subEndEvent);
+        // EndEvent subEndEvent = new EndEvent();
+        // subEndEvent.setTracingTag("subEndEvent");
+        SequenceFlow subEndEventSequenceFlow = new SequenceFlow("activityWithinSubProcess3", "activityAfterSubProcess");
+        subEndEventSequenceFlow.setTracingTag("subEndEventSequenceFlow");
+        processDefinition.addSequenceFlow(subEndEventSequenceFlow);
+        // processDefinition.addChildActivity(subEndEvent);
 
-        DefaultActivity activityAfterSubProcess = new DefaultActivity();
+        // DefaultActivity activityAfterSubProcess = new DefaultActivity();
+        // activityAfterprocessDefinition.setTracingTag("activityAfterSubProcess");
+        // processDefinition.addChildActivity(activityAfterSubProcess);
+
+        HumanActivity activityAfterSubProcess = new HumanActivity();
+        activityAfterSubProcess.setRole(processDefinition.getRole("reporter"));
         activityAfterSubProcess.setTracingTag("activityAfterSubProcess");
+        activityAfterSubProcess.setEventSynchronization(es);
+        activityAfterSubProcess.setMessage("receive"); // 이벤트를 받기 위한 설정
         processDefinition.addChildActivity(activityAfterSubProcess);
 
+        ExclusiveGateway exclusiveGateway = new ExclusiveGateway();
+        exclusiveGateway.setTracingTag("exclusiveGateway");
+        processDefinition.addChildActivity(exclusiveGateway);
+
+        SequenceFlow sq = new SequenceFlow("activityAfterSubProcess", "exclusiveGateway");
+        processDefinition.addSequenceFlow(sq);
+        sq.setTracingTag("sq");
+        
+
+        SequenceFlow sq2 = new SequenceFlow("exclusiveGateway", "activityBeforeSubProcess");
+        sq2.setTracingTag("sq2");
+        sq2.setOtherwise(true);
+        processDefinition.addSequenceFlow(sq2);
+        HumanActivity backActivity2 = new HumanActivity();
+        backActivity2.setRole(processDefinition.getRole("reporter"));
+        backActivity2.setTracingTag("backActivity2");
+        backActivity2.setEventSynchronization(es);
+        backActivity2.setMessage("receive"); // 이벤트를 받기 위한 설정
+        processDefinition.addChildActivity(backActivity2);
+
+        SequenceFlow sq3 = new SequenceFlow("exclusiveGateway", "backActivity2");
+        sq3.setTracingTag("sq3");
+        Evaluate ev = new Evaluate();
+        ev.setCondition("==");
+        ev.setKey("myVar");
+        ev.setValue("value1");
+        sq3.setCondition(ev);
+        exclusiveGateway.setDefaultFlow("sq2");
+        processDefinition.addSequenceFlow(sq3);
         // 시퀀스 플로우 구성
-        processDefinition.addSequenceFlow(new SequenceFlow("startEvent", "activityBeforeSubProcess"));
-        processDefinition.addSequenceFlow(new SequenceFlow("activityBeforeSubProcess", "subProcess"));
-        processDefinition.addSequenceFlow(new SequenceFlow("subProcess", "activityAfterSubProcess"));
+        
+
+        SequenceFlow subProcessSequenceFlow = new SequenceFlow("activityBeforeSubProcess", "activityWithinSubProcess");
+        subProcessSequenceFlow.setTracingTag("subProcessSequenceFlow");
+        processDefinition.addSequenceFlow(subProcessSequenceFlow);
+
+        // SequenceFlow activityAfterSubProcessSequenceFlow = new SequenceFlow("subProcess", "activityAfterSubProcess");
+        // activityAfterSubProcessSequenceFlow.setTracingTag("activityAfterSubProcessSequenceFlow");
+        // processDefinition.addSequenceFlow(activityAfterSubProcessSequenceFlow);
 
         processDefinition.afterDeserialization();
         processDefinition.setActivityFilters(new ActivityFilter[] {
@@ -200,15 +269,16 @@ public class BackToHereTest extends UEngineTest {
         ProcessVariableValue pvv = new ProcessVariableValue();
         pvv.setName("myVar");
         pvv.setValue("value1");
-        pvv.moveToAdd();
-        pvv.setValue("value2");
-        pvv.moveToAdd();
-        pvv.setValue("value3");
+        // pvv.moveToAdd();
+        // pvv.setValue("value2");
+        // pvv.moveToAdd();
+        // pvv.setValue("value3");
 
         // Step 3: Set the ProcessVariableValue to the process instance
-        instance.set("", "myVar", pvv);
+        instance.set("", "myVar", "value1");
         instance.putRoleMapping("reporter", "reporter@uengine.org");
         instance.execute();
+        instance.set("", "myVar", "value1");
         // 서브프로세스 내에서 취소 이벤트 발생
         // instance.getProcessDefinition().fireMessage("event", instance,
         // "cancelEvent");
@@ -219,17 +289,24 @@ public class BackToHereTest extends UEngineTest {
         // }, instance);
 
         // 서브프로세스 내의 ReceiveActivity를 트리거하여 진행
+        
         // ExecutionScopeContext rootExecutionScopeContext = instance.getExecutionScopeContext();
         instance.getProcessDefinition().fireMessage("receive", instance, "receive");
         assertEquals(instance.getStatus("activityBeforeSubProcess"), "Completed");
-        instance.setExecutionScope("0");
-        assertEquals(instance.getStatus("activityWithinSubProcess"), "Running");
+        // instance.setExecutionScope("0");
         instance.getProcessDefinition().fireMessage("receive", instance, "receive");
-        assertEquals(instance.getStatus("activityWithinSubProcess2"), "Running");
+        assertEquals(instance.getStatus("activityWithinSubProcess"), "Completed");
         instance.getProcessDefinition().fireMessage("receive", instance, "receive");
-        assertEquals(instance.getStatus("activityWithinSubProcess3"), "Running");
+        assertEquals(instance.getStatus("activityWithinSubProcess2"), "Completed");
+        instance.getProcessDefinition().fireMessage("receive", instance, "receive");
+        assertEquals(instance.getStatus("activityWithinSubProcess3"), "Completed");
+        assertEquals(instance.getStatus("activityAfterSubProcess"), "Running");
+        instance.set("","myVar", "value1");
+        instance.getProcessDefinition().fireMessage("receive", instance, "receive");
+        assertEquals(instance.getStatus("activityAfterSubProcess"), "Completed");
+        assertEquals(instance.getStatus("exclusiveGateway"), "Completed");
+        assertEquals(instance.getStatus("activityBeforeSubProcess"), "Completed");
         instance.getProcessDefinition().getActivity("activityWithinSubProcess").backToHere(instance);
-        
         assertEquals(instance.getStatus("activityWithinSubProcess"), "Running");
         // }
 

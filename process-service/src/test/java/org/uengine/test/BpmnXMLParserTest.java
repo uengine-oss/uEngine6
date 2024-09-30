@@ -55,7 +55,19 @@ public class BpmnXMLParserTest {
             fail("Parsing failed with exception: " + e.getMessage());
         }
     }
-
+    @Test
+    public void testParsePurchaseRequestBpmn() {
+        BpmnXMLParser parser = new BpmnXMLParser();
+        String bpmnFilePath = "/Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6/definitions/corr-test.bpmn";
+        try {
+            String bpmnContent = new String(Files.readAllBytes(Paths.get(bpmnFilePath)));
+            assertNotNull("BPMN content should not be null", bpmnContent);
+            ProcessDefinition processDefinition = parser.parse(bpmnContent);
+            assertNotNull("ProcessDefinition should not be null", processDefinition);
+        } catch (Exception e) {
+            fail("Failed to parse PurchaseRequest.bpmn due to: " + e.getMessage());
+        }
+    }
     @Test
     public void testParseSequenceFlow() {
         BpmnXMLParser parser = new BpmnXMLParser();
@@ -208,7 +220,7 @@ public class BpmnXMLParserTest {
         }
     }
 
-    // @Test
+    @Test
     public void testParseProcessVariables() throws Exception {
         String xml = "<definitions>" +
                 "  <bpmn:process id=\"process1\" name=\"Sample Process\">\n" +

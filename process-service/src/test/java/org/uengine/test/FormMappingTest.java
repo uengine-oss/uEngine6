@@ -3,15 +3,13 @@ package org.uengine.test;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Vector;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Replace;
 import org.uengine.contexts.MappingContext;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.AbstractProcessInstance;
-import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.FormActivity;
 import org.uengine.kernel.MappingElement;
@@ -19,7 +17,6 @@ import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ProcessVariable;
-import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.StartEvent;
@@ -45,6 +42,7 @@ public class FormMappingTest extends UEngineTest {
      * 
      * @throws Exception
      */
+    @Before
     public void setUp() throws Exception {
 
         AbstractProcessInstance.USE_CLASS = DefaultProcessInstance.class;

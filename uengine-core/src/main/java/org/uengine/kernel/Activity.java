@@ -780,22 +780,23 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
         System.out.println("getInstanceId : " + instance.getInstanceId());
         System.out.println("getExecutionScopeContext : " + instance.getExecutionScopeContext());
         System.out.println("**********************");
-        ProcessDefinition definition = instance.getProcessDefinition();
-        List<Activity> list = new ArrayList<Activity>();
-
-        // Activity returningActivity = definition.getActivity(tracingTag);
-
-        // returningActivity.compensateToThis(instance);
         
-        definition.gatherPropagatedActivitiesOf(instance, this, list);
-
-        Activity proActiviy;
+        List<ProcessInstance> list = new ArrayList<ProcessInstance>();
+        Map<String,List<Activity>> map = new HashMap<String,List<Activity>>();
+        recursivePropagatedActivities(instance, this, map, list);
+        ProcessInstance proInstance;
         for (int i = list.size() - 1; i >= 0; i--) {
-            proActiviy = list.get(i);
-            // compensate
-            proActiviy.compensate(instance);
+            proInstance = list.get(i);
+        
+            List<Activity> activities = map.get(proInstance.getInstanceId());
+            Activity proActivity;
+            for(int y = activities.size() -1; y >= 0; y--) {
+                proActivity = activities.get(y);
+                proActivity.compensate(proInstance);
+            }
         }
-        compensate(instance);
+        
+        compensateToThis(instance);
         resume(instance);
         /*
          * ProcessDefinition extends FlowActivity 상속하고 있기 때문에,
@@ -808,6 +809,26 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
         // return new InstanceResource(instance);
     }
+
+    public void recursivePropagatedActivities(ProcessInstance instance, Activity activity, Map<String,List<Activity>> map, List<ProcessInstance> list) throws Exception {
+        ProcessDefinition definition = instance.getProcessDefinition();
+        List<Activity> activities = new ArrayList<Activity>();
+        definition.gatherPropagatedActivitiesOf(instance, activity, activities);
+    
+        map.put(instance.getInstanceId(), activities);
+        list.add(instance);
+        if(instance.isSubProcess()) {
+            String tracingTag = instance.getMainActivityTracingTag();
+            ProcessInstance pi = instance.getMainProcessInstance();
+            ProcessDefinition def = pi.getProcessDefinition();
+            Activity act = def.getActivity(tracingTag);
+            recursivePropagatedActivities(pi, act, map, list);
+        }
+    }
+
+    // definition.getActivity()
+    // ㅁ-ㅁ
+
 	/**
 	 * only when needed to reserve activity before running, it stores the runner
 	 * ticket for trigger the activity later.
@@ -1734,6 +1755,10 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 				superCompensatingList = returningActivity.compensateToThis(returningInstance, false);
 
 				returningActivity.setStatus(returningInstance, Activity.STATUS_RUNNING);
+
+                Vector completedSpIds = returningActivity.getSubprocessIds(returningInstance, "completedInstanceIdOfSPs");
+                completedSpIds.remove(instance.getInstanceId());
+                returningActivity.setSubprocessIds(returningInstance, completedSpIds, "completedInstanceIdOfSPs");
 
 				// TODO: should be moved to SubProcessActivity?
 				// returningDefinition.compensateOneStep(returningInstance);

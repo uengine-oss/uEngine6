@@ -6,6 +6,29 @@ import java.util.Date;
 /**
  * Created by uengine on 2017. 12. 21..
  */
+
+// JPA DDL Generation
+// CREATE TABLE bpm_audit (
+//     auditId BIGINT NOT NULL,
+//     fullTracingTag VARCHAR(255),
+//     startedDate TIMESTAMP,
+//     finishedDate TIMESTAMP,
+//     activityName VARCHAR(255),
+//     tracingTag VARCHAR(255),
+//     instId BIGINT,
+//     rootInstId BIGINT,
+//     PRIMARY KEY (auditId)
+// );
+// ALTER TABLE bpm_audit 
+// ADD CONSTRAINT FK_rootProcessInstance 
+// FOREIGN KEY (rootInstId) 
+// REFERENCES BPM_PROCINST (instId);
+// ALTER TABLE bpm_audit 
+// ADD CONSTRAINT FK_processInstance 
+// FOREIGN KEY (instId) 
+// REFERENCES BPM_PROCINST (instId);
+
+ 
 @Entity
 @Table(name="bpm_audit")
 public class AuditEntity {

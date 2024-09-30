@@ -468,7 +468,7 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 			}
 		}
 
-		//the child (which is compensated in the lastest order) whould compensate this (parent)activity by event escalation (CHILD_COMPENSATED).
+		// the child (which is compensated in the lastest order) whould compensate this (parent)activity by event escalation (CHILD_COMPENSATED).
 		// So we don't need to call the 'compensate' method for it-self. 
 		if(neverAffected && Activity.isCompensatable(getStatus(instance)))
 			super.compensate(instance);

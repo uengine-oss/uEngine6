@@ -1,0 +1,6 @@
+server:
+  ssl:
+    key-store: src/test/resources/keystore.p12
+    key-store-password: mypassword
+    keyStoreType: PKCS12
+    keyAlias: uengine

@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
-import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.StandaloneApplication;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -991,7 +991,7 @@ public class InstanceServiceImpl implements InstanceService {
                         try {
                             typeName = (String) ((Map) data).get("_type");
                             Class classType = Thread.currentThread().getContextClassLoader().loadClass(typeName);
-                            data = (Serializable) ProcessServiceApplication.objectMapper.convertValue(data, classType);
+                            data = (Serializable) StandaloneApplication.objectMapper.convertValue(data, classType);
                         } catch (Exception e) {
                             throw new Exception("Error while convert map to type: " + typeName, e);
                         }
@@ -1037,7 +1037,7 @@ public class InstanceServiceImpl implements InstanceService {
             throw new FileNotFoundException("File not found: " + filePath);
         }
         StringBuilder contentBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 contentBuilder.append(line).append(System.lineSeparator());
@@ -1106,7 +1106,7 @@ public class InstanceServiceImpl implements InstanceService {
             for (File file : files) {
                 if (file.isFile()) {
                     StringBuilder contentBuilder = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             contentBuilder.append(line).append(System.lineSeparator());
@@ -1137,7 +1137,7 @@ public class InstanceServiceImpl implements InstanceService {
         instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
                 .getActivity(worklistEntity.getTrcTag()));
-                
+
         if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");

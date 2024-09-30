@@ -414,6 +414,10 @@ public class SubProcess extends ScopeActivity {
             }
         } else {
             super.executeActivity(instance);
+            ProcessInstance thePI = initiateSubProcess(instance, null, null, false, 0);
+            Vector subprocessInstanceIds = new Vector();
+            subprocessInstanceIds.add(thePI.getInstanceId());
+            setSubprocessIds(instance, subprocessInstanceIds, SUBPROCESS_INST_ID);
         }
     }
 
@@ -563,6 +567,7 @@ public class SubProcess extends ScopeActivity {
             ProcessInstance thePI = initiateSubProcess(instance, null, null, false, 0);
             subprocessInstances.add(thePI);
             subprocessInstanceIds.add(thePI.getInstanceId());
+
         }
         ArrayList<ExecutionScopeContext> execScopes = (ArrayList) instance.getProperty("", "_executionScopes");
         Vector<String> execScopesVector = new Vector<String>();
@@ -1057,7 +1062,7 @@ public class SubProcess extends ScopeActivity {
     // super.stop(instance);
     // }
     //
-    
+
     public void compensate(ProcessInstance instance) throws Exception {
         Vector subProcesses = getSubprocessIds(instance);
         // getSubProcesses methods 확인 필요.
@@ -1068,10 +1073,14 @@ public class SubProcess extends ScopeActivity {
             for (int y = 0; y < childActivities.size(); y++) {
                 Activity act = childActivities.get(y);
                 ProcessInstance pi = AbstractProcessInstance.create().getInstance(theSP);
-                instance.setExecutionScopeContext(pi.getExecutionScopeContext());
+                if(pi.getExecutionScopeContext() != null)
+                    instance.setExecutionScopeContext(pi.getExecutionScopeContext());
+                
                 act.compensate(instance);
             }
         }
+        
+        super.compensate(instance);
     }
 
     public void attachSubProcess(ProcessInstance instance, String subProcessInstanceId, String label) throws Exception {
