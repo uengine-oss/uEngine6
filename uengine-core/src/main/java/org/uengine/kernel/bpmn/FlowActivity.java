@@ -61,24 +61,35 @@ public class FlowActivity extends ComplexActivity {
         this.getSequenceFlows().add(trasition);
     }
 
-    private Map<String, StartEvent> startEventMap = new HashMap<>();
     private ArrayList<Map<String, Integer>> distancesFromStartEvents = new ArrayList<>();
+    private ArrayList<Map<String, Integer>> distancesFromEndEvents = new ArrayList<>();
 
     public ArrayList<Map<String, Integer>> getDistancesFromStartEvents() {
         return distancesFromStartEvents;
     }
 
+    public ArrayList<Map<String, Integer>> getDistancesFromEndEvents() {
+        return distancesFromEndEvents;
+    }
+
     public void setStartEvent() {
         if (getChildActivities() != null) {
             for (Object activityObj : getChildActivities()) {
-                if (activityObj instanceof StartEvent) {
-                    if (activityObj instanceof EndEvent)
-                        continue;
+                if (!(activityObj instanceof StartEvent))
+                    continue;
+                StartEvent startEvent = (StartEvent) activityObj;
+                distancesFromStartEvents.add(calculateDistancesFromStartEvent(startEvent));
+            }
+        }
+    }
 
-                    StartEvent startEvent = (StartEvent) activityObj;
-                    startEventMap.put(startEvent.getTracingTag(), startEvent);
-                    distancesFromStartEvents.add(calculateDistancesFromStartEvent(startEvent));
-                }
+    public void setEndEvent() {
+        if (getChildActivities() != null) {
+            for (Object activityObj : getChildActivities()) {
+                if (!(activityObj instanceof EndEvent))
+                    continue;
+                EndEvent endEvent = (EndEvent) activityObj;
+                distancesFromEndEvents.add(calculateDistancesFromEndEvent(endEvent));
             }
         }
     }
@@ -112,11 +123,55 @@ public class FlowActivity extends ComplexActivity {
         }
     }
 
+    private Map<String, Integer> calculateDistancesFromEndEvent(EndEvent endEvent) {
+        if (endEvent == null) {
+            return null;
+        }
+
+        Map<String, Integer> distancesFromEndEvent = new HashMap<>();
+        calculateDistanceFromEndRecursive(distancesFromEndEvent, endEvent, 0, new HashSet<>());
+        return distancesFromEndEvent;
+    }
+
+    private void calculateDistanceFromEndRecursive(Map<String, Integer> distancesFromEndEvent, Activity activity,
+            int distance, Set<String> visited) {
+        if (activity == null || visited.contains(activity.getTracingTag())) {
+            return;
+        }
+
+        visited.add(activity.getTracingTag());
+
+        if (!distancesFromEndEvent.containsKey(activity.getTracingTag())
+                || distancesFromEndEvent.get(activity.getTracingTag()) > distance) {
+            distancesFromEndEvent.put(activity.getTracingTag(), distance);
+        }
+
+        for (SequenceFlow incomingFlow : activity.getIncomingSequenceFlows()) {
+            Activity sourceActivity = incomingFlow.getSourceActivity();
+            calculateDistanceFromEndRecursive(distancesFromEndEvent, sourceActivity, distance + 1, visited);
+        }
+    }
+
     public int getDepthFromStartEvent(Activity activity) {// 시작이벤트로부터의 깊이 체크
         if (getDistancesFromStartEvents() == null)
             return -1;
 
         for (Map<String, Integer> distances : getDistancesFromStartEvents()) {
+            if (distances.containsKey(activity.getTracingTag())) {
+                Integer depth = distances.get(activity.getTracingTag());
+                if (depth != null) {
+                    return depth;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public int getDepthFromEndEvent(Activity activity) { // 종료이벤트로부터의 깊이 체크
+        if (getDistancesFromEndEvents() == null)
+            return -1;
+
+        for (Map<String, Integer> distances : getDistancesFromEndEvents()) {
             if (distances.containsKey(activity.getTracingTag())) {
                 Integer depth = distances.get(activity.getTracingTag());
                 if (depth != null) {
@@ -204,6 +259,7 @@ public class FlowActivity extends ComplexActivity {
         }
 
         setStartEvent();
+        setEndEvent();
 
         for (SequenceFlow sequence : getSequenceFlows()) {
             if (sequence.getSourceActivity() == null)
@@ -211,12 +267,16 @@ public class FlowActivity extends ComplexActivity {
 
             ProcessDefinition processDefinition = sequence.getSourceActivity().getProcessDefinition();
 
-            int sourceDepth = processDefinition
+            int sourceDepthStart = processDefinition
                     .getDepthFromStartEvent(sequence.getSourceActivity());
-            int targetDepth = processDefinition
+            int targetDepthStart = processDefinition
                     .getDepthFromStartEvent(sequence.getTargetActivity());
+            int sourceDepthEnd = processDefinition
+                    .getDepthFromEndEvent(sequence.getSourceActivity());
+            int targetDepthEnd = processDefinition
+                    .getDepthFromEndEvent(sequence.getTargetActivity());
 
-            sequence.setFeedback(sourceDepth > targetDepth);
+            sequence.setFeedback(sourceDepthStart > targetDepthStart && sourceDepthEnd < targetDepthEnd);
         }
 
         // for each events: getProcessDefinition().addMessageListener(instance,
