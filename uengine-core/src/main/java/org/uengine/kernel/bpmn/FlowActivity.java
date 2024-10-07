@@ -135,7 +135,12 @@ public class FlowActivity extends ComplexActivity {
 
     private void calculateDistanceFromEndRecursive(Map<String, Integer> distancesFromEndEvent, Activity activity,
             int distance, Set<String> visited) {
-        if (activity == null || visited.contains(activity.getTracingTag())) {
+        if (activity == null) {
+            return;
+        }
+
+        if (visited.contains(activity.getTracingTag())
+                && distancesFromEndEvent.get(activity.getTracingTag()) < distance) {
             return;
         }
 
