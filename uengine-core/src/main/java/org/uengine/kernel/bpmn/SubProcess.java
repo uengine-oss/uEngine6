@@ -1069,18 +1069,28 @@ public class SubProcess extends ScopeActivity {
         // Vector subProcesses = getSubProcesses(instance);
         for (int i = 0; i < subProcesses.size(); i++) {
             String theSP = (String) subProcesses.get(i);
+            ProcessInstance pi = AbstractProcessInstance.create().getInstance(theSP);
             List<Activity> childActivities = getChildActivities();
             for (int y = 0; y < childActivities.size(); y++) {
                 Activity act = childActivities.get(y);
-                ProcessInstance pi = AbstractProcessInstance.create().getInstance(theSP);
-                if(pi.getExecutionScopeContext() != null)
-                    instance.setExecutionScopeContext(pi.getExecutionScopeContext());
                 
-                act.compensate(instance);
+                act.compensate(pi);
             }
         }
-        
+
+        // List<ActivityEventListener> eventListeners = getActivityEventListeners();
+        // getActivityEventListeners().clear();
+        // for(int x = 0; x < eventListeners.size(); x++) {
+        //     ActivityEventListener listener = eventListeners.get(x);
+        //     // listener.
+        // }
+
+        instance.setExecutionScope(null);
+        reset(instance);
         super.compensate(instance);
+        // super.reset
+        // instance.setStatus(getTracingTag(), STATUS_READY);
+        // super.compensate(instance);
     }
 
     public void attachSubProcess(ProcessInstance instance, String subProcessInstanceId, String label) throws Exception {

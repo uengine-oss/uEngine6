@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Pool;
 import org.uengine.processmanager.ProcessManagerRemote;
 import org.uengine.processmanager.ProcessTransactionContext;
@@ -473,6 +474,15 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		if(neverAffected && Activity.isCompensatable(getStatus(instance)))
 			super.compensate(instance);
 
+        for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+			if (childActivity instanceof Event) {
+				Event event = (Event) childActivity;
+				if (this.getTracingTag().equals(event.getAttachedToRef())) {
+					// instance.execute(event.getTracingTag());
+                    instance.setStatus(event.getTracingTag(), STATUS_READY);
+				}
+			}
+		}
 
 		/**
 		 * clear the status

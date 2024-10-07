@@ -54,8 +54,10 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     @Query("select pi from ProcessInstanceEntity pi where (pi.corrKey = :corrKey and pi.status = :status)")
     List<ProcessInstanceEntity> findByCorrKeyAndStatus(@Param("corrKey") String corrKey, @Param("status") String status);
     
-    // // TEST
-    @Query("select pi from ProcessInstanceEntity pi")
-    List<ProcessInstanceEntity> findAll();
+    @Query("select pi from ProcessInstanceEntity pi order by pi.startedDate desc")
+    Page<ProcessInstanceEntity> findAll(Pageable pageable);
+
+    @Query("select pi from ProcessInstanceEntity pi where pi.name like CONCAT('%',:name,'%') order by pi.startedDate desc")
+    Page<ProcessInstanceEntity> findByName(@Param("name") String name, Pageable pageable);
 }
 
