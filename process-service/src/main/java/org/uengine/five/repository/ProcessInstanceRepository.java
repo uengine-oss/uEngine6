@@ -57,7 +57,7 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     @Query("select pi from ProcessInstanceEntity pi order by pi.startedDate desc")
     Page<ProcessInstanceEntity> findAll(Pageable pageable);
 
-    @Query("select pi from ProcessInstanceEntity pi where pi.name like CONCAT('%',:name,'%') order by pi.startedDate desc")
-    Page<ProcessInstanceEntity> findByName(@Param("name") String name, Pageable pageable);
+    @Query("select pi from ProcessInstanceEntity pi where (:name is null or pi.name like CONCAT('%',:name,'%')) and (:status is null or pi.status = :status) and (:startedDate is null or pi.startedDate >= :startedDate) and (:finishedDate is null or :finishedDate >= pi.finishedDate ) and (:subProcess is null or :subProcess = pi.subProcess ) order by pi.startedDate desc")
+    Page<ProcessInstanceEntity> findByName(@Param("name") String name, @Param("status") String status, @Param("startedDate") String startedDate, @Param("finishedDate") String finishedDate, @Param("subProcess") String subProcess, Pageable pageable);
 }
 
