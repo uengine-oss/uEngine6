@@ -2,6 +2,7 @@ package org.uengine.kernel.bpmn;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -172,6 +173,21 @@ public class FlowActivity extends ComplexActivity {
         return -1;
     }
 
+    public int getDepthFromStartEvent(String trcTag) {// 시작이벤트로부터의 깊이 체크
+        if (getDistancesFromStartEvents() == null)
+            return -1;
+
+        for (Map<String, Integer> distances : getDistancesFromStartEvents()) {
+            if (distances.containsKey(trcTag)) {
+                Integer depth = distances.get(trcTag);
+                if (depth != null) {
+                    return depth;
+                }
+            }
+        }
+        return -1;
+    }
+
     public int getDepthFromEndEvent(Activity activity) { // 종료이벤트로부터의 깊이 체크
         if (getDistancesFromEndEvents() == null)
             return -1;
@@ -185,6 +201,77 @@ public class FlowActivity extends ComplexActivity {
             }
         }
         return -1;
+    }
+
+    public List<List<String>> detectLoopsInSequenceFlows(Activity activity) {
+        List<List<String>> loops = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        detectLoopsRecursive(activity, activity, visited, loops, new ArrayList<>());
+        for (List<String> loop : loops) {
+            Set<String> loopSet = new HashSet<>(loop);
+            loop.clear();
+            loop.addAll(loopSet);
+            Collections.sort(loop);
+        }
+        return loops;
+    }
+
+    private void detectLoopsRecursive(Activity startActivity, Activity currentActivity, Set<String> visited,
+            List<List<String>> loops, List<SequenceFlow> path) {
+        if (visited.contains(currentActivity.getTracingTag())) {
+            if (currentActivity.equals(startActivity)) {
+                List<String> loop = new ArrayList<>();
+                for (SequenceFlow flow : path) {
+                    loop.add(flow.getSourceActivity().getTracingTag());
+                    loop.add(flow.getTracingTag());
+                }
+                loops.add(loop);
+            }
+            return;
+        }
+
+        visited.add(currentActivity.getTracingTag());
+
+        for (SequenceFlow sequenceFlow : currentActivity.getIncomingSequenceFlows()) {
+            path.add(sequenceFlow);
+            detectLoopsRecursive(startActivity, sequenceFlow.getSourceActivity(), visited, loops, path);
+            path.remove(sequenceFlow);
+        }
+
+        visited.remove(currentActivity.getTracingTag());
+    }
+
+    ArrayList<String> visitLoop = new ArrayList<String>();
+
+    public void setFeedbackWithActivity(Activity activity) {
+        if (activity.getIncomingSequenceFlows().size() < 2)
+            return;
+        List<List<String>> loopActivities = detectLoopsInSequenceFlows(activity);
+        int minDepth = -1;
+        String minActivity = null;
+        if (loopActivities.size() > 0) {
+            for (List<String> loop : loopActivities) {
+                if (visitLoop.contains(loop.toString())) // 이미 체크한 루프는 무시
+                    continue;
+
+                visitLoop.add(loop.toString());
+                for (String trcTag : loop) {
+                    int depth = getDepthFromStartEvent(trcTag);
+                    if (minDepth == -1 || (depth > 0 && minDepth > depth)) {
+                        minDepth = depth;
+                        minActivity = trcTag;
+                    }
+                }
+                if (minActivity != null) {
+                    for (SequenceFlow minSequenceFlow : getProcessDefinition().getActivity(minActivity)
+                            .getIncomingSequenceFlows()) {
+                        if (loop.contains(minSequenceFlow.getTracingTag())) {
+                            minSequenceFlow.setFeedback(true);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -264,28 +351,10 @@ public class FlowActivity extends ComplexActivity {
         }
 
         setStartEvent();
-        setEndEvent();
-
-        for (SequenceFlow sequence : getSequenceFlows()) {
-            if (sequence.getSourceActivity() == null)
-                continue;
-
-            ProcessDefinition processDefinition = sequence.getSourceActivity().getProcessDefinition();
-
-            int sourceDepthStart = processDefinition
-                    .getDepthFromStartEvent(sequence.getSourceActivity());
-            int targetDepthStart = processDefinition
-                    .getDepthFromStartEvent(sequence.getTargetActivity());
-            int sourceDepthEnd = processDefinition
-                    .getDepthFromEndEvent(sequence.getSourceActivity());
-            int targetDepthEnd = processDefinition
-                    .getDepthFromEndEvent(sequence.getTargetActivity());
-
-            sequence.setFeedback(sourceDepthStart > targetDepthStart && sourceDepthEnd < targetDepthEnd);
+        for (Activity activity : getChildActivities()) {
+            setFeedbackWithActivity(activity);
         }
 
-        // for each events: getProcessDefinition().addMessageListener(instance,
-        // eventActivity);
         for (Activity childActivity : getChildActivities()) {
             if (childActivity instanceof Event && "Catching".equals(((Event) childActivity).getEventType())
                     && (childActivity.getIncomingSequenceFlows() == null
