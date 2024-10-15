@@ -207,12 +207,12 @@ public class FlowActivity extends ComplexActivity {
         List<List<String>> loops = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         detectLoopsRecursive(activity, activity, visited, loops, new ArrayList<>());
-        for (List<String> loop : loops) {
-            Set<String> loopSet = new HashSet<>(loop);
-            loop.clear();
-            loop.addAll(loopSet);
-            Collections.sort(loop);
-        }
+        // for (List<String> loop : loops) {
+        // Set<String> loopSet = new HashSet<>(loop);
+        // loop.clear();
+        // loop.addAll(loopSet);
+        // Collections.sort(loop);
+        // }
         return loops;
     }
 
@@ -226,6 +226,7 @@ public class FlowActivity extends ComplexActivity {
                     loop.add(flow.getTracingTag());
                 }
                 loops.add(loop);
+
             }
             return;
         }
@@ -247,10 +248,11 @@ public class FlowActivity extends ComplexActivity {
         if (activity.getIncomingSequenceFlows().size() < 2)
             return;
         List<List<String>> loopActivities = detectLoopsInSequenceFlows(activity);
-        int minDepth = -1;
-        String minActivity = null;
+
         if (loopActivities.size() > 0) {
             for (List<String> loop : loopActivities) {
+                int minDepth = -1;
+                String minActivity = null;
                 if (visitLoop.contains(loop.toString())) // 이미 체크한 루프는 무시
                     continue;
 
@@ -262,6 +264,7 @@ public class FlowActivity extends ComplexActivity {
                         minActivity = trcTag;
                     }
                 }
+                
                 if (minActivity != null) {
                     for (SequenceFlow minSequenceFlow : getProcessDefinition().getActivity(minActivity)
                             .getIncomingSequenceFlows()) {
@@ -270,6 +273,7 @@ public class FlowActivity extends ComplexActivity {
                         }
                     }
                 }
+
             }
         }
     }
@@ -649,13 +653,14 @@ public class FlowActivity extends ComplexActivity {
 
             for (int i = 0; i < possibleNextActivities.size(); i++) {
                 Activity activity = possibleNextActivities.get(i);
-                boolean hasToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
+                boolean hasNoToken = !Gateway.hasTokenInPreviousActivities(instance, activity);
+                // boolean hasToken = true;
                 if (activity instanceof Gateway) {
-                    hasToken = ((Gateway) activity).isCompletedAllOfPreviousActivities(instance);
+                    hasNoToken = ((Gateway) activity).isCompletedAllOfPreviousActivities(instance);
                 }
 
                 // if there are no gateway but if it look like a join, apply inclusive gateway.
-                if (activity.getIncomingSequenceFlows().size() == 1 || hasToken) {
+                if (activity.getIncomingSequenceFlows().size() == 1 || hasNoToken) {
                     for (SequenceFlow flow : activity.getIncomingSequenceFlows()) {
                         if (currentActivity.getTracingTag().equals(flow.getSourceActivity().getTracingTag()) &&
                                 activity.getTracingTag().equals(flow.getTargetActivity().getTracingTag())) {
