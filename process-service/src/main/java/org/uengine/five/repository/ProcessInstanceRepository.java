@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.util.Date;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.framework.ProcessTransactional;
 
@@ -26,22 +28,28 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     List<ProcessInstanceEntity> findMainInstICanSee();
 
     @Query("select pi from ProcessInstanceEntity pi " +
-            "where 1=1 " +
-            "and (:instId is null or pi.instId = :instId )" +
-            "and (:defId is null or pi.defId like CONCAT('%',:defId,'%')) " +
-            "and (:status is null or pi.status = :status )" +
-            "and (:eventHandler is null or pi.eventHandler = :eventHandler )" +
-            "and (:name is null or pi.name like CONCAT('%',:name,'%') )" +
-            "and (:startedDate is null or pi.startedDate >= :startedDate)" +
-            "and (:finishedDate is null or :finishedDate >= pi.finishedDate )")
-    Page<ProcessInstanceEntity> findFilterICanSee(
+       "where 1=1 " +
+       "and (:instId is null or pi.instId = :instId )" +
+       "and (:defId is null or pi.defId like CONCAT('%',:defId,'%')) " +
+       "and (:status is null or pi.status = :status )" +
+       "and (:eventHandler is null or pi.eventHandler = :eventHandler )" +
+       "and (:name is null or pi.name like CONCAT('%',:name,'%') )" +
+       "and (:startedDate is null or pi.startedDate >= :startedDate)" +
+       "and (:finishedDate is null or :finishedDate >= pi.finishedDate )" +
+       "and (:subProcess is null or :subProcess = pi.subProcess )" +
+       "and (:initEp is null or pi.initEp like CONCAT('%',:initEp,'%'))" +
+       "group by pi.instId, pi.startedDate " +  // Added GROUP BY clause
+       "order by pi.startedDate desc")
+        Page<ProcessInstanceEntity> findFilterICanSee(
             @Param("defId") String defId,
             @Param("instId") Long instId,
             @Param("status") String status,
             @Param("eventHandler") String eventHandler,
             @Param("name") String name,
-            @Param("startedDate") String startedDate,
-            @Param("finishedDate") String finishedDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("startedDate") Date startedDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("finishedDate") Date finishedDate,
+            @Param("initEp") String initEp,
+            @Param("subProcess") Boolean subProcess,
             Pageable pageable
             //Temporal 이 먹지않거나 시작일 검색이 제대로 기능하지않는다면 (String to Date Type error)시 아래 주석해제후 이내용으로 하시면됩니다.
 //                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)@Param("startedDate") Date startedDate,
@@ -60,4 +68,3 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     @Query("select pi from ProcessInstanceEntity pi where (:name is null or pi.name like CONCAT('%',:name,'%')) and (:status is null or pi.status = :status) and (:startedDate is null or pi.startedDate >= :startedDate) and (:finishedDate is null or :finishedDate >= pi.finishedDate ) and (:subProcess is null or :subProcess = pi.subProcess ) order by pi.startedDate desc")
     Page<ProcessInstanceEntity> findByName(@Param("name") String name, @Param("status") String status, @Param("startedDate") String startedDate, @Param("finishedDate") String finishedDate, @Param("subProcess") String subProcess, Pageable pageable);
 }
-
