@@ -17,11 +17,13 @@ import org.uengine.kernel.ActivityEventListener;
 import org.uengine.kernel.ActivityReference;
 import org.uengine.kernel.CatchingMessageEvent;
 import org.uengine.kernel.ComplexActivity;
+import org.uengine.kernel.EventHandler;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.MessageListener;
 import org.uengine.kernel.Otherwise;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ScopeActivity;
 import org.uengine.kernel.TransactionListener;
 import org.uengine.kernel.UEngineException;
 import org.uengine.processmanager.ProcessTransactionContext;
@@ -187,6 +189,14 @@ public class FlowActivity extends ComplexActivity {
         return -1;
     }
 
+    public Boolean findFeedBack(SequenceFlow sequenceFlow) {
+        if(sequenceFlow.getSourceActivity().getIncomingSequenceFlows().size() != 0) {
+            List<SequenceFlow> beforeSequenceFlows = sequenceFlow.getSourceActivity().getIncomingSequenceFlows();
+            // beforeSequenceFlows
+        }
+        return false;
+    }
+
     @Override
     public void afterDeserialization() {
         super.afterDeserialization();
@@ -271,17 +281,26 @@ public class FlowActivity extends ComplexActivity {
                 continue;
 
             ProcessDefinition processDefinition = sequence.getSourceActivity().getProcessDefinition();
+            Boolean seqFeedback = findFeedBack(sequenceFlow);
+            // int sourceDepthStart = processDefinition
+            //         .getDepthFromStartEvent(sequence.getSourceActivity());
+            // int targetDepthStart = processDefinition
+            //         .getDepthFromStartEvent(sequence.getTargetActivity());
+            // int sourceDepthEnd = processDefinition
+            //         .getDepthFromEndEvent(sequence.getSourceActivity());
+            // int targetDepthEnd = processDefinition
+            //         .getDepthFromEndEvent(sequence.getTargetActivity());
 
-            int sourceDepthStart = processDefinition
-                    .getDepthFromStartEvent(sequence.getSourceActivity());
-            int targetDepthStart = processDefinition
-                    .getDepthFromStartEvent(sequence.getTargetActivity());
-            int sourceDepthEnd = processDefinition
-                    .getDepthFromEndEvent(sequence.getSourceActivity());
-            int targetDepthEnd = processDefinition
-                    .getDepthFromEndEvent(sequence.getTargetActivity());
+            // 1. 앞에서 찾기 --> 해당 
+            // 2. 뒤에서도 찾기 --> 
+            // 3. 
 
-            sequence.setFeedback(sourceDepthStart > targetDepthStart && sourceDepthEnd < targetDepthEnd);
+            if(sequence.getSourceActivity().getIncomingSequenceFlows().size() != 0) {
+                // seqFeedback = ;
+            }
+        
+
+            sequence.setFeedback(seqFeedback);
         }
 
         // for each events: getProcessDefinition().addMessageListener(instance,
@@ -294,22 +313,37 @@ public class FlowActivity extends ComplexActivity {
                 final Event event = (Event) childActivity;
 
                 if (event.getAttachedToRef() != null) {
-                    getProcessDefinition().getActivity(event.getAttachedToRef())
-                            .addEventListener(
-                                    new ActivityEventListener() {
-                                        @Override
-                                        public void afterExecute(Activity activity, ProcessInstance instance)
-                                                throws Exception {
-                                            getProcessDefinition().addMessageListener(instance, event);
-                                            queueActivity(event, instance);
-                                        }
+                    if(event.getClass().equals(CompensateEvent.class)) {
+                        ScopeActivity scopeActivity = (ScopeActivity) getProcessDefinition().getActivity(event.getAttachedToRef());
+                        EventHandler eventHandler = new EventHandler();
+                        eventHandler.setTriggeringMethod(11);
+                        eventHandler.setHandlerActivity(event);
+                        eventHandler.setName("compensate");
+                        EventHandler[] eventHandlers = new EventHandler[] { eventHandler };
+                        
+                        scopeActivity.setEventHandlers(eventHandlers);
+                    } else {
+                        getProcessDefinition().getActivity(event.getAttachedToRef())
+                        .addEventListener(
+                                new ActivityEventListener() {
+                                    @Override
+                                    public void afterExecute(Activity activity, ProcessInstance instance)
+                                            throws Exception {
+                                        getProcessDefinition().addMessageListener(instance, event);
+                                        queueActivity(event, instance);
+                                    }
 
-                                        @Override
-                                        public void afterComplete(Activity activity, ProcessInstance instance)
-                                                throws Exception {
-                                            getProcessDefinition().removeMessageListener(instance, event);
-                                        }
-                                    });
+                                    @Override
+                                    public void afterComplete(Activity activity, ProcessInstance instance)
+                                            throws Exception {
+                                                getProcessDefinition().removeMessageListener(instance, event);
+                                                
+                                        
+                                    }
+                                });
+                    }
+                    
+                    
                 }
 
             } else if (childActivity instanceof Gateway) {
