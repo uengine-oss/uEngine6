@@ -19,6 +19,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.uengine.contexts.EventSynchronization;
 import org.uengine.kernel.*;
 
 import javax.net.ssl.SSLContext;
@@ -31,6 +32,7 @@ import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +41,6 @@ import java.util.Map;
  */
 public class ServiceTask extends DefaultActivity {
 
-
     private boolean skipIfNotFound;
 
     @Override
@@ -47,13 +48,13 @@ public class ServiceTask extends DefaultActivity {
 
         /**
          * get the target server:
-         *  1. try full uri from uriTemplate,
-         *  2. find full url from rolemapping data,
-         *  3. try searching from EUREKA server by the endpoint of roleMapping
-         *  4. try searching from EUREKA server by the role name.
-         *  ******/
+         * 1. try full uri from uriTemplate,
+         * 2. find full url from rolemapping data,
+         * 3. try searching from EUREKA server by the endpoint of roleMapping
+         * 4. try searching from EUREKA server by the role name.
+         ******/
 
-        if(checkLocalCall(instance)){
+        if (checkLocalCall(instance)) {
             return;
         }
 
@@ -81,38 +82,42 @@ public class ServiceTask extends DefaultActivity {
                 if (serviceId == null)
                     serviceId = role.getName();
 
-                // LoadBalancerClient loadBalancerClient = MetaworksRemoteService.getInstance().getComponent(LoadBalancerClient.class);
+                // LoadBalancerClient loadBalancerClient =
+                // MetaworksRemoteService.getInstance().getComponent(LoadBalancerClient.class);
 
-                // DiscoveryClient discoveryClient = MetaworksRemoteService.getInstance().getComponent(DiscoveryClient.class);
+                // DiscoveryClient discoveryClient =
+                // MetaworksRemoteService.getInstance().getComponent(DiscoveryClient.class);
                 // List<String> services = discoveryClient.getServices();
 
                 // if (loadBalancerClient != null) {
-                //     ServiceInstance serviceInstance = loadBalancerClient.choose(serviceId);
+                // ServiceInstance serviceInstance = loadBalancerClient.choose(serviceId);
 
-                //     if (serviceInstance != null) {
-                //         String baseUrl = serviceInstance.getUri().toString();
+                // if (serviceInstance != null) {
+                // String baseUrl = serviceInstance.getUri().toString();
 
-                //         fullURITemplate = baseUrl + (getUriTemplate().startsWith("/") ? getUriTemplate() : "/" + getUriTemplate());
-                //     }
+                // fullURITemplate = baseUrl + (getUriTemplate().startsWith("/") ?
+                // getUriTemplate() : "/" + getUriTemplate());
+                // }
                 // }
             }
         }
 
-        if (fullURITemplate == null) throw new UEngineException("Target Service URI to call is not found: " + (getRole()!=null ? getRole().getName() : getUriTemplate()));
-
+        if (fullURITemplate == null)
+            throw new UEngineException("Target Service URI to call is not found: "
+                    + (getRole() != null ? getRole().getName() : getUriTemplate()));
 
         /**
-         *  creating real uri by evaluating the url pattern
-         *  ******/
+         * creating real uri by evaluating the url pattern
+         ******/
 
-//        ExpressionParser parser = new SpelExpressionParser();
-//
-//        StandardEvaluationContext context = new StandardEvaluationContext(instance);
-//        context.setVariable("activity", this);
-//
-//        String realURI =
-//                parser.parseExpression(fullURITemplate,
-//                        new TemplateParserContext()).getValue(String.class);
+        // ExpressionParser parser = new SpelExpressionParser();
+        //
+        // StandardEvaluationContext context = new StandardEvaluationContext(instance);
+        // context.setVariable("activity", this);
+        //
+        // String realURI =
+        // parser.parseExpression(fullURITemplate,
+        // new TemplateParserContext()).getValue(String.class);
 
         String realURI = evaluateContent(instance, fullURITemplate).toString();
 
@@ -123,10 +128,9 @@ public class ServiceTask extends DefaultActivity {
             throw new UEngineException("URI is malformed: " + realURI, e);
         }
 
-
         /**
-         *  call the uri with configured method and payload
-         *  ******/
+         * call the uri with configured method and payload
+         ******/
 
         String payload = null;
         String result = null;
@@ -134,35 +138,34 @@ public class ServiceTask extends DefaultActivity {
         try {
             RestTemplate restTemplate;
 
-            if(isNoValidationForSSL()){
+            if (isNoValidationForSSL()) {
                 restTemplate = noValidatingRestTemplate();
 
-            }else{
+            } else {
                 restTemplate = new RestTemplate();
             }
 
             HttpMethod httpMethod = HttpMethod.GET;
 
-            if ("POST".equals(getMethod())){
+            if ("POST".equals(getMethod())) {
                 httpMethod = HttpMethod.POST;
-            }else if ("PUT".equals(getMethod())){
+            } else if ("PUT".equals(getMethod())) {
                 httpMethod = HttpMethod.PUT;
-            }else if ("DELETE".equals(getMethod())){
+            } else if ("DELETE".equals(getMethod())) {
                 httpMethod = HttpMethod.DELETE;
             }
 
-            if ("GET,DELETE".indexOf(getMethod()) == -1){
-                payload =
-                        evaluateContent(instance, getInputPayloadTemplate()).toString();
-            }else{
+            if ("GET,DELETE".indexOf(getMethod()) == -1) {
+                payload = evaluateContent(instance, getInputPayloadTemplate()).toString();
+            } else {
                 payload = null;
             }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            //load headers
-            for(HttpHeader header : getHeaders()){
+            // load headers
+            for (HttpHeader header : getHeaders()) {
                 String headerKey = header.getName();
                 String value = header.getValue();
 
@@ -181,27 +184,34 @@ public class ServiceTask extends DefaultActivity {
             result = response.getBody();
 
             /**
-             *  parse the result by JSON PATH for each parameter contexts
-             *  ******/
+             * parse the result by JSON PATH for each parameter contexts
+             ******/
 
-            if (result != null && getOutputMapping()!=null) {
+            if (result != null && getOutputMapping().getMappingContext().getMappingElements() != null) {
 
-
-                for (ParameterContext parameterContext : getOutputMapping()) {
+                for (MappingElement mappingElement : getOutputMapping().getMappingContext().getMappingElements()) {
                     Object value = null;
+                    String valueKey = null;
+                    String srcVariableName = mappingElement.getVariable().getName();
+                    String targetVariableName = mappingElement.getArgument().getText();
                     try {
-                        value = JsonPath.read(result, parameterContext.getArgument().getText());
-                    }catch(PathNotFoundException e){ //forgive for the path not found, it means just null
+                        if (srcVariableName.toLowerCase().startsWith("[arguments]")) {
+                            String[] srcVariableNames = srcVariableName.split("\\.");
+                            valueKey = String.join(".",
+                                    Arrays.copyOfRange(srcVariableNames, 1, srcVariableNames.length));
+                            value = JsonPath.read(result, valueKey);
+                        }
+                    } catch (PathNotFoundException e) { // forgive for the path not found, it means just null
                         value = null;
                     }
 
-                    parameterContext.getVariable().set(instance, "", (Serializable) value);
+                    instance.setBeanProperty(targetVariableName, (Serializable) value);
                 }
             }
 
         } catch (HttpClientErrorException e) {
             if (isSkipIfNotFound() && "404".equals(e.getStatusCode())) {
-                //skip
+                // skip
             } else {
                 throw new UEngineException("A HTTP Exception: ", e);
             }
@@ -212,16 +222,18 @@ public class ServiceTask extends DefaultActivity {
 
     private RestTemplate noValidatingRestTemplate() {
 
-        try{
+        try {
             TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
                 @Override
-                public boolean isTrusted(java.security.cert.X509Certificate[] x509Certificates, String s) throws java.security.cert.CertificateException {
+                public boolean isTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
+                        throws java.security.cert.CertificateException {
                     return true;
                 }
 
             };
 
-            SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
+            SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom()
+                    .loadTrustMaterial(null, acceptingTrustStrategy).build();
             SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
             CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
             HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
@@ -241,18 +253,18 @@ public class ServiceTask extends DefaultActivity {
 
         Activity localCallTarget = null;
 
-        if(processDefinition.getMessageFlows()!=null && processDefinition.getMessageFlows().size() > 0)
-        for(MessageFlow messageFlow : processDefinition.getMessageFlows()){
+        if (processDefinition.getMessageFlows() != null && processDefinition.getMessageFlows().size() > 0)
+            for (MessageFlow messageFlow : processDefinition.getMessageFlows()) {
 
-            if(getTracingTag().equals(messageFlow.getSourceRef()) && messageFlow.isLocalCall()){
-                //this is local call
-                localCallTarget = processDefinition.getActivity(messageFlow.getTargetRef());
+                if (getTracingTag().equals(messageFlow.getSourceRef()) && messageFlow.isLocalCall()) {
+                    // this is local call
+                    localCallTarget = processDefinition.getActivity(messageFlow.getTargetRef());
 
-                break;
+                    break;
+                }
             }
-        }
 
-        if(localCallTarget!=null){
+        if (localCallTarget != null) {
             fireComplete(instance);
             instance.execute(localCallTarget.getTracingTag()); // this must be after the fireComplete
 
@@ -263,64 +275,74 @@ public class ServiceTask extends DefaultActivity {
     }
 
     Role role;
-        public Role getRole() {
-            return role;
-        }
-        public void setRole(Role role) {
-            this.role = role;
-        }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
     String uriTemplate;
-        public String getUriTemplate() {
-            return uriTemplate;
-        }
 
-        public void setUriTemplate(String uriTemplate) {
-            this.uriTemplate = uriTemplate;
-        }
+    public String getUriTemplate() {
+        return uriTemplate;
+    }
+
+    public void setUriTemplate(String uriTemplate) {
+        this.uriTemplate = uriTemplate;
+    }
 
     String inputPayloadTemplate;
-        public String getInputPayloadTemplate() {
-            return inputPayloadTemplate;
-        }
-        public void setInputPayloadTemplate(String inputPayloadTemplate) {
-            this.inputPayloadTemplate = inputPayloadTemplate;
-        }
+
+    public String getInputPayloadTemplate() {
+        return inputPayloadTemplate;
+    }
+
+    public void setInputPayloadTemplate(String inputPayloadTemplate) {
+        this.inputPayloadTemplate = inputPayloadTemplate;
+    }
 
     HttpHeader[] headers;
 
-        public HttpHeader[] getHeaders() {
-            return headers;
-        }
+    public HttpHeader[] getHeaders() {
+        return headers;
+    }
 
-        public void setHeaders(HttpHeader[] headers) {
-            this.headers = headers;
-        }
-    
+    public void setHeaders(HttpHeader[] headers) {
+        this.headers = headers;
+    }
+
     String method;
-        public String getMethod() {
-            return method;
-        }
-        public void setMethod(String method) {
-            this.method = method;
-        }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
 
     boolean noValidationForSSL;
-        public boolean isNoValidationForSSL() {
-            return noValidationForSSL;
-        }
-        public void setNoValidationForSSL(boolean noValidationForSSL) {
-            this.noValidationForSSL = noValidationForSSL;
-        }
 
-    ParameterContext[] outputMapping;
-        public ParameterContext[] getOutputMapping() {
-            return outputMapping;
-        }
-        public void setOutputMapping(ParameterContext[] outputMapping) {
-            this.outputMapping = outputMapping;
-        }
+    public boolean isNoValidationForSSL() {
+        return noValidationForSSL;
+    }
+
+    public void setNoValidationForSSL(boolean noValidationForSSL) {
+        this.noValidationForSSL = noValidationForSSL;
+    }
+
+    EventSynchronization outputMapping;
+
+    public EventSynchronization getOutputMapping() {
+        return outputMapping;
+    }
+
+    public void setOutputMapping(EventSynchronization outputMapping) {
+        this.outputMapping = outputMapping;
+    }
 
     public boolean isSkipIfNotFound() {
         return skipIfNotFound;
@@ -329,7 +351,5 @@ public class ServiceTask extends DefaultActivity {
     public void setSkipIfNotFound(boolean skipIfNotFound) {
         this.skipIfNotFound = skipIfNotFound;
     }
-
-
 
 }
