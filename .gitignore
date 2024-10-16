@@ -10,6 +10,7 @@ definitions/
 .settings
 .springBeans
 instances/
+payloads/
 archive/
 test/
 ### IntelliJ IDEA ###

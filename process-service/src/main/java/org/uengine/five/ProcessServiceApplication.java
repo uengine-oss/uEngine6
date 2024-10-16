@@ -1,13 +1,16 @@
 package org.uengine.five;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.uengine.five.overriding.ActivityQueue;
 import org.uengine.five.overriding.EventMappingDeployFilter;
 import org.uengine.five.overriding.InstanceNameFilter;
+import org.uengine.five.overriding.PayloadFilter;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.overriding.SpringComponentFactory;
 import org.uengine.kernel.DeployFilter;
@@ -42,7 +45,7 @@ public class ProcessServiceApplication {
 
     // @Bean
     // public ServiceRegisterDeployFilter serviceRegisterDeployFilter() {
-    //     return new ServiceRegisterDeployFilter();
+    // return new ServiceRegisterDeployFilter();
     // }
 
     @Bean
@@ -58,6 +61,15 @@ public class ProcessServiceApplication {
     @Bean
     public InstanceNameFilter instanceNameFilter() {
         return new InstanceNameFilter();
+    }
+
+    @Value("${filter.payload.enabled:true}")
+    private boolean isPayloadFilterEnabled;
+
+    @Bean
+    @ConditionalOnProperty(name = "filter.payload.enabled", havingValue = "true", matchIfMissing = true)
+    public PayloadFilter payloadFilter() {
+        return new PayloadFilter();
     }
 
     @Bean
