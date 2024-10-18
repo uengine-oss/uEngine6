@@ -1,4 +1,4 @@
-version: '2'
+version: '3.8'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -7,6 +7,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
+    networks:
+      - app-network
   
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -17,7 +19,53 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: "bpm-topic:1:1"
+    networks:
+      - app-network
+
+
+  process-service:
+    image: m6023m/process-service:1.0.0
+    depends_on:
+      - kafka
+    ports:
+      - 9094:9094
+    volumes:
+      - ../archive:/app/archive
+      - ../definitions:/app/definitions
+      - ../instances:/app/instances
+      - ../payloads:/app/payloads
+      - ../test:/app/test
+    networks:
+    - app-network
+
+  definition-service:
+    image: m6023m/definition-service:1.0.0
+    depends_on:
+      - kafka
+    ports:
+      - 9093:9093
+    volumes:
+      - ../archive:/app/archive
+      - ../definitions:/app/definitions
+      - ../instances:/app/instances
+      - ../payloads:/app/payloads
+      - ../test:/app/test
+    networks:
+    - app-network
+
+volumes:
+  archive:
+  definitions:
+  instances:
+  payloads:
+  test:
+  
+networks:
+  app-network:
+    driver: bridge
