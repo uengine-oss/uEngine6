@@ -335,7 +335,6 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     public void setMainExecScope(String mainExecScope) {
         this.mainExecScope = mainExecScope;
     }
-
     public Long getMainDefVerId() {
         return mainDefVerId;
     }

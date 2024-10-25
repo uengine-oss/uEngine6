@@ -13,6 +13,7 @@ import java.util.Vector;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.uengine.kernel.bpmn.CatchingErrorEventActivityEventInterceptor;
 import org.uengine.kernel.bpmn.SubProcess;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.TransactionContext;
@@ -251,7 +252,7 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
         // }
 
         activity.beforeExecute(this);
-
+        // 두번 실행 됨.
         try {
             if (!Activity.STATUS_QUEUED.equals(activity.getStatus(this)) // if already queued, run it
                     && (activity.isQueuingEnabled() || forceToQueue)) {
@@ -856,7 +857,21 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
             if (eventInterceptors == null)
                 eventInterceptors = new ArrayList<ActivityEventInterceptor>();
 
-            eventInterceptors.add(aei);
+            if(eventInterceptors.size() == 0) {
+                eventInterceptors.add(aei);
+            } else {
+                for (ActivityEventInterceptor interceptor : eventInterceptors) {
+                    if(interceptor instanceof CatchingErrorEventActivityEventInterceptor && aei instanceof CatchingErrorEventActivityEventInterceptor) {
+                        if(!((CatchingErrorEventActivityEventInterceptor)interceptor).getTracingTag().equals(((CatchingErrorEventActivityEventInterceptor)aei).getTracingTag())) {
+                            eventInterceptors.add(aei);
+                        }
+                    }
+                }    
+            }
+            
+            
+            Serializable ei = (Serializable) eventInterceptors;
+            setProperty("", PROP_KEY_EVENT_LISTENERS, ei);
 
         } catch (Exception e) {
             throw new RuntimeException("Error when to register activity event listener", e);

@@ -43,6 +43,52 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
         setMessage(definition.getName());
     }
 
+    EventHandler[] eventHandlers;
+
+	public EventHandler[] getEventHandlers() {
+		return eventHandlers;
+	}
+
+	public void setEventHandlers(EventHandler[] eventHandlers) {
+
+		this.eventHandlers = eventHandlers;
+		if (eventHandlers != null) {
+			for (int i = 0; i < eventHandlers.length; i++) {
+				Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+
+				eventHandlingActivity.setParentActivity(this);
+				autoTag(eventHandlingActivity);
+
+				if (getProcessDefinition() != null)
+					getProcessDefinition().registerActivity(eventHandlingActivity);
+			}
+		}
+	}
+
+    protected void autoTag(Activity child){
+		//		child.setTracingTag(getTracingTag() + "_" + getChildActivities().size());
+		if(getProcessDefinition()==null) return;
+
+		if(child.getTracingTag()==null
+				/*|| 
+				(
+						getProcessDefinition().wholeChildActivities!=null &&
+						getProcessDefinition().wholeChildActivities.containsKey(child.getTracingTag())						
+				)
+				 */		){
+			child.setTracingTag(""+getProcessDefinition().getNextActivitySequence());
+		}
+
+		if(child instanceof ComplexActivity){
+			ComplexActivity complexActivity = (ComplexActivity)child;
+
+			for(int i=0; i < complexActivity.getChildActivities().size(); i++){
+				Activity childAct = (Activity)complexActivity.getChildActivities().get(i);	
+				autoTag(childAct);
+			}
+		}
+	}
+
     ParameterContext[] parameters;
 
     public ParameterContext[] getParameters() {

@@ -12,6 +12,8 @@ import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -150,7 +152,7 @@ public class InstanceServiceImpl implements InstanceService {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getCause().toString(), e);
         }
 
         if (definition instanceof ProcessDefinition) {
@@ -202,23 +204,11 @@ public class InstanceServiceImpl implements InstanceService {
             return null;
         }
 
-        String highestNumberedFileName = null;
-        int highestNumber = -1;
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
 
-        for (File file : files) {
-            String fileName = file.getName();
-            try {
-                int number = Integer.parseInt(fileName.replaceAll("\\D", ""));
-                if (number > highestNumber) {
-                    highestNumber = number;
-                    highestNumberedFileName = fileName.substring(0, fileName.lastIndexOf('.'));
-                }
-            } catch (NumberFormatException e) {
-                // Ignore files that do not contain a number
-            }
-        }
+        return files[0].getName().substring(0, files[0].getName().lastIndexOf('.'));
 
-        return highestNumberedFileName;
+        // return highestNumberedFileName;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
@@ -376,10 +366,8 @@ public class InstanceServiceImpl implements InstanceService {
         for (Object key : variables.keySet()) {
             if (key instanceof String) {
                 String keyStr = (String) key;
-                if (keyStr.matches("Activity_\\w+:_status:prop") 
-                || keyStr.matches("Gateway_\\w+:_status:prop")
-                        || keyStr.matches("Event_\\w+:_status:prop")
-                        || keyStr.matches("Flow_\\w+:_status:prop")) {
+                if (keyStr.matches("Activity_\\w+:_status:prop") || keyStr.matches("Gateway_\\w+:_status:prop")
+                        || keyStr.matches("Event_\\w+:_status:prop")) {
                     String newKey = keyStr.replace(":_status:prop", "");
                     filteredVariables.put(newKey, variables.get(key));
                 }

@@ -379,8 +379,13 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 
 			System.out.println("- [uEngine] Start Executing Activity: " + act.getName() + " (" + act.getTracingTag() + ")");
 
-
-			instance.execute(act.getTracingTag());
+            if(act instanceof Event) {
+                if(((Event)act).getAttachedToRef() == null) {
+                    instance.execute(act.getTracingTag());
+                }
+            } else {
+                instance.execute(act.getTracingTag());
+            }
 
 			long elapsedTime = (System.currentTimeMillis() - timeInMillis_start);
 
@@ -474,15 +479,15 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		if(neverAffected && Activity.isCompensatable(getStatus(instance)))
 			super.compensate(instance);
 
-        for (Activity childActivity : getProcessDefinition().getChildActivities()) {
-			if (childActivity instanceof Event) {
-				Event event = (Event) childActivity;
-				if (this.getTracingTag().equals(event.getAttachedToRef())) {
-					// instance.execute(event.getTracingTag());
-                    instance.setStatus(event.getTracingTag(), STATUS_READY);
-				}
-			}
-		}
+        // for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+		// 	if (childActivity instanceof Event) {
+		// 		Event event = (Event) childActivity;
+		// 		if (this.getTracingTag().equals(event.getAttachedToRef())) {
+		// 			// instance.execute(event.getTracingTag());
+        //             instance.setStatus(event.getTracingTag(), STATUS_READY);
+		// 		}
+		// 	}
+		// }
 
 		/**
 		 * clear the status
@@ -600,29 +605,7 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 		}
 	}
 
-	protected void autoTag(Activity child){
-		//		child.setTracingTag(getTracingTag() + "_" + getChildActivities().size());
-		if(getProcessDefinition()==null) return;
-
-		if(child.getTracingTag()==null
-				/*|| 
-				(
-						getProcessDefinition().wholeChildActivities!=null &&
-						getProcessDefinition().wholeChildActivities.containsKey(child.getTracingTag())						
-				)
-				 */		){
-			child.setTracingTag(""+getProcessDefinition().getNextActivitySequence());
-		}
-
-		if(child instanceof ComplexActivity){
-			ComplexActivity complexActivity = (ComplexActivity)child;
-
-			for(int i=0; i < complexActivity.getChildActivities().size(); i++){
-				Activity childAct = (Activity)complexActivity.getChildActivities().get(i);	
-				autoTag(childAct);
-			}
-		}
-	}
+	
 
 	public Activity findChildActivity(final Class type){
 		ActivityForLoop findingLoop = new ActivityForLoop(){

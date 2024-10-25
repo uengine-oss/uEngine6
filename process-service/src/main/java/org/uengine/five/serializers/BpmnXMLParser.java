@@ -18,6 +18,7 @@ import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
 import org.uengine.kernel.ScopeActivity;
+import org.uengine.kernel.bpmn.CompensateEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
@@ -149,8 +150,6 @@ public class BpmnXMLParser {
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
                     break;
-                case "bpmn:association":
-                    break;
                 case "bpmn:textAnnotation":
                     break;
                 default:
@@ -197,8 +196,6 @@ public class BpmnXMLParser {
                     break;
                 case "bpmn:extensionElements":
                     parseExtensionElements(element, processDefinition);
-                    break;
-                case "bpmn:association":
                     break;
                 case "bpmn:textAnnotation":
                     break;
@@ -449,6 +446,9 @@ public class BpmnXMLParser {
             case "sequenceFlow":
                 parseSequenceFlow(element, processDefinition);
                 break;
+            case "association":
+                parseSequenceFlow(element, processDefinition);
+                break;    
             case "incoming":
             case "outgoing":
                 // Skip processing for incoming or outgoing nodes
@@ -557,17 +557,9 @@ public class BpmnXMLParser {
 
         if (task instanceof Gateway) {
             String defaultSequence = element.getAttribute("default");
-            // SequenceFlow defaultSequenceFlow = Arrays
-            // .stream(processDefinition.getSequenceFlows().toArray(new SequenceFlow[0]))
-            // .filter(sequence -> sequence.getTracingTag().equals(defaultSequence))
-            // .findFirst()
-            // .orElse(null);
-            // if (defaultSequenceFlow != null) {
-            // defaultSequenceFlow.setCondition(new Otherwise());
-            // defaultSequenceFlow.setOtherwise(true);
-            // }
             ((Gateway) task).setDefaultFlow(defaultSequence);
         }
+
 
         task.setTracingTag(id);
         task.setName(name);
@@ -585,7 +577,7 @@ public class BpmnXMLParser {
             fullClassName = "org.uengine.kernel.ScriptActivity";
         } else if (className.equals("BoundaryEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message", "escalation");
+                    "message", "escalation", "compensate");
             fullClassName = eventTypes.stream()
                     .filter(eventType -> element.getElementsByTagName(eventType +
                             "EventDefinition")
@@ -647,7 +639,7 @@ public class BpmnXMLParser {
                     .orElse("org.uengine.kernel.bpmn." + className);
         } else if (className.equals("EndEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message");
+                    "message", "escalation");
             fullClassName = eventTypes.stream()
                     .filter(eventType -> element.getElementsByTagName(eventType +
                             "EventDefinition")
@@ -657,7 +649,7 @@ public class BpmnXMLParser {
                     .findFirst()
                     .map(eventType -> {
                         if (eventType.equals("error")) {
-                            return "org.uengine.kernel.SendErrorEvent";
+                            return "org.uengine.kernel.bpmn.ErrorEndEvent";
                         } else {
                             return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
                                     + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.

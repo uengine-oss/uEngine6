@@ -17,7 +17,7 @@ public class SendErrorEvent extends Event {
 		ProcessDefinition mainProcessDefinition = instance.getProcessDefinition();
 		EventMessagePayload eventMessagePayload = new EventMessagePayload();
 		eventMessagePayload.setEventName(this.getName());
-		
+		// eventMessagePayload.
 		mainProcessDefinition.fireMessage(this.getName(), instance, eventMessagePayload);
 	}
 }

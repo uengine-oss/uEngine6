@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class Message implements Serializable {
     private String event;
     private Serializable payload;
+    private String tracingTag;
 
     public Message() {
     }
@@ -30,4 +31,13 @@ public class Message implements Serializable {
         this.payload = payload;
     }
 
+    public String getTracingTag() {
+        return tracingTag;
+    }
+
+    public void setTracingTag(String tracingTag) {
+        this.tracingTag = tracingTag;
+    }
+
+    
 }

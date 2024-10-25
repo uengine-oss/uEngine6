@@ -21,11 +21,13 @@ public class CatchingErrorEvent extends Event{
 
     @Override
     public boolean onMessage(ProcessInstance instance, Object payload) throws Exception {
-        fireComplete(instance); // run the connected activity
-
-        //let error is not fired.
-        instance.getProcessTransactionContext().setSharedContext("faultTolerant", new Boolean(true));
-
+        if(instance.getProcessDefinition().getActivity(getTracingTag()).getStatus(instance).equals(STATUS_RUNNING)) {
+            fireComplete(instance); // run the connected activity
+            //let error is not fired.
+            instance.getProcessTransactionContext().setSharedContext("faultTolerant", new Boolean(true));
+        }
         return true;
+            
+
     }
 }

@@ -370,14 +370,14 @@ public class FlowActivity extends ComplexActivity {
 
                 if (event.getAttachedToRef() != null) {
                     if(event.getClass().equals(CompensateEvent.class)) {
-                        ScopeActivity scopeActivity = (ScopeActivity) getProcessDefinition().getActivity(event.getAttachedToRef());
+                        Activity activity = getProcessDefinition().getActivity(event.getAttachedToRef());
                         EventHandler eventHandler = new EventHandler();
                         eventHandler.setTriggeringMethod(11);
                         eventHandler.setHandlerActivity(event);
                         eventHandler.setName("compensate");
                         EventHandler[] eventHandlers = new EventHandler[] { eventHandler };
                         
-                        scopeActivity.setEventHandlers(eventHandlers);
+                        activity.setEventHandlers(eventHandlers);
                     } else {
                         getProcessDefinition().getActivity(event.getAttachedToRef())
                         .addEventListener(
@@ -592,14 +592,11 @@ public class FlowActivity extends ComplexActivity {
 
         if (command.equals(CHILD_DONE)) {
 
-            // if adhoc instance, don't continue to execute process
             Boolean adhoc = (Boolean) instance.getProperty("", "__adhoc");
             if (adhoc != null && adhoc) {
                 return;
             }
 
-            // when we finish??
-            // boolean stillRunning = false;
             final Activity currentActivity = (Activity) payload;
             List<Activity> possibleNextActivities = currentActivity.getPossibleNextActivities(instance, "");
 
@@ -619,6 +616,7 @@ public class FlowActivity extends ComplexActivity {
                  * 3까지 수행된 이후에 최종 수행중인 Task가 있는지 확인하여 처리함
                  * 2018.01.02 Leehc
                  */
+
                 final FlowActivity finalThis = this;
                 TransactionListener tl = new TransactionListener() {
 

@@ -1087,6 +1087,7 @@ public class SubProcess extends ScopeActivity {
 
         instance.setExecutionScope(null);
         reset(instance);
+        
         super.compensate(instance);
         // super.reset
         // instance.setStatus(getTracingTag(), STATUS_READY);

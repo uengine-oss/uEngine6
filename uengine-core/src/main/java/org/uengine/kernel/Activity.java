@@ -32,6 +32,7 @@ import org.uengine.contexts.EventSynchronization;
 //import org.springframework.expression.spel.standard.SpelExpressionParser;
 //import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.uengine.contexts.TextContext;
+import org.uengine.kernel.bpmn.CompensateEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.modeling.ElementView;
@@ -158,6 +159,55 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public void setBreakpoint(boolean breakpoint) {
 		this.breakpoint = breakpoint;
+	}
+
+    EventHandler[] eventHandlers;
+
+	public EventHandler[] getEventHandlers() {
+		return eventHandlers;
+	}
+
+	public void setEventHandlers(EventHandler[] eventHandlers) {
+
+		this.eventHandlers = eventHandlers;
+		if (eventHandlers != null) {
+			for (int i = 0; i < eventHandlers.length; i++) {
+				Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+
+				eventHandlingActivity.setParentActivity(this);
+				autoTag(eventHandlingActivity);
+
+				if (getProcessDefinition() != null)
+					getProcessDefinition().registerActivity(eventHandlingActivity);
+			}
+		}
+	}
+
+    @JsonIgnore
+    private Vector<Activity> previousActivities;
+
+    protected void autoTag(Activity child){
+		//		child.setTracingTag(getTracingTag() + "_" + getChildActivities().size());
+		if(getProcessDefinition()==null) return;
+
+		if(child.getTracingTag()==null
+				/*|| 
+				(
+						getProcessDefinition().wholeChildActivities!=null &&
+						getProcessDefinition().wholeChildActivities.containsKey(child.getTracingTag())						
+				)
+				 */		){
+			child.setTracingTag(""+getProcessDefinition().getNextActivitySequence());
+		}
+
+		if(child instanceof ComplexActivity){
+			ComplexActivity complexActivity = (ComplexActivity)child;
+
+			for(int i=0; i < complexActivity.getChildActivities().size(); i++){
+				Activity childAct = (Activity)complexActivity.getChildActivities().get(i);	
+				autoTag(childAct);
+			}
+		}
 	}
 
 	TextContext name;
@@ -985,9 +1035,42 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		fireSkipped(instance);
 	}
 
+    public void executeAttachedEvent(ProcessInstance instance) throws Exception{
+        EventHandler[] eventHandlers = getEventHandlers();
+
+		if (eventHandlers != null) {
+			for (int i = 0; i < eventHandlers.length; i++) {
+				// Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+
+				if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_COMPENSATION) {
+					EventMessagePayload eventMessage = new EventMessagePayload();
+					eventMessage.setEventName(eventHandlers[i].getName() + eventHandlers[i].getHandlerActivity().getTracingTag());
+                    eventMessage.setTriggerTracingTag(eventHandlers[i].getHandlerActivity().getTracingTag());
+                    // fireEventHandlers(instance, 11, eventMessage);
+                    CompensateEvent activity = (CompensateEvent) instance.getProcessDefinition().getActivity(eventHandlers[i].getHandlerActivity().getTracingTag());
+                    activity.onMessage(instance, eventHandlers);
+				}
+			}
+		}
+
+        for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+			if (childActivity instanceof Event) {
+				Event event = (Event) childActivity;
+				if (this.getTracingTag().equals(event.getAttachedToRef())) {
+                        getProcessDefinition().fireMessage(event.getTracingTag(), instance, event.getTracingTag());
+                    
+                    instance.setStatus(event.getTracingTag(), STATUS_READY);
+                    
+				}
+			}
+		}
+    }
+
 	public void compensate(ProcessInstance instance) throws Exception {
 		reset(instance);
-		// instance.setStatus(getTracingTag(), STATUS_READY);
+		
+        executeAttachedEvent(instance);
+
 		fireCompensate(instance);
 	}
 
@@ -1167,7 +1250,15 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		}
 
 		if (getOutgoingSequenceFlows().size() < 1) {
-			vc.add("해당 블록에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
+            Boolean requiredOutgoing = true;
+            if (getIncomingSequenceFlows().size() > 0) {
+                for (SequenceFlow sequenceFlow : getIncomingSequenceFlows()) {
+                    if(sequenceFlow.getSourceActivity() instanceof CompensateEvent) {
+                        requiredOutgoing = false;
+                    }
+                }
+            }
+            if(requiredOutgoing) vc.add("해당 블록에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
 		}
 
 		Set<Activity> visitedActivities = new HashSet();

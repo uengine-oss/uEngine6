@@ -26,6 +26,8 @@ public class DefinitionXMLServiceImpl implements DefinitionXMLService {
             if (!definitionPath.endsWith(".bpmn")) {
                 definitionPath = definitionPath + ".bpmn";
             }
+            // dev -> definitions
+            // version ex) 1.0 
             if(version != null && !version.equals("dev")) {
                 definitionPath = "/archive/" + definitionPath + "/" + version + ".bpmn";
             } else {

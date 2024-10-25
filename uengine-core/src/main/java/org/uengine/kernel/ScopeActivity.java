@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import org.uengine.kernel.bpmn.CompensateEvent;
 //import org.metaworks.Type;
 //import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.bpmn.FlowActivity;
@@ -85,28 +86,6 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 			}
 			firePropertyChangeEvent(new PropertyChangeEvent(this, "processVariables", processVariableDescriptors,
 					processVariableDescriptors));
-		}
-	}
-
-	EventHandler[] eventHandlers;
-
-	public EventHandler[] getEventHandlers() {
-		return eventHandlers;
-	}
-
-	public void setEventHandlers(EventHandler[] eventHandlers) {
-
-		this.eventHandlers = eventHandlers;
-		if (eventHandlers != null) {
-			for (int i = 0; i < eventHandlers.length; i++) {
-				Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
-
-				eventHandlingActivity.setParentActivity(this);
-				autoTag(eventHandlingActivity);
-
-				if (getProcessDefinition() != null)
-					getProcessDefinition().registerActivity(eventHandlingActivity);
-			}
 		}
 	}
 
@@ -377,33 +356,36 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 
 	public void compensate(ProcessInstance instance) throws Exception {
 
-		EventHandler[] eventHandlers = getEventHandlers();
+		// EventHandler[] eventHandlers = getEventHandlers();
 
 		super.compensate(instance);
+        executeAttachedEvent(instance);
+		// if (eventHandlers != null) {
+		// 	for (int i = 0; i < eventHandlers.length; i++) {
+		// 		// Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
 
-		if (eventHandlers != null) {
-			for (int i = 0; i < eventHandlers.length; i++) {
-				// Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+		// 		if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_COMPENSATION) {
+		// 			EventMessagePayload eventMessage = new EventMessagePayload();
+		// 			eventMessage.setEventName(eventHandlers[i].getName());
+        //             eventMessage.setTriggerTracingTag(eventHandlers[i].getHandlerActivity().getTracingTag());
+        //             // fireEventHandlers(instance, 11, eventMessage);
+        //             CompensateEvent activity = (CompensateEvent) instance.getProcessDefinition().getActivity(eventHandlers[i].getHandlerActivity().getTracingTag());
+        //             activity.onMessage(instance, eventHandlers);
+		// 			onMessage(instance, eventMessage);
+		// 		}
 
-				if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_COMPENSATION) {
-					EventMessagePayload eventMessage = new EventMessagePayload();
-					eventMessage.setEventName(eventHandlers[i].getName());
+		// 		/**
+		// 		 * We don't need to compensate the event executions
+		// 		 */
+		// 		/*
+		// 		 * else
+		// 		 * if(isCompensatable(eventHandlingActivity.getStatus(instance))){
+		// 		 * eventHandlingActivity.compensate(instance);
+		// 		 * }
+		// 		 */
 
-					onMessage(instance, eventMessage);
-				}
-
-				/**
-				 * We don't need to compensate the event executions
-				 */
-				/*
-				 * else
-				 * if(isCompensatable(eventHandlingActivity.getStatus(instance))){
-				 * eventHandlingActivity.compensate(instance);
-				 * }
-				 */
-
-			}
-		}
+		// 	}
+		// }
 
 		if (!isLeaveEventListenersEvenIfOutOfScope())
 			getProcessDefinition().removeMessageListener(instance, this);

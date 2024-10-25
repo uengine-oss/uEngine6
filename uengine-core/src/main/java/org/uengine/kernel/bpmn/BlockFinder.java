@@ -39,42 +39,6 @@ public class BlockFinder {
         this.processDefinition = joinActivity.getProcessDefinition();
     }
 
-    // protected void find(Activity activity){
-    // branch += (activity.getIncomingTransitions().size()-1);
-    //
-    // //Since queue is a interface
-    // Queue<Activity> queue = new LinkedList<Activity>();
-    //
-    // if(activity == null) return;
-    //
-    // //Adds to end of queue
-    // queue.add(activity);
-    //
-    // while(!queue.isEmpty())
-    // {
-    // //removes from front of queue
-    // Activity r = queue.remove();
-    //
-    // blockMembers.put(r.getTracingTag(), r);
-    //
-    // //Visit child first before grandchild
-    // for(Transition transition : r.getIncomingTransitions())
-    // {
-    // Activity sourceActivity = transition.getSourceActivity();
-    //
-    // if(!blockMembers.containsKey(sourceActivity.getTracingTag()))
-    // {
-    // blockMembers.put(sourceActivity.getTracingTag(), sourceActivity);
-    //
-    // queue.add(sourceActivity);
-    // }
-    // }
-    //
-    // if(queue.size()==1) return;
-    // }
-    //
-    // }
-
     Integer depth = 0;
     Map<Integer, List<Activity>> activitiesByDistanceMap = new HashMap<Integer, List<Activity>>();
     Map<String, Integer> distancesByActivity = new HashMap<String, Integer>();

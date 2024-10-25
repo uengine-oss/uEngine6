@@ -12,7 +12,7 @@ public class CompensateEvent extends Event {
     @Override
     protected void executeActivity(final ProcessInstance instance) throws Exception {
         if(getAttachedToRef() != null){
-            System.out.println("PREPIX_MESSAGE");
+            // System.out.println("PREPIX_MESSAGE");
         }
     }
 
