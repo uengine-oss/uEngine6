@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,6 +85,9 @@ import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
 import org.uengine.kernel.bpmn.SubProcess;
+import org.uengine.modeling.resource.DefaultResource;
+import org.uengine.modeling.resource.IResource;
+import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -110,6 +114,9 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     DefinitionServiceUtil definitionService;
+
+    @Autowired
+    ResourceManager resourceManager;
 
     @Autowired
     ApplicationContext applicationContext;
@@ -366,8 +373,10 @@ public class InstanceServiceImpl implements InstanceService {
         for (Object key : variables.keySet()) {
             if (key instanceof String) {
                 String keyStr = (String) key;
-                if (keyStr.matches("Activity_\\w+:_status:prop") || keyStr.matches("Gateway_\\w+:_status:prop")
-                        || keyStr.matches("Event_\\w+:_status:prop")) {
+                if (keyStr.matches("Activity_\\w+:_status:prop")
+                        || keyStr.matches("Gateway_\\w+:_status:prop")
+                        || keyStr.matches("Event_\\w+:_status:prop")
+                        || keyStr.matches("Flow_\\w+:_status:prop")) {
                     String newKey = keyStr.replace(":_status:prop", "");
                     filteredVariables.put(newKey, variables.get(key));
                 }
@@ -929,20 +938,38 @@ public class InstanceServiceImpl implements InstanceService {
             workItem.setParameterValues(parameterValues);
         }
 
-        if (activity.getStatus(instance).equals(Activity.STATUS_COMPLETED)) {
-            if (workItem.getWorklist().getPayload() != null) {
-                String payload = workItem.getWorklist().getPayload();
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, Object> payloadMap = objectMapper.readValue(payload,
-                        new TypeReference<Map<String, Object>>() {
-                        });
-                workItem.setParameterValues(payloadMap);
+        if (activity.getStatus(instance).equals(Activity.STATUS_COMPLETED)
+                && instance instanceof JPAProcessInstance) {
+            Map<String, Object> payloadValues = getPayloadValues((JPAProcessInstance) instance, activity);
+            if (payloadValues != null) {
+                workItem.setParameterValues(payloadValues);
             }
         }
 
         workItem.getWorklist().setProcessInstance(null); // disconnect recursive json path
 
         return workItem;
+    }
+
+    private Map<String, Object> getPayloadValues(JPAProcessInstance instance, Activity activity) throws Exception {
+        Date date = instance.getProcessInstanceEntity().getStartedDate();
+        String currentYear = String.valueOf(date.getYear() + 1900);
+        String currentMonth = String.format("%02d", date.getMonth() + 1);
+        IResource resource = new DefaultResource(
+                "payloads/" + currentYear + "/" + currentMonth + "/" + instance.getInstanceId());
+
+        boolean resourceExists = resourceManager.exists(resource);
+        if (resourceExists) {
+            Map<String, String> payloadMap = (Map) resourceManager.getObject(resource);
+            String payloadKey = activity.getTracingTag() + "_payload@" + instance.getInstanceId() + ":";
+            if (payloadMap.containsKey(payloadKey)) {
+                String payload = payloadMap.get(payloadKey);
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {
+                });
+            }
+        }
+        return null;
     }
 
     @RequestMapping(value = "/work-item/{taskId}/save", method = RequestMethod.POST)
@@ -1133,7 +1160,7 @@ public class InstanceServiceImpl implements InstanceService {
         instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
                 .getActivity(worklistEntity.getTrcTag()));
-                
+
         if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
             throw new UEngineException("Illegal completion for workitem [" + humanActivity + ":"
                     + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
@@ -1159,10 +1186,12 @@ public class InstanceServiceImpl implements InstanceService {
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
         try {
-            humanActivity.fireReceived(instance, parameterValues);
             ObjectMapper objectMapper = new ObjectMapper();
             String payload = objectMapper.writeValueAsString(parameterValues);
-            worklistEntity.setPayload(payload);
+            ProcessTransactionContext tc = ProcessTransactionContext.getThreadLocalInstance();
+            tc.setSharedContext(humanActivity.getTracingTag() + "_payload@" + instance.getInstanceId() + ":", payload);
+
+            humanActivity.fireReceived(instance, parameterValues);
             // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json",
             // "result: " + instance.getAll().toString() + "}");
             //

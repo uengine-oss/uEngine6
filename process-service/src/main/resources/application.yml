@@ -13,9 +13,9 @@ spring:
 uengine:
   definition:
     basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6
-
 spring:
-  profiles: default
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
   jpa:
     properties:
       hibernate:
@@ -49,9 +49,12 @@ logging:
     org.hibernate.type: trace
     org.springframework.cloud: debug
 
-
 server:
   port: 9094
+
+filter:
+  payload:
+    enabled: true
 
 ---
 
@@ -74,4 +77,3 @@ spring:
         bpm-topic:
           destination: bpm.topic
           contentType: application/json
-          
