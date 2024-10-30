@@ -77,7 +77,7 @@ public class HumanActivity extends ReceiveActivity {
 		return getTool();
 	}
 
-    String checkPoint;
+	String checkPoint;
 
 	public String getCheckPoint() {
 		return checkPoint;
@@ -442,11 +442,11 @@ public class HumanActivity extends ReceiveActivity {
 
 		if (instance != null) {
 			kpv.setProperty(KeyedParameter.INSTRUCTION, getExtraMessage(instance));
-            if(instance.getProcessDefinition().getVersion() == null) {
-                kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, "dev");
-            } else {
-                kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, instance.getProcessDefinition().getVersion());
-            }
+			if (instance.getProcessDefinition().getVersion() == null) {
+				kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, "dev");
+			} else {
+				kpv.setProperty(KeyedParameter.PROCESSDEFINITIONVERSION, instance.getProcessDefinition().getVersion());
+			}
 			kpv.setProperty(KeyedParameter.INSTANCEID, instance.getInstanceId());
 			kpv.setProperty(KeyedParameter.ROOTINSTANCEID, instance.getRootProcessInstanceId());
 			kpv.setProperty(KeyedParameter.PROCESSDEFINITION, instance.getProcessDefinition().getId());
@@ -976,10 +976,10 @@ public class HumanActivity extends ReceiveActivity {
 		// UserManagerBean.addWorkload(getRole().getMapping(instance).getEndpoint(),
 		// (-1)*getWorkload());
 		super.afterComplete(instance);
-        
-        // TODO: 매핑 관련 개선
+
+		// TODO: 매핑 관련 개선
 		// dataMapping(instance, getMappingContexts());
-        // dataMapping(instance, getParameters());
+		// dataMapping(instance, getParameters());
 		fireEventToActivityFilters(instance, "saveAnyway", null);
 	}
 
@@ -1047,6 +1047,15 @@ public class HumanActivity extends ReceiveActivity {
 		instance.setStatus(getTracingTag(), STATUS_SUSPENDED);
 	}
 
+	public void setNewTaskId(ProcessInstance instance) throws Exception {
+		super.setNewTaskId(instance);
+		String[] taskIds = getTaskIds(instance);
+		if (taskIds != null) {
+			setDueDate(instance, (Calendar) null);
+			setTaskIds(instance, null);
+		}
+	}
+
 	public void reset(ProcessInstance instance) throws Exception {
 		super.reset(instance);
 
@@ -1072,8 +1081,6 @@ public class HumanActivity extends ReceiveActivity {
 				worklist.cancelWorkItem(taskId, parameters, instance.getProcessTransactionContext());
 			}
 	}
-
-    
 
 	@Override
 	public void reserveActivity(ProcessInstance instance) throws Exception {
@@ -1341,10 +1348,10 @@ public class HumanActivity extends ReceiveActivity {
 			onComplete(instance, new org.uengine.kernel.ResultPayload());
 			fireComplete(instance);
 		}
-        // TODO: 매핑 관련 개선
+		// TODO: 매핑 관련 개선
 		// dataMapping(instance, getMappingContextsIn());
-        // dataMapping(instance, getParameters());
-        // mappingOut(instance, extendedAttributes);
+		// dataMapping(instance, getParameters());
+		// mappingOut(instance, extendedAttributes);
 		super.afterExecute(instance);
 	}
 

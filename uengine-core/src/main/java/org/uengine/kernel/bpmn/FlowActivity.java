@@ -266,7 +266,7 @@ public class FlowActivity extends ComplexActivity {
                         minActivity = trcTag;
                     }
                 }
-                
+
                 if (minActivity != null) {
                     for (SequenceFlow minSequenceFlow : getProcessDefinition().getActivity(minActivity)
                             .getIncomingSequenceFlows()) {
@@ -357,9 +357,6 @@ public class FlowActivity extends ComplexActivity {
         }
 
         setStartEvent();
-        for (Activity activity : getChildActivities()) {
-            setFeedbackWithActivity(activity);
-        }
 
         for (Activity childActivity : getChildActivities()) {
             if (childActivity instanceof Event && "Catching".equals(((Event) childActivity).getEventType())
@@ -369,37 +366,35 @@ public class FlowActivity extends ComplexActivity {
                 final Event event = (Event) childActivity;
 
                 if (event.getAttachedToRef() != null) {
-                    if(event.getClass().equals(CompensateEvent.class)) {
+                    if (event.getClass().equals(CompensateEvent.class)) {
                         Activity activity = getProcessDefinition().getActivity(event.getAttachedToRef());
                         EventHandler eventHandler = new EventHandler();
                         eventHandler.setTriggeringMethod(11);
                         eventHandler.setHandlerActivity(event);
                         eventHandler.setName("compensate");
                         EventHandler[] eventHandlers = new EventHandler[] { eventHandler };
-                        
+
                         activity.setEventHandlers(eventHandlers);
                     } else {
                         getProcessDefinition().getActivity(event.getAttachedToRef())
-                        .addEventListener(
-                                new ActivityEventListener() {
-                                    @Override
-                                    public void afterExecute(Activity activity, ProcessInstance instance)
-                                            throws Exception {
-                                        getProcessDefinition().addMessageListener(instance, event);
-                                        queueActivity(event, instance);
-                                    }
+                                .addEventListener(
+                                        new ActivityEventListener() {
+                                            @Override
+                                            public void afterExecute(Activity activity, ProcessInstance instance)
+                                                    throws Exception {
+                                                getProcessDefinition().addMessageListener(instance, event);
+                                                queueActivity(event, instance);
+                                            }
 
-                                    @Override
-                                    public void afterComplete(Activity activity, ProcessInstance instance)
-                                            throws Exception {
+                                            @Override
+                                            public void afterComplete(Activity activity, ProcessInstance instance)
+                                                    throws Exception {
                                                 getProcessDefinition().removeMessageListener(instance, event);
-                                                
-                                        
-                                    }
-                                });
+
+                                            }
+                                        });
                     }
-                    
-                    
+
                 }
 
             } else if (childActivity instanceof Gateway) {
@@ -659,7 +654,8 @@ public class FlowActivity extends ComplexActivity {
             for (int i = 0; i < possibleNextActivities.size(); i++) {
                 Activity child = possibleNextActivities.get(i);
 
-                child.reset(instance);
+                child.setNewTaskId(instance);
+                // child.reset(instance);
                 child.setStartedTime(instance, (Calendar) null);
 
                 int tokenCount = child.getTokenCount(instance);
