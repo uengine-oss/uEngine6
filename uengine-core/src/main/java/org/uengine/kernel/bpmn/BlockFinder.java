@@ -1,7 +1,6 @@
 package org.uengine.kernel.bpmn;
 
 import org.uengine.kernel.Activity;
-import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
 import java.util.*;
@@ -9,7 +8,6 @@ import java.util.*;
 public class BlockFinder {
 
     Activity joinActivity;
-    ProcessDefinition processDefinition;
 
     public Activity getJoinActivity() {
         return joinActivity;
@@ -29,14 +27,9 @@ public class BlockFinder {
 
     private BlockFinder(Activity joinActivity) {
         setJoinActivity(joinActivity);
-        setProcessDefinition(joinActivity);
         visitForDepthAndVisitCountSetting(joinActivity);
         visitToLineUp(joinActivity);
         findBlockMembers();
-    }
-
-    private void setProcessDefinition(Activity joinActivity) {
-        this.processDefinition = joinActivity.getProcessDefinition();
     }
 
     Integer depth = 0;
@@ -52,6 +45,9 @@ public class BlockFinder {
 
         for (SequenceFlow sequenceFlow : activity.getIncomingSequenceFlows()) {
             Activity sourceActivity = sequenceFlow.getSourceActivity();
+
+            if (sequenceFlow.isFeedback())
+                continue;
 
             if (sourceActivity == null)
                 continue;
