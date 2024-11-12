@@ -362,29 +362,53 @@ public class InstanceServiceImpl implements InstanceService {
         return variables;
     }
 
-    @RequestMapping(value = "/instance/{instanceId}/status", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @RequestMapping(value = "/instance/{instanceId}/status/{executionScope}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ProcessTransactional(readOnly = true)
-    public Map getActivitiesStatus(@PathVariable("instanceId") String instanceId)
+    public Map getActivitiesStatus(@PathVariable("instanceId") String instanceId,
+            @PathVariable(value = "executionScope", required = false) String executionScope)
             throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
         Map variables = ((DefaultProcessInstance) instance).getVariables();
         Map<String, Object> filteredVariables = new HashMap<>();
+
+        String execScope = (executionScope == null) ? "0" : executionScope;
+
         for (Object key : variables.keySet()) {
             if (key instanceof String) {
                 String keyStr = (String) key;
-                if (keyStr.matches("Activity_\\w+:_status:prop")
+                if (keyStr.matches("Activity_\\w+:" + execScope + ":_status:prop")
+                        || keyStr.matches("Gateway_\\w+:" + execScope + ":_status:prop")
+                        || keyStr.matches("Event_\\w+:" + execScope + ":_status:prop")
+                        || keyStr.matches("Flow_\\w+:" + execScope + ":_status:prop")) {
+                    String newKey = keyStr.replace(":" + execScope + ":_status:prop", "");
+                    filteredVariables.put(newKey, variables.get(key));
+
+                    Activity activity = instance.getProcessDefinition().getActivity(newKey);
+                    if (activity != null) {
+                        System.out.println("Activity Name: " + activity.getName() + ", New Key: " + newKey
+                                + ", Status: " + variables.get(key));
+                    }
+                } else if (keyStr.matches("Activity_\\w+:_status:prop")
                         || keyStr.matches("Gateway_\\w+:_status:prop")
                         || keyStr.matches("Event_\\w+:_status:prop")
                         || keyStr.matches("Flow_\\w+:_status:prop")) {
                     String newKey = keyStr.replace(":_status:prop", "");
-                    filteredVariables.put(newKey, variables.get(key));
+                    if (!filteredVariables.containsKey(newKey)) {
+                        filteredVariables.put(newKey, variables.get(key));
+                    }
+                    Activity activity = instance.getProcessDefinition().getActivity(newKey);
+                    if (activity != null) {
+                        System.out.println("Activity Name: " + activity.getName() + ", New Key: " + newKey
+                                + ", Status: " + variables.get(key));
+                    }
                 }
             }
         }
         variables = filteredVariables;
 
         return variables;
+
     }
 
     @RequestMapping(value = "/instance/{instanceId}/running", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
@@ -1350,7 +1374,6 @@ public class InstanceServiceImpl implements InstanceService {
                     if (parameterValues.size() > 0) {
                         workItem.setParameterValues(parameterValues);
                     }
-
                     workItem.setActivity(activity);
                 }
 

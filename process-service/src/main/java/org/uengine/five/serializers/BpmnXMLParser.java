@@ -396,8 +396,8 @@ public class BpmnXMLParser {
                             ((ProcessDefinition) processDefinition)
                                     .setInstanceNamePattern(definition.getInstanceNamePattern());
                             processDefinition.setName(definition.getDefinitionName());
-                            ((ProcessDefinition)processDefinition).setVersion(definition.getVersion());
-                            
+                            ((ProcessDefinition) processDefinition).setVersion(definition.getVersion());
+
                         }
                     }
                 }
@@ -448,7 +448,7 @@ public class BpmnXMLParser {
                 break;
             case "association":
                 parseSequenceFlow(element, processDefinition);
-                break;    
+                break;
             case "incoming":
             case "outgoing":
                 // Skip processing for incoming or outgoing nodes
@@ -550,7 +550,8 @@ public class BpmnXMLParser {
         if (task instanceof HumanActivity) {
             if (((HumanActivity) task).getRole() == null) {
                 Role role = createRoleInLane(laneInfo, id);
-                ((HumanActivity) task).setRole(role);
+                if (role != null)
+                    ((HumanActivity) task).setRole(role);
             }
 
         }
@@ -559,7 +560,6 @@ public class BpmnXMLParser {
             String defaultSequence = element.getAttribute("default");
             ((Gateway) task).setDefaultFlow(defaultSequence);
         }
-
 
         task.setTracingTag(id);
         task.setName(name);
@@ -1017,8 +1017,11 @@ public class BpmnXMLParser {
     public Role createRoleInLane(LaneInfo laneInfo, String id) {
         Role role = new Role();
         String laneRoleName = laneInfo.taskToLaneMap.get(id);
-        int xValue = laneInfo.laneXValue.get(id);
-        int yValue = laneInfo.laneYValue.get(id);
+        if (laneInfo.laneXValue.get(id) == null) {
+            return null;
+        }
+        int xValue = laneInfo.laneXValue.get(id) != null ? laneInfo.laneXValue.get(id) : 0; // null 체크 추가
+        int yValue = laneInfo.laneYValue.get(id) != null ? laneInfo.laneYValue.get(id) : 0; // null 체크 추가
         if (laneRoleName == null || laneRoleName.equals("")) {
             laneRoleName = getRoleNameInLocation(laneInfo.laneCoordinate, xValue, yValue);
         }

@@ -267,7 +267,7 @@ public class FlowActivity extends ComplexActivity {
                     }
                 }
 
-                if (minActivity != null) {
+                if (minActivity != null && getProcessDefinition().getActivity(minActivity) != null) {
                     for (SequenceFlow minSequenceFlow : getProcessDefinition().getActivity(minActivity)
                             .getIncomingSequenceFlows()) {
                         if (loop.contains(minSequenceFlow.getTracingTag())) {
