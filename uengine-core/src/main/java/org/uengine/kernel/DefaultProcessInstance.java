@@ -346,11 +346,15 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		if (sourceValue instanceof IndexedProcessVariableMap) {
 			ProcessVariableValue pvv = getMultiple(scopeByTracingTag, key);
 			if (getExecutionScopeContextTree() != null && getExecutionScopeContext() != null) {
-				int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
-				if (executionOrder > -1) {
-					pvv.setCursor(executionOrder);
+				if (getExecutionScopeContextTree().getExecutionScope() != null) {
+					int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
+					if (executionOrder > -1) {
+						pvv.setCursor(executionOrder);
+					}
+					sourceValue = pvv.getValue();
+				} else {
+					sourceValue = pvv.getValues();
 				}
-				sourceValue = pvv.getValue();
 			} else {
 				sourceValue = pvv;
 			}
@@ -900,10 +904,10 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		throw new UEngineException("You can't access root process in in-memory process.");
 	}
 
-    String definitionVersionId;
+	String definitionVersionId;
 
 	public void setDefinitionVersionId(String verId) throws Exception {
-        definitionVersionId = verId;
+		definitionVersionId = verId;
 	}
 
 	public boolean isNew() {
