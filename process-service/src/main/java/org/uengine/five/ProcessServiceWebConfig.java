@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
+import org.uengine.five.overriding.InstanceServiceLocalImpl;
 import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.overriding.JPAWorkList;
 import org.uengine.five.spring.TenantSecurityEvaluationContextExtension;
@@ -19,6 +20,7 @@ import org.uengine.modeling.resource.CachedResourceManager;
 import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
+import org.uengine.processmanager.InstanceServiceLocal;
 import org.uengine.webservices.worklist.WorkList;
 
 @EnableWebMvc
@@ -133,6 +135,11 @@ public class ProcessServiceWebConfig {
     // public TimerEventJob timerEventJob() {
     // return new TimerEventJob();
     // }
+
+    @Bean
+    public InstanceServiceLocal instanceServiceLocal() {
+        return new InstanceServiceLocalImpl();
+    }
 
     @Bean
     EvaluationContextExtension securityExtension() {

@@ -23,11 +23,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.context.annotation.ComponentScan;
 // import org.uengine.five.config.kafka.KafkaProcessor;
 
 @SpringBootApplication
 @EnableBinding(Streams.class)
 @EnableFeignClients
+@ComponentScan(basePackages = { "org.uengine.kernel.bpmn", "org.uengine.five" })
+
 public class ProcessServiceApplication {
 
     public static ApplicationContext applicationContext;

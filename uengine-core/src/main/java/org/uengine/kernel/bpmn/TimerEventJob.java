@@ -5,12 +5,13 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.uengine.five.service.InstanceService;
 import org.uengine.kernel.GlobalContext;
-import org.uengine.processmanager.ProcessManagerRemote;
-
-import java.rmi.RemoteException;
+import org.uengine.kernel.ProcessInstance;
+import org.uengine.processmanager.InstanceServiceLocal;
 
 /**
  * Created by jinyoung jang on 2015. 8. 6..
@@ -32,7 +33,7 @@ public class TimerEventJob implements Job {
     }
 
     @Autowired
-    ProcessManagerRemote processManagerRemote;
+    InstanceServiceLocal instanceService;
 
     @Transactional
     public void fireEvent(JobDataMap jobDataMap) throws Exception {
@@ -40,14 +41,14 @@ public class TimerEventJob implements Job {
         String tracingTag = jobDataMap.getString("tracingTag");
         String executionScope = jobDataMap.getString("executionScope");
 
+        System.out.println("triggered for [instId: " + instanceId + "] and [execScope: " + executionScope
+                + "] and [trcTag: " + tracingTag + "]");
 
-        System.out.println("triggered for [instId: " + instanceId + "] and [execScope: " + executionScope + "] and [trcTag: "+ tracingTag + "]");
+        ProcessInstance instance = instanceService.getInstance(instanceId);
+        TimerEvent timerEvent = (TimerEvent) instance.getProcessDefinition().getActivity(tracingTag);
 
-        processManagerRemote.sendMessage(
-                instanceId + (executionScope != null ? "@" + executionScope : ""),
-                "onTime", //it is important! --> org.uengine.five.overriding.ProcessManagerBean.sendMessage(..) will check this as key
-                tracingTag
-        );
-
+        if (timerEvent != null) {
+            timerEvent.onMessage(instance, null);
+        }
     }
 }

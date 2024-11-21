@@ -575,54 +575,26 @@ public class BpmnXMLParser {
             fullClassName = "org.uengine.kernel.HumanActivity";
         } else if (className.equals("ScriptTask")) {
             fullClassName = "org.uengine.kernel.ScriptActivity";
-        } else if (className.equals("BoundaryEvent")) {
-            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message", "escalation", "compensate");
-            fullClassName = eventTypes.stream()
-                    .filter(eventType -> element.getElementsByTagName(eventType +
-                            "EventDefinition")
-                            .getLength() > 0
-                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
-                                    .getLength() > 0)
-                    .findFirst()
-                    .map(eventType -> {
-                        if (eventType.equals("error")) {
-                            return "org.uengine.kernel.bpmn.CatchingErrorEvent";
-                        } else {
-                            return "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
-                                    + eventType.substring(1) + "Event"; // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
-                        }
-                    })
-                    .orElse(null); // 혹은 기본값을 설정하거나 예외를 던질 수 있습니다.
-
-        } else if (className.equals("IntermediateCatchEvent")) {
-            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message", "escalation");
-            fullClassName = eventTypes.stream()
-                    .filter(eventType -> element.getElementsByTagName(eventType +
-                            "EventDefinition")
-                            .getLength() > 0
-                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
-                                    .getLength() > 0)
-                    .findFirst()
-                    .map(eventType -> "org.uengine.kernel.bpmn."
-                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
-                            + className)
-                    .orElse(null);
-        } else if (className.equals("IntermediateThrowEvent")) {
-            List<String> eventTypes = Arrays.asList("timer", "signal", "error",
-                    "message");
-            fullClassName = eventTypes.stream()
-                    .filter(eventType -> element.getElementsByTagName(eventType +
-                            "EventDefinition")
-                            .getLength() > 0
-                            || element.getElementsByTagName("bpmn:" + eventType + "EventDefinition")
-                                    .getLength() > 0)
-                    .findFirst()
-                    .map(eventType -> "org.uengine.kernel.bpmn."
-                            + Character.toUpperCase(eventType.charAt(0)) + eventType.substring(1)
-                            + className)
-                    .orElse(null);
+        } else if (className.equals("BoundaryEvent") || className.equals("IntermediateCatchEvent")
+                || className.equals("IntermediateThrowEvent")) {
+            NodeList allElements = element.getOwnerDocument().getElementsByTagName("*");
+            fullClassName = "org.uengine.kernel.bpmn.Event";
+            for (int i = 0; i < allElements.getLength(); i++) {
+                Element currentElement = (Element) allElements.item(i);
+                String tagName = currentElement.getTagName();
+                if (tagName.endsWith("EventDefinition")) {
+                    String eventType = tagName.replace("EventDefinition", "").replace("bpmn:", "");
+                    fullClassName = "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
+                            + eventType.substring(1) + className;
+                    break;
+                }
+            }
+            // 비중단 체크
+            if (className.equals("BoundaryEvent")) {
+                String cancelActivity = element.getAttribute("cancelActivity");
+                if (cancelActivity != null && !cancelActivity.isEmpty()) {
+                }
+            }
         } else if (className.equals("StartEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
                     "message");

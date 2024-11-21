@@ -35,8 +35,10 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -110,6 +112,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
  */
 @RestController
 @CrossOrigin(origins = "*")
+@Service
 public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
@@ -543,7 +546,9 @@ public class InstanceServiceImpl implements InstanceService {
      * @param instanceId
      * @return
      */
-    public ProcessInstance getProcessInstanceLocal(String instanceId) {
+
+    @GetMapping("/instance/{instanceId}")
+    public ProcessInstance getProcessInstanceLocal(@PathVariable("instanceId") String instanceId) {
 
         ProcessInstance instance = ProcessTransactionContext.getThreadLocalInstance()
                 .getProcessInstanceInTransaction(instanceId);
