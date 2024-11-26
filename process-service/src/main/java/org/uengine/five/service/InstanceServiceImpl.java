@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -18,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -1083,6 +1085,48 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
+    public void writeToFileRecord(String filePath, String trcTag, String name, WorkItemResource workItem)
+            throws IOException {
+        File file = new File("test/" + filePath);
+        file.getParentFile().mkdirs(); // Ensure the parent directories exist
+
+        // Read existing data from the file
+        List<Object> existingData = readExistingData(filePath);
+        HashMap<String, Object> newData = new HashMap<>();
+        newData.put("name", name);
+        newData.put("tracingTag", trcTag);
+        newData.put("workItem", workItem.getParameterValues());
+
+        existingData.add(newData);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(file, existingData);
+    }
+
+    //
+    private List<Object> readExistingData(String filePath) throws IOException {
+        File file = new File("test/" + filePath);
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
+        StringBuilder contentBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                contentBuilder.append(line).append(System.lineSeparator());
+            }
+        }
+
+        String fileContent = contentBuilder.toString();
+        ObjectMapper objectMapper = new ObjectMapper();
+        if (fileContent.trim().isEmpty()) {
+            return new ArrayList<>();
+        } else {
+            return objectMapper.readValue(fileContent, new TypeReference<List<Object>>() {
+            });
+        }
+    }
+
     public Set<Object> readFromFile(String filePath) throws IOException {
         File file = new File("test/" + filePath);
         if (!file.exists()) {
@@ -1111,7 +1155,15 @@ public class InstanceServiceImpl implements InstanceService {
     public void deleteTest(HttpServletRequest request, @RequestBody Map<String, Object> testData) throws IOException {
         System.out.println(testData);
         String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
         folderPath = folderPath.substring("/test/".length());
+
+        // Check if the folderPath ends with "/record"
+        if (folderPath.endsWith("/record")) {
+            deleteRecordTest(folderPath, testData);
+            return;
+        }
+
         String filePath = folderPath + "/" + testData.get("tracingTag") + ".json";
         Set<Object> tmp = readFromFile(filePath);
 
@@ -1141,6 +1193,19 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         System.out.println(tmp);
+    }
+
+    public void deleteRecordTest(
+            @PathVariable("recordPath") String recordPath,
+            @RequestBody Map<String, Object> requestData) throws IOException {
+        Object index = requestData.get("idx"); // 요청 본문에서 'idx' 값 추출
+        System.out.println("Record Path: " + recordPath);
+        System.out.println("Index: " + index);
+
+        File file = new File("test/" + recordPath + "/" + index + ".json");
+        if (file.exists() && file.isFile()) {
+            file.delete();
+        }
     }
 
     @RequestMapping(value = "/test/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
@@ -1199,6 +1264,11 @@ public class InstanceServiceImpl implements InstanceService {
         writeToFile(instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag() + ".json",
                 workItem);
 
+        if ("true".equals(isSimulate)) {
+            writeToFileRecord(instance.getProcessDefinition().getId() + "/record/" + instance.getInstanceId() + ".json",
+                    humanActivity.getTracingTag(), humanActivity.getName(), workItem);
+        }
+
         // if (isSimulate.equals("record")) {
 
         // } else {
@@ -1230,6 +1300,24 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
                     humanActivity);
         }
+    }
+
+    @RequestMapping(value = "/test/{recordPath}/record", method = RequestMethod.GET)
+    @ProcessTransactional
+    public List<String> testRecordList(@PathVariable("recordPath") String recordPath) throws Exception {
+        List<String> fileContents = new ArrayList<>();
+
+        try {
+            File file = new File("test/" + recordPath);
+            if (file.exists() && file.isFile()) {
+                String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+                fileContents.add(content);
+            }
+        } catch (IOException e) {
+            throw new UEngineException("Error reading record file from path: " + recordPath, e);
+        }
+
+        return fileContents;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/fire-message", method = RequestMethod.POST)
