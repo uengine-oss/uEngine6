@@ -8,6 +8,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -89,7 +92,9 @@ import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
 import org.uengine.kernel.bpmn.SubProcess;
+import org.uengine.modeling.resource.ContainerResource;
 import org.uengine.modeling.resource.DefaultResource;
+import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.util.UEngineUtil;
@@ -1057,11 +1062,11 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    public void writeToFile(String filePath, WorkItemResource workItem) throws IOException {
-        File file = new File("test/" + filePath);
-        file.getParentFile().mkdirs(); // Ensure the parent directories exist
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            if (!file.exists()) {
+    public void writeToFile(String filePath, WorkItemResource workItem) throws Exception {
+        IResource resource = new DefaultResource("test/" + filePath);
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(resourceManager.getOutputStream(resource), StandardCharsets.UTF_8))) {
+            if (!resourceManager.exists(resource)) {
                 String workItemJson = objectMapper.writeValueAsString(workItem);
                 writer.write(workItemJson);
             } else {
@@ -1076,7 +1081,8 @@ public class InstanceServiceImpl implements InstanceService {
                 existObj.clear();
                 existObj.addAll(uniqueValues);
                 ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(file, existObj);
+                objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(
+                        resourceManager.getOutputStream(resource), existObj);
 
                 // "errorList" : [ "java.util.ArrayList", [ "aa", "bb" ] ]
 
@@ -1086,9 +1092,9 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     public void writeToFileRecord(String filePath, String trcTag, String name, WorkItemResource workItem)
-            throws IOException {
-        File file = new File("test/" + filePath);
-        file.getParentFile().mkdirs(); // Ensure the parent directories exist
+            throws Exception {
+
+        IResource resource = new DefaultResource("test/" + filePath);
 
         // Read existing data from the file
         List<Object> existingData = readExistingData(filePath);
@@ -1100,17 +1106,18 @@ public class InstanceServiceImpl implements InstanceService {
         existingData.add(newData);
 
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.writeValue(file, existingData);
+        objectMapper.writeValue(resourceManager.getOutputStream(resource), existingData);
     }
 
     //
-    private List<Object> readExistingData(String filePath) throws IOException {
-        File file = new File("test/" + filePath);
-        if (!file.exists()) {
+    private List<Object> readExistingData(String filePath) throws Exception {
+        IResource resource = new DefaultResource("test/" + filePath);
+        if (!resourceManager.exists(resource)) {
             return new ArrayList<>();
         }
         StringBuilder contentBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(resourceManager.getInputStream(resource), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 contentBuilder.append(line).append(System.lineSeparator());
@@ -1127,13 +1134,14 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    public Set<Object> readFromFile(String filePath) throws IOException {
-        File file = new File("test/" + filePath);
-        if (!file.exists()) {
+    public Set<Object> readFromFile(String filePath) throws Exception {
+        IResource resource = new DefaultResource("test/" + filePath);
+        if (!resourceManager.exists(resource)) {
             throw new FileNotFoundException("File not found: " + filePath);
         }
         StringBuilder contentBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(resourceManager.getInputStream(resource), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 contentBuilder.append(line).append(System.lineSeparator());
@@ -1152,7 +1160,7 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     @RequestMapping(value = "/test/**", method = RequestMethod.DELETE, produces = "application/json;charset=UTF-8")
-    public void deleteTest(HttpServletRequest request, @RequestBody Map<String, Object> testData) throws IOException {
+    public void deleteTest(HttpServletRequest request, @RequestBody Map<String, Object> testData) throws Exception {
         System.out.println(testData);
         String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
@@ -1181,14 +1189,12 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
 
-        File file = new File("test/" + filePath);
-        file.getParentFile().mkdirs(); // Ensure the parent directories exist
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            if (!file.exists()) {
+        IResource resource = new DefaultResource("test/" + filePath);
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(resourceManager.getOutputStream(resource), StandardCharsets.UTF_8))) {
+            if (resourceManager.exists(resource)) {
                 String workItemJson = objectMapper.writeValueAsString(tmp);
                 writer.write(workItemJson);
-            } else {
-                objectMapper.writerWithDefaultPrettyPrinter().withoutAttribute("_type").writeValue(file, tmp);
             }
         }
 
@@ -1197,39 +1203,45 @@ public class InstanceServiceImpl implements InstanceService {
 
     public void deleteRecordTest(
             @PathVariable("recordPath") String recordPath,
-            @RequestBody Map<String, Object> requestData) throws IOException {
-        Object index = requestData.get("idx"); // 요청 본문에서 'idx' 값 추출
+            @RequestBody Map<String, Object> requestData) throws Exception {
+        Object index = requestData.get("idx");
         System.out.println("Record Path: " + recordPath);
         System.out.println("Index: " + index);
 
-        File file = new File("test/" + recordPath + "/" + index + ".json");
-        if (file.exists() && file.isFile()) {
-            file.delete();
+        IResource resource = new DefaultResource("test/" + recordPath + "/" + index + ".json");
+        if (resourceManager.exists(resource)) {
+            resourceManager.delete(resource);
         }
     }
 
     @RequestMapping(value = "/test/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Map<String, Object> testList(HttpServletRequest request) throws IOException {
+    public Map<String, Object> testList(HttpServletRequest request) throws Exception {
         String folderPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         folderPath = folderPath.substring("/test/".length());
 
         Map<String, Object> result = new HashMap<>();
-        File folder = new File("test/" + folderPath);
-        if (!folder.exists() || !folder.isDirectory()) {
+
+        IContainer container = new ContainerResource();
+        container.setPath("test/" + folderPath);
+        if (!resourceManager.exists(container)) {
             throw new FileNotFoundException("Folder not found: " + folderPath);
         }
-        File[] files = folder.listFiles();
+        List<IResource> files = resourceManager.listFiles(container);
         if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
+            for (IResource file : files) {
+                if (!file.isContainer()) {
+                    IResource resource = new DefaultResource(file.getPath());
+                    InputStream inputStream = resourceManager.getInputStream(resource);
                     StringBuilder contentBuilder = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
+                    try (BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             contentBuilder.append(line).append(System.lineSeparator());
                         }
                     }
-                    String fileNameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf('.'));
+
+                    String fileNameWithoutExtension = resource.getName().substring(0, file.getName().lastIndexOf('.'));
                     result.put(fileNameWithoutExtension, contentBuilder.toString());
                 }
             }
@@ -1308,9 +1320,10 @@ public class InstanceServiceImpl implements InstanceService {
         List<String> fileContents = new ArrayList<>();
 
         try {
-            File file = new File("test/" + recordPath);
-            if (file.exists() && file.isFile()) {
-                String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            IResource resource = new DefaultResource("test/" + recordPath);
+            if (resourceManager.exists(resource)) {
+                InputStream inputStream = resourceManager.getInputStream(resource);
+                String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 fileContents.add(content);
             }
         } catch (IOException e) {
