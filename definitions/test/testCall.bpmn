@@ -12,7 +12,7 @@
   <bpmn:process id="Process_1oscmbn" isExecutable="true">
     <bpmn:extensionElements>
       <uengine:properties>
-        <uengine:json>{"definitionName":"test/test","version":null}</uengine:json>
+        <uengine:json>{"definitionName":"test/testCall","version":"2.0","shortDescription":{"text":null}}</uengine:json>
         <uengine:variable name="고장" type="Text">
           <uengine:json>{"defaultValue":"","name":"고장","type":"Text","datasource":{"type":"BPMN","sql":""}}</uengine:json>
         </uengine:variable>
@@ -60,7 +60,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_0g8jtgs" sourceRef="Event_0ny0on5" targetRef="Activity_1y8idin" />
     <bpmn:sequenceFlow id="Flow_0i211os" sourceRef="Activity_1y8idin" targetRef="Activity_1gsxyw5" />
-    <bpmn:userTask id="Activity_1gsxyw5" name="고장접수">
+    <bpmn:userTask id="Activity_1gsxyw5" name="고장처리111">
       <bpmn:extensionElements>
         <uengine:properties>
           <uengine:json>{"variableForHtmlFormContext":{"name":"테스트 폼"},"eventSynchronization":{"eventType":"","attributes":[],"mappingContext":{"mappingElements":[{"argument":{"text":"고장"},"direction":"out","variable":{"name":"테스트 폼","askWhenInit":false,"isVolatile":false},"isKey":false}]}},"_type":"org.uengine.kernel.FormActivity"}</uengine:json>

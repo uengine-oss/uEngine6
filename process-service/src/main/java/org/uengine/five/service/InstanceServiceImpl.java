@@ -220,12 +220,34 @@ public class InstanceServiceImpl implements InstanceService {
         if (files == null || files.length == 0) {
             return null;
         }
+        Arrays.sort(files, (f1, f2) -> {
+            String name1 = f1.getName().replace(".bpmn", "");
+            String name2 = f2.getName().replace(".bpmn", "");
 
-        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
+            boolean isName1Parsable = isParsableAsFloat(name1);
+            boolean isName2Parsable = isParsableAsFloat(name2);
 
-        return files[0].getName().substring(0, files[0].getName().lastIndexOf('.'));
+            if (isName1Parsable && isName2Parsable) {
+                return Float.compare(Float.parseFloat(name2), Float.parseFloat(name1));
+            } else if (isName1Parsable) {
+                return -1;
+            } else if (isName2Parsable) {
+                return 1;
+            } else {
+                return name1.compareTo(name2);
+            }
+        });
 
-        // return highestNumberedFileName;
+        return files[0].getName().replace(".bpmn", "");
+    }
+
+    private boolean isParsableAsFloat(String str) {
+        try {
+            Float.parseFloat(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)

@@ -106,7 +106,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     }
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
-    @Override   
+    @Override
     public CollectionModel<DefinitionResource> listDefinition(String basePath) throws Exception {
         return _listDefinition(RESOURCE_ROOT, basePath);
     }
@@ -116,7 +116,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String fullPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String basePath = "/versions/";
         String defId = fullPath.substring(basePath.length());
-        
+
         // 디버깅 로그 추가
         System.out.println("fullPath: " + fullPath);
         System.out.println("basePath: " + basePath);
@@ -143,8 +143,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definition.setVersion(definition.name.replace(".bpmn", ""));
             definitions.add(definition);
         }
-
-        definitions.sort(Comparator.comparing(DefinitionResource::getVersion));
+        definitions.sort(Comparator.comparing(def -> {
+            String version = def.getVersion();
+            try {
+                return Float.parseFloat(version);
+            } catch (NumberFormatException e) {
+                return 0.0f;
+            }
+        }));
 
         CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
         return halResources;
@@ -437,7 +443,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                                                                                   * required = false) boolean unwrap
                                                                                   */) throws Exception {
         String version = null;
-        if(definitionPath.contains("/version/")) {
+        if (definitionPath.contains("/version/")) {
             String[] parts = definitionPath.split("/version/");
             definitionPath = parts[0];
             version = parts[1];
@@ -445,10 +451,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (definitionPath.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(RESOURCE_ROOT + "/" + definitionPath, "xml");
         }
-        if(!(definitionPath.startsWith(RESOURCE_ROOT))) {
+        if (!(definitionPath.startsWith(RESOURCE_ROOT))) {
             definitionPath = RESOURCE_ROOT + "/" + definitionPath;
         }
-        // 무조건 xml 파일로 결국 저장됨.   
+        // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
         Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), version);
 
@@ -812,7 +818,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             if (definitionPath.indexOf(".") == -1) {
                 definitionPath = definitionPath + ".xml";
             }
-            if(version != null) {
+            if (version != null) {
                 definitionPath = definitionPath.replace("definitions/", "archive/");
                 definitionPath = definitionPath + "/" + version + ".bpmn";
             }

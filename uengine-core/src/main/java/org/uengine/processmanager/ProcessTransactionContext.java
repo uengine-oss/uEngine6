@@ -27,6 +27,8 @@ public interface ProcessTransactionContext extends TransactionContext {
 
     ProcessDefinition getProcessDefinition(String pdvid) throws Exception;
 
+    ProcessDefinition getProcessDefinition(String pdvid, String version) throws Exception;
+
     List<ActivityInstanceContext> getExecutedActivityInstanceContextsInTransaction();
 
     void addExecutedActivityInstanceContext(ActivityInstanceContext activityInstanceContext);

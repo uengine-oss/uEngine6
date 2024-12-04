@@ -203,4 +203,19 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
         }
         // return null;
     }
+
+    public ProcessDefinition getProcessDefinition(String pdvid, String version) throws Exception {
+        DefinitionServiceUtil definitionService = ProcessServiceApplication.getApplicationContext()
+                .getBean(DefinitionServiceUtil.class);
+
+        Object definition = definitionService.getDefinition(pdvid, version);
+        if (definition instanceof ProcessDefinition) {
+            ProcessDefinition processDefinition = (ProcessDefinition) definition;
+
+            return processDefinition;
+        } else {
+            throw new RuntimeException("It is not a ProcessDefinition type with defId: " + pdvid);
+        }
+        // return null;
+    }
 }
