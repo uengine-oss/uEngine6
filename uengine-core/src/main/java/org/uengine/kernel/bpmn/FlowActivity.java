@@ -369,9 +369,18 @@ public class FlowActivity extends ComplexActivity {
                     if (event.getClass().equals(CompensateEvent.class)) {
                         Activity activity = getProcessDefinition().getActivity(event.getAttachedToRef());
                         EventHandler eventHandler = new EventHandler();
-                        eventHandler.setTriggeringMethod(11);
+                        eventHandler.setTriggeringMethod(EventHandler.TRIGGERING_BY_COMPENSATION);
                         eventHandler.setHandlerActivity(event);
                         eventHandler.setName("compensate");
+                        EventHandler[] eventHandlers = new EventHandler[] { eventHandler };
+
+                        activity.setEventHandlers(eventHandlers);
+                    } else if (event.getClass().equals(ConditionalBoundaryEvent.class)) {
+                        Activity activity = getProcessDefinition().getActivity(event.getAttachedToRef());
+                        EventHandler eventHandler = new EventHandler();
+                        eventHandler.setTriggeringMethod(EventHandler.TRIGGERING_BY_CONDITIONAL);
+                        eventHandler.setHandlerActivity(event);
+                        eventHandler.setName("conditional");
                         EventHandler[] eventHandlers = new EventHandler[] { eventHandler };
 
                         activity.setEventHandlers(eventHandlers);

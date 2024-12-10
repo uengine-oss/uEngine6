@@ -25,6 +25,10 @@ public class TimerEvent extends Event {
 	String expression;
 
 	public String getExpression() {
+		String[] fields = expression.trim().split("\\s+");
+		if (fields.length == 6) {
+			return expression + " *";
+		}
 		return expression;
 	}
 

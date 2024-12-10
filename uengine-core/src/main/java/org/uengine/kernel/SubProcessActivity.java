@@ -61,6 +61,16 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         definitionId = l;
     }
 
+    String version;
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     ProcessVariable dynamicDefinitionIdPV;
 
     public ProcessVariable getDynamicDefinitionIdPV() {
@@ -852,7 +862,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         // versionManager.getProductionResourcePath(realDefinitionId);
         // }
 
-        subProcessInstance = instance.getProcessTransactionContext().getProcessDefinition(realDefinitionId)
+        subProcessInstance = instance.getProcessTransactionContext().getProcessDefinition(realDefinitionId, version)
                 .createInstance(subProcessInstanceName, options);
 
         if (isConnectedMultipleSubProcesses)

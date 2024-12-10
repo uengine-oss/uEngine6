@@ -1,5 +1,6 @@
 package org.uengine.kernel.bpmn;
 
+import org.uengine.kernel.Activity;
 import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.MessageListener;
 import org.uengine.kernel.ProcessInstance;
@@ -40,6 +41,16 @@ public class Event extends ReceiveActivity implements MessageListener {
         this.attachedToRef = attachedToRef;
     }
 
+    boolean cancelActivity;
+
+    public boolean isCancelActivity() {
+        return cancelActivity;
+    }
+
+    public void setCancelActivity(boolean cancelActivity) {
+        this.cancelActivity = cancelActivity;
+    }
+
     @Override
     protected void executeActivity(ProcessInstance instance) throws Exception {
         // TODO Auto-generated method stub
@@ -75,6 +86,15 @@ public class Event extends ReceiveActivity implements MessageListener {
 
     @Override
     public boolean onMessage(ProcessInstance instance, Object payload) throws Exception {
+
+        // Boundary Event 전용 -> 각 Boundary Event 별로 넣는 성질의 코드가 아니기 때문에 Event 클래스에 넣음
+        if (getAttachedToRef() != null) {// 중단 비중단 처리
+            if (isCancelActivity()) {
+                Activity activity = getProcessDefinition().getActivity(getAttachedToRef());
+                activity.stop(instance);
+            }
+        }
+
         if (payload instanceof String) {
             String message = (String) payload;
 

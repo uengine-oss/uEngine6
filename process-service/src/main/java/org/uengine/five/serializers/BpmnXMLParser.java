@@ -8,6 +8,11 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.uengine.contexts.HtmlFormContext;
@@ -522,7 +527,7 @@ public class BpmnXMLParser {
                                         || jsonNode.getNodeType() == Node.TEXT_NODE
                                         || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
                                     String jsonText = jsonNode.getTextContent();
-                                    if (jsonText.contains("_type")) {
+                                    if (jsonText.contains("_type") && !className.contains("Event")) {
                                         clazz = Activity.class;
                                     }
 
@@ -532,6 +537,10 @@ public class BpmnXMLParser {
                                     } else if (className.equals("BoundaryEvent")) {
                                         task = (Event) jsonObject;
                                         ((Event) task).setAttachedToRef(element.getAttribute("attachedToRef"));
+                                        String cancelActivityAttr = element.getAttribute("cancelActivity");
+                                        boolean cancelActivity = cancelActivityAttr == null
+                                                || !cancelActivityAttr.equals("false");
+                                        ((Event) task).setCancelActivity(cancelActivity);
                                     } else {
                                         task = (Activity) jsonObject;
                                     }
@@ -577,22 +586,28 @@ public class BpmnXMLParser {
             fullClassName = "org.uengine.kernel.ScriptActivity";
         } else if (className.equals("BoundaryEvent") || className.equals("IntermediateCatchEvent")
                 || className.equals("IntermediateThrowEvent")) {
-            NodeList allElements = element.getOwnerDocument().getElementsByTagName("*");
+            NodeList eventDefinitions = element.getChildNodes();
             fullClassName = "org.uengine.kernel.bpmn.Event";
-            for (int i = 0; i < allElements.getLength(); i++) {
-                Element currentElement = (Element) allElements.item(i);
-                String tagName = currentElement.getTagName();
-                if (tagName.endsWith("EventDefinition")) {
-                    String eventType = tagName.replace("EventDefinition", "").replace("bpmn:", "");
-                    fullClassName = "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
-                            + eventType.substring(1) + className;
-                    break;
+
+            for (int i = 0; i < eventDefinitions.getLength(); i++) {
+                Node node = eventDefinitions.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element currentElement = (Element) node;
+                    String tagName = currentElement.getTagName();
+                    if (tagName.endsWith("EventDefinition")) {
+                        String eventType = tagName.replace("EventDefinition", "").replace("bpmn:", "");
+                        fullClassName = "org.uengine.kernel.bpmn." + Character.toUpperCase(eventType.charAt(0))
+                                + eventType.substring(1) + className;
+                        break; // 정확히 구분할 수 있도록 첫 번째 매칭된 이벤트 정의에서 멈춤
+                    }
                 }
             }
+
             // 비중단 체크
             if (className.equals("BoundaryEvent")) {
                 String cancelActivity = element.getAttribute("cancelActivity");
                 if (cancelActivity != null && !cancelActivity.isEmpty()) {
+                    // 추가적인 로직이 필요할 경우 여기에 작성
                 }
             }
         } else if (className.equals("StartEvent")) {

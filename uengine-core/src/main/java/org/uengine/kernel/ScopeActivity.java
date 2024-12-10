@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.uengine.kernel.bpmn.CompensateEvent;
+import org.uengine.kernel.bpmn.ConditionalEvent;
 //import org.metaworks.Type;
 //import org.metaworks.annotation.Hidden;
 import org.uengine.kernel.bpmn.FlowActivity;
@@ -271,7 +272,12 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 
 			if (eventHandlers != null)
 				for (int i = 0; i < eventHandlers.length; i++) {
-					if (eventHandlers[i].getHandlerActivity() == childActivityHasBeenDone) {
+					ConditionalEvent conditionalEvent = (ConditionalEvent) eventHandlers[i].getHandlerActivity();
+					if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_CONDITIONAL) {
+						if (conditionalEvent.onMessage(instance, conditionalEvent.getTracingTag())) {
+							return;
+						}
+					} else if (eventHandlers[i].getHandlerActivity() == childActivityHasBeenDone) {
 						return; // ignore CHILD_DONE event from the event handlers
 					}
 				}
@@ -359,32 +365,34 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 		// EventHandler[] eventHandlers = getEventHandlers();
 
 		super.compensate(instance);
-        executeAttachedEvent(instance);
+		executeAttachedEvent(instance);
 		// if (eventHandlers != null) {
-		// 	for (int i = 0; i < eventHandlers.length; i++) {
-		// 		// Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+		// for (int i = 0; i < eventHandlers.length; i++) {
+		// // Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
 
-		// 		if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_COMPENSATION) {
-		// 			EventMessagePayload eventMessage = new EventMessagePayload();
-		// 			eventMessage.setEventName(eventHandlers[i].getName());
-        //             eventMessage.setTriggerTracingTag(eventHandlers[i].getHandlerActivity().getTracingTag());
-        //             // fireEventHandlers(instance, 11, eventMessage);
-        //             CompensateEvent activity = (CompensateEvent) instance.getProcessDefinition().getActivity(eventHandlers[i].getHandlerActivity().getTracingTag());
-        //             activity.onMessage(instance, eventHandlers);
-		// 			onMessage(instance, eventMessage);
-		// 		}
+		// if (eventHandlers[i].getTriggeringMethod() ==
+		// EventHandler.TRIGGERING_BY_COMPENSATION) {
+		// EventMessagePayload eventMessage = new EventMessagePayload();
+		// eventMessage.setEventName(eventHandlers[i].getName());
+		// eventMessage.setTriggerTracingTag(eventHandlers[i].getHandlerActivity().getTracingTag());
+		// // fireEventHandlers(instance, 11, eventMessage);
+		// CompensateEvent activity = (CompensateEvent)
+		// instance.getProcessDefinition().getActivity(eventHandlers[i].getHandlerActivity().getTracingTag());
+		// activity.onMessage(instance, eventHandlers);
+		// onMessage(instance, eventMessage);
+		// }
 
-		// 		/**
-		// 		 * We don't need to compensate the event executions
-		// 		 */
-		// 		/*
-		// 		 * else
-		// 		 * if(isCompensatable(eventHandlingActivity.getStatus(instance))){
-		// 		 * eventHandlingActivity.compensate(instance);
-		// 		 * }
-		// 		 */
+		// /**
+		// * We don't need to compensate the event executions
+		// */
+		// /*
+		// * else
+		// * if(isCompensatable(eventHandlingActivity.getStatus(instance))){
+		// * eventHandlingActivity.compensate(instance);
+		// * }
+		// */
 
-		// 	}
+		// }
 		// }
 
 		if (!isLeaveEventListenersEvenIfOutOfScope())
