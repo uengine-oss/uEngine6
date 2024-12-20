@@ -1,9 +1,11 @@
 package org.uengine.five;
 
+import org.hibernate.event.spi.AbstractEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +26,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.event.EventListener;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 // import org.uengine.five.config.kafka.KafkaProcessor;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 
 @SpringBootApplication
 @EnableBinding(Streams.class)
@@ -44,7 +50,24 @@ public class ProcessServiceApplication {
     public static void main(String[] args) {
         applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
         GlobalContext.setComponentFactory(new SpringComponentFactory());
+
     }
+
+    // @EventListener(ApplicationReadyEvent.class)
+    // public void onApplicationEvent() {
+    // // 트랜잭션 동기화 로직을 여기서 처리
+    // if (TransactionSynchronizationManager.isSynchronizationActive()) {
+    // TransactionSynchronizationManager.registerSynchronization(
+    // new TransactionSynchronizationAdapter() {
+    // @Override
+    // public void afterCompletion(int status) {
+    // System.out.println("afterCompletion");
+    // }
+    // });
+    // } else {
+    // System.out.println("트랜잭션 동기화가 활성화되지 않았습니다.");
+    // }
+    // }
 
     // @Bean
     // public ServiceRegisterDeployFilter serviceRegisterDeployFilter() {

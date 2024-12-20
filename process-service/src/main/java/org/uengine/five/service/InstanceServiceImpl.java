@@ -40,8 +40,14 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,6 +61,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.Streams;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -334,6 +341,7 @@ public class InstanceServiceImpl implements InstanceService {
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
     public InstanceResource backToHere(@PathVariable("instanceId") String instanceId,
             @PathVariable("tracingTag") String tracingTag) throws Exception {
 
@@ -1272,8 +1280,8 @@ public class InstanceServiceImpl implements InstanceService {
     }
 
     @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-    @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
+    @Transactional(rollbackFor = { Exception.class })
     public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
             @RequestHeader("isSimulate") String isSimulate)
 

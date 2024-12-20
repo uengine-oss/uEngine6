@@ -28,19 +28,19 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
     List<ProcessInstanceEntity> findMainInstICanSee();
 
     @Query("select pi from ProcessInstanceEntity pi " +
-       "where 1=1 " +
-       "and (:instId is null or pi.instId = :instId )" +
-       "and (:defId is null or pi.defId like CONCAT('%',:defId,'%')) " +
-       "and (:status is null or pi.status = :status )" +
-       "and (:eventHandler is null or pi.eventHandler = :eventHandler )" +
-       "and (:name is null or pi.name like CONCAT('%',:name,'%') )" +
-       "and (:startedDate is null or pi.startedDate >= :startedDate)" +
-       "and (:finishedDate is null or :finishedDate >= pi.finishedDate )" +
-       "and (:subProcess is null or :subProcess = pi.subProcess )" +
-       "and (:initEp is null or pi.initEp like CONCAT('%',:initEp,'%'))" +
-       "group by pi.instId, pi.startedDate " +  // Added GROUP BY clause
-       "order by pi.startedDate desc")
-        Page<ProcessInstanceEntity> findFilterICanSee(
+            "where 1=1 " +
+            "and (:instId is null or pi.instId = :instId )" +
+            "and (:defId is null or pi.defId like CONCAT('%',:defId,'%')) " +
+            "and (:status is null or pi.status = :status )" +
+            "and (:eventHandler is null or pi.eventHandler = :eventHandler )" +
+            "and (:name is null or pi.name like CONCAT('%',:name,'%') )" +
+            "and (:startedDate is null or pi.startedDate >= :startedDate)" +
+            "and (:finishedDate is null or :finishedDate >= pi.finishedDate )" +
+            "and (:subProcess is null or :subProcess = pi.subProcess )" +
+            "and (:initEp is null or pi.initEp like CONCAT('%',:initEp,'%'))" +
+            "group by pi.instId, pi.startedDate " + // Added GROUP BY clause
+            "order by pi.startedDate desc")
+    Page<ProcessInstanceEntity> findFilterICanSee(
             @Param("defId") String defId,
             @Param("instId") Long instId,
             @Param("status") String status,
@@ -51,20 +51,29 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
             @Param("initEp") String initEp,
             @Param("subProcess") Boolean subProcess,
             Pageable pageable
-            //Temporal 이 먹지않거나 시작일 검색이 제대로 기능하지않는다면 (String to Date Type error)시 아래 주석해제후 이내용으로 하시면됩니다.
-//                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)@Param("startedDate") Date startedDate,
-//                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)@Param("finishedDate") Date finishedDate
+    // Temporal 이 먹지않거나 시작일 검색이 제대로 기능하지않는다면 (String to Date Type error)시 아래 주석해제후
+    // 이내용으로 하시면됩니다.
+    // @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)@Param("startedDate") Date
+    // startedDate,
+    // @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)@Param("finishedDate") Date
+    // finishedDate
     );
 
     @Query("select pi from ProcessInstanceEntity pi where pi.rootInstId = :instId")
     List<ProcessInstanceEntity> findChild(@Param("instId") Long instId);
 
     @Query("select pi from ProcessInstanceEntity pi where (pi.corrKey = :corrKey and pi.status = :status)")
-    List<ProcessInstanceEntity> findByCorrKeyAndStatus(@Param("corrKey") String corrKey, @Param("status") String status);
-    
+    List<ProcessInstanceEntity> findByCorrKeyAndStatus(@Param("corrKey") String corrKey,
+            @Param("status") String status);
+
+    @Query("select pi from ProcessInstanceEntity pi where pi.status = :status")
+    List<ProcessInstanceEntity> findByStatus(@Param("status") String status);
+
     @Query("select pi from ProcessInstanceEntity pi order by pi.startedDate desc")
     Page<ProcessInstanceEntity> findAll(Pageable pageable);
 
     @Query("select pi from ProcessInstanceEntity pi where (:name is null or pi.name like CONCAT('%',:name,'%')) and (:status is null or pi.status = :status) and (:startedDate is null or pi.startedDate >= :startedDate) and (:finishedDate is null or :finishedDate >= pi.finishedDate ) and (:subProcess is null or :subProcess = pi.subProcess ) order by pi.startedDate desc")
-    Page<ProcessInstanceEntity> findByName(@Param("name") String name, @Param("status") String status, @Param("startedDate") String startedDate, @Param("finishedDate") String finishedDate, @Param("subProcess") String subProcess, Pageable pageable);
+    Page<ProcessInstanceEntity> findByName(@Param("name") String name, @Param("status") String status,
+            @Param("startedDate") String startedDate, @Param("finishedDate") String finishedDate,
+            @Param("subProcess") String subProcess, Pageable pageable);
 }

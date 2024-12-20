@@ -602,14 +602,6 @@ public class BpmnXMLParser {
                     }
                 }
             }
-
-            // 비중단 체크
-            if (className.equals("BoundaryEvent")) {
-                String cancelActivity = element.getAttribute("cancelActivity");
-                if (cancelActivity != null && !cancelActivity.isEmpty()) {
-                    // 추가적인 로직이 필요할 경우 여기에 작성
-                }
-            }
         } else if (className.equals("StartEvent")) {
             List<String> eventTypes = Arrays.asList("timer", "signal", "error",
                     "message");

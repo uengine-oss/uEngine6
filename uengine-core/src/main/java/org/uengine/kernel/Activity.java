@@ -28,10 +28,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.MimeTypeUtils;
 import org.uengine.contexts.EventSynchronization;
 //import org.springframework.expression.spel.standard.SpelExpressionParser;
 //import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.uengine.contexts.TextContext;
+import org.uengine.kernel.bpmn.BlockFinder;
 import org.uengine.kernel.bpmn.CompensateEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
@@ -626,12 +631,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 		// run attached events
 		for (Activity childActivity : getProcessDefinition().getChildActivities()) {
-			if (childActivity instanceof Event) {
-				Event event = (Event) childActivity;
-				if (this.getTracingTag().equals(event.getAttachedToRef())) {
-					instance.execute(event.getTracingTag());
-				}
-			}
+			runBoundaryEvents(childActivity, instance);
 		}
 
 		ActivityFilter[] activityFilters = getProcessDefinition().getActivityFilters();
@@ -642,6 +642,20 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 		fireActivityEventListeners(instance, "beforeExecute", null);
 
+	}
+
+	private void runBoundaryEvents(Activity activity, ProcessInstance instance) throws Exception {
+		if (activity instanceof Event) {
+			Event event = (Event) activity;
+			if (this.getTracingTag().equals(event.getAttachedToRef())) {
+				instance.execute(event.getTracingTag());
+			}
+		} else if (activity instanceof ScopeActivity) {
+			ScopeActivity scopeActivity = (ScopeActivity) activity;
+			for (Activity childActivity : scopeActivity.getChildActivities()) {
+				runBoundaryEvents(childActivity, instance);
+			}
+		}
 	}
 
 	/**
@@ -819,6 +833,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public void backToHere(ProcessInstance instance) throws Exception {
 		// ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
 		String execScope = null;
 		if (tracingTag.contains(":")) {
 			execScope = tracingTag.split(":")[1];
@@ -827,6 +842,26 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		if (execScope != null) {
 			instance.setExecutionScope(execScope);
 		}
+
+		List<ActivityInstanceContext> runningActivities = instance.getCurrentRunningActivitiesDeeply();
+		int depth = getProcessDefinition().getDepthFromStartEvent(this);
+		for (ActivityInstanceContext activityInstanceContext : runningActivities) {
+			Activity activity = activityInstanceContext.getActivity();
+			int runningDepth = getProcessDefinition().getDepthFromStartEvent(activity);
+			if (runningDepth < depth) {
+				throw new UEngineException(
+						"Activity [" + getTracingTag() + "] is next for [" + activity.getTracingTag() + "]");
+			}
+			if (activity.getTracingTag().equals(getTracingTag())) {
+				throw new UEngineException("Activity [" + getTracingTag() + "] is already running.");
+			}
+		}
+
+		if (instance.getStatus(this.getTracingTag()).equals(STATUS_RUNNING)
+				&& instance.getStatus(this.getTracingTag()).equals(STATUS_CANCELLED)) {
+			throw new UEngineException("Activity [" + getTracingTag() + "] is not available.");
+		}
+
 		System.out.println("**********************");
 		System.out.println("getInstanceId : " + instance.getInstanceId());
 		System.out.println("getExecutionScopeContext : " + instance.getExecutionScopeContext());

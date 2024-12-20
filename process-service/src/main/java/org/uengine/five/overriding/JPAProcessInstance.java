@@ -10,6 +10,12 @@ import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.MimeTypeUtils;
+import org.uengine.five.Streams;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
@@ -39,6 +45,9 @@ import org.uengine.webservices.worklist.WorkList;
 @Transactional
 // @Scope("prototype")
 public class JPAProcessInstance extends DefaultProcessInstance implements TransactionListener {
+
+    @Autowired
+    ApplicationContext applicationContext;
 
     @Autowired
     DefinitionServiceUtil definitionService;
@@ -201,14 +210,13 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
         // applicationEventPublisher.publishEvent(new ProcessInstanceChangeEvent(this));
     }
 
-
-
     @Override
     public ProcessDefinition getProcessDefinition() throws Exception {
         ProcessDefinition definition = super.getProcessDefinition();
         if (definition == null) {
-            setProcessDefinition((ProcessDefinition) definitionService.getDefinition(processInstanceEntity.getDefId(),processInstanceEntity.getDefVerId()));
-        }   
+            setProcessDefinition((ProcessDefinition) definitionService.getDefinition(processInstanceEntity.getDefId(),
+                    processInstanceEntity.getDefVerId()));
+        }
         return super.getProcessDefinition();
     }
 
@@ -326,10 +334,11 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     protected Map loadVariables() throws Exception {
         Date date = getProcessInstanceEntity().getStartedDate();
-       
+
         String currentYear = String.valueOf(date.getYear() + 1900);
         String currentMonth = String.format("%02d", date.getMonth() + 1);
-        IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
+        IResource resource = new DefaultResource(
+                "instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         return (Map) resourceManager.getObject(resource);
     }
 
@@ -337,7 +346,8 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
         java.util.Calendar calendar = java.util.Calendar.getInstance();
         String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
         String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
-        IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
+        IResource resource = new DefaultResource(
+                "instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         resourceManager.save(resource, getVariables());
     }
 
@@ -526,5 +536,20 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             }
         }
         return result;
+    }
+
+    public boolean sendBroadcast(String eventType, Object payload) throws Exception {
+        Streams processor = applicationContext.getBean(Streams.class);
+        MessageChannel outputChannel = processor.outboundChannel();
+
+        boolean sent = outputChannel.send(
+                MessageBuilder
+                        .withPayload(payload)
+                        .setHeader(
+                                MessageHeaders.CONTENT_TYPE,
+                                MimeTypeUtils.APPLICATION_JSON)
+                        .setHeader("type", eventType)
+                        .build());
+        return sent;
     }
 }

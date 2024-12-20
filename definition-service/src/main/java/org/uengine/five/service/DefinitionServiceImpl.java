@@ -426,7 +426,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         Object definitionDeployed = null;
 
         resourceManager.save(resource, definitionRequest.getDefinition());
-        instanceService.postCreatedRawDefinition(resource.getPath());
+        instanceService.postCreatedRawDefinition(definitionPath);
 
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {

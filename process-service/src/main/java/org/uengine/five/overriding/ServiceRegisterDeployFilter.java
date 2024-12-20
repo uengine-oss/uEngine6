@@ -21,44 +21,50 @@ import org.uengine.processmanager.ProcessTransactionContext;
 public class ServiceRegisterDeployFilter implements DeployFilter {
 
     @Override
-    public void beforeDeploy(ProcessDefinition definition, ProcessTransactionContext tc, String path, boolean isNew) throws Exception {
+    public void beforeDeploy(ProcessDefinition definition, ProcessTransactionContext tc, String path, boolean isNew)
+            throws Exception {
 
         // if(!definition.isInitiateByFirstWorkitem()) return;
 
         List<Activity> startActivities = definition.getStartActivities();
-        if(startActivities == null) return;
+        if (startActivities == null)
+            return;
 
         // for(Activity activity : startActivities){
 
-        //     if(activity instanceof CatchingRestMessageEvent){
+        // if(activity instanceof CatchingRestMessageEvent){
 
-        //         CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
+        // CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent)
+        // activity;
 
-        //         ServiceEndpointRepository serviceEndpointRepository = GlobalContext.getComponent(ServiceEndpointRepository.class);
+        // ServiceEndpointRepository serviceEndpointRepository =
+        // GlobalContext.getComponent(ServiceEndpointRepository.class);
 
-        //         ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
+        // ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
 
-        //         serviceEndpointEntity.setPath(catchingMessageEvent.getServicePath());
-        //         serviceEndpointEntity.setCorrelationKey(catchingMessageEvent.getCorrelationKey());
-        //         serviceEndpointEntity.setDefId(path);
+        // serviceEndpointEntity.setPath(catchingMessageEvent.getServicePath());
+        // serviceEndpointEntity.setCorrelationKey(catchingMessageEvent.getCorrelationKey());
+        // serviceEndpointEntity.setDefId(path);
 
-        //         serviceEndpointRepository.save(serviceEndpointEntity);
-
-        //     }
+        // serviceEndpointRepository.save(serviceEndpointEntity);
 
         // }
-        ServiceEndpointRepository serviceEndpointRepository = GlobalContext.getComponent(ServiceEndpointRepository.class);
+
+        // }
+        ServiceEndpointRepository serviceEndpointRepository = GlobalContext
+                .getComponent(ServiceEndpointRepository.class);
         // 기존 defId를 가진 요소를 우선 제거
         serviceEndpointRepository.deleteByDefId(path);
         ServiceEndpointEntity serviceEndpointEntity = new ServiceEndpointEntity();
 
         List<Activity> catchingMessageEvents = definition.getCatchingMessageEvents();
-        if(catchingMessageEvents == null) return;
-        
+        if (catchingMessageEvents == null)
+            return;
+
         List<CatchEvent> catchEvents = new ArrayList<>();
         for (Activity activity : catchingMessageEvents) {
-            if (activity instanceof CatchingMessageEvent) {
-                
+            if (activity instanceof CatchingRestMessageEvent) {
+
                 CatchingRestMessageEvent catchingMessageEvent = (CatchingRestMessageEvent) activity;
                 serviceEndpointEntity.setPath(catchingMessageEvent.getServicePath());
                 CatchEvent catchEvent = new CatchEvent();
@@ -69,7 +75,9 @@ public class ServiceRegisterDeployFilter implements DeployFilter {
             }
         }
 
-        serviceEndpointEntity.setEvents(catchEvents);
-        serviceEndpointRepository.save(serviceEndpointEntity);
+        if (catchEvents.size() > 0) {
+            serviceEndpointEntity.setEvents(catchEvents);
+            serviceEndpointRepository.save(serviceEndpointEntity);
+        }
     }
 }

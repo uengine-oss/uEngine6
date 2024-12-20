@@ -232,23 +232,24 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
         if (!"".equals(tracingTag))
             addDebugInfo(activity);
 
-        // if (Activity.STATUS_READY.equals(activity.getStatus(this)) && activity.getStartedTime(this) != null) { // means
-        //                                                                                                        // the
-        //                                                                                                        // activity
-        //                                                                                                        // is
-        //                                                                                                        // future
-        //                                                                                                        // activity
-        //                                                                                                        // that
-        //                                                                                                        // needed
-        //                                                                                                        // to be
-        //                                                                                                        // notified
-        //                                                                                                        // to be
-        //                                                                                                        // started
-        //                                                                                                        // later.
-        //     activity.reserveActivity(this);
+        // if (Activity.STATUS_READY.equals(activity.getStatus(this)) &&
+        // activity.getStartedTime(this) != null) { // means
+        // // the
+        // // activity
+        // // is
+        // // future
+        // // activity
+        // // that
+        // // needed
+        // // to be
+        // // notified
+        // // to be
+        // // started
+        // // later.
+        // activity.reserveActivity(this);
 
-        //     return;
-        
+        // return;
+
         // }
 
         activity.beforeExecute(this);
@@ -857,19 +858,20 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
             if (eventInterceptors == null)
                 eventInterceptors = new ArrayList<ActivityEventInterceptor>();
 
-            if(eventInterceptors.size() == 0) {
+            if (eventInterceptors.size() == 0) {
                 eventInterceptors.add(aei);
             } else {
                 for (ActivityEventInterceptor interceptor : eventInterceptors) {
-                    if(interceptor instanceof CatchingErrorEventActivityEventInterceptor && aei instanceof CatchingErrorEventActivityEventInterceptor) {
-                        if(!((CatchingErrorEventActivityEventInterceptor)interceptor).getTracingTag().equals(((CatchingErrorEventActivityEventInterceptor)aei).getTracingTag())) {
+                    if (interceptor instanceof CatchingErrorEventActivityEventInterceptor
+                            && aei instanceof CatchingErrorEventActivityEventInterceptor) {
+                        if (!((CatchingErrorEventActivityEventInterceptor) interceptor).getTracingTag()
+                                .equals(((CatchingErrorEventActivityEventInterceptor) aei).getTracingTag())) {
                             eventInterceptors.add(aei);
                         }
                     }
-                }    
+                }
             }
-            
-            
+
             Serializable ei = (Serializable) eventInterceptors;
             setProperty("", PROP_KEY_EVENT_LISTENERS, ei);
 
@@ -1008,5 +1010,10 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
     @Override
     public boolean isRoot() {
         return getMainProcessInstanceId() == null;
+    }
+
+    @Override
+    public boolean sendBroadcast(String eventType, Object payload) throws Exception {
+        return false;
     }
 }
