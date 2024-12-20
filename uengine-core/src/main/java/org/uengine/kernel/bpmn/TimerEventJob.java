@@ -47,8 +47,18 @@ public class TimerEventJob implements Job {
         ProcessInstance instance = instanceService.getInstance(instanceId);
         TimerEvent timerEvent = (TimerEvent) instance.getProcessDefinition().getActivity(tracingTag);
 
+        String originalExecutionScope = null;
+
+        if (instance.getExecutionScopeContext() != null) {
+            originalExecutionScope = instance.getExecutionScopeContext().getExecutionScope();
+        }
+
+        instance.setExecutionScope(executionScope);
+
         if (timerEvent != null) {
             timerEvent.onMessage(instance, null);
         }
+
+        instance.setExecutionScope(originalExecutionScope);
     }
 }

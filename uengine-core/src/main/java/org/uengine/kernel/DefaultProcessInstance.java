@@ -1066,4 +1066,8 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 	// return super.getParentExecutionScopeOf(executionScope); //TODO
 	// }
 
+	@Override
+	public boolean sendBroadcast(String eventType, Object payload) throws Exception {
+		return false;
+	}
 }

@@ -18,7 +18,7 @@ public class EventHandler implements Serializable {
 	public final static int TRIGGERING_BY_COMPENSATION = 11;
 	public final static int TRIGGERING_BY_FAULT = 12;
 	public final static int TRIGGERING_BY_CONDITIONAL = 13;
-
+	public final static int TRIGGERING_BY_ESCALATION = 14;
 	// activity event
 	public final static int TRIGGERING_BY_AFTER_CHILD_COMPLETED = 21;
 	public final static int TRIGGERING_BY_AFTER_CHILD_SAVED = 22;

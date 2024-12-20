@@ -6,6 +6,7 @@ import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -19,8 +20,10 @@ public class SignalEndEvent extends EndEvent {
 		setName("ErrorEnd");
 	}
 
+	@Override
 	public void executeActivity(ProcessInstance instance) throws Exception {
-
+		instance.sendBroadcast(getEventType(), new HashMap<>());
+		super.executeActivity(instance);
 	}
 
 }

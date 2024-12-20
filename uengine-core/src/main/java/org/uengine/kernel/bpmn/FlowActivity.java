@@ -385,7 +385,10 @@ public class FlowActivity extends ComplexActivity {
 
                         activity.setEventHandlers(eventHandlers);
                     } else {
-                        getProcessDefinition().getActivity(event.getAttachedToRef())
+                        getChildActivities().stream()
+                                .filter(child -> child.getTracingTag().equals(event.getAttachedToRef()))
+                                .findFirst()
+                                .orElse(null)
                                 .addEventListener(
                                         new ActivityEventListener() {
                                             @Override
@@ -490,6 +493,20 @@ public class FlowActivity extends ComplexActivity {
         // exception.setErrorLevel(UEngineException.FATAL);
         // throw exception;
         // }
+
+        return null;
+    }
+
+    public List<Activity> getEvents() {
+        List<Activity> events = new ArrayList<>();
+        for (Activity childActivity : getChildActivities()) {
+            if (childActivity instanceof Event && childActivity instanceof MessageListener) {
+                events.add(childActivity);
+            }
+        }
+        if (events.size() > 0) {
+            return events;
+        }
 
         return null;
     }
@@ -797,7 +814,7 @@ public class FlowActivity extends ComplexActivity {
                     // int targetDepth = getProcessDefinition()
                     // .getDepthFromStartEvent(sequenceFlow.getTargetActivity());
 
-                    if (!sequenceFlow.isFeedback()) {
+                    if (!sequenceFlow.isFeedback() && sequenceFlow.getTargetActivity() != null) {
                         outgoingActivities.add(sequenceFlow.getTargetActivity());
                     }
                 }

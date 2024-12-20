@@ -1,18 +1,29 @@
 package org.uengine.kernel.bpmn;
 
+import java.util.Map;
+
 import org.uengine.kernel.Activity;
+import org.uengine.kernel.ComplexActivity;
 import org.uengine.kernel.DefaultActivity;
 import org.uengine.kernel.MessageListener;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
+import org.uengine.kernel.Validatable;
+import org.uengine.kernel.ValidationContext;
 import org.uengine.modeling.ElementView;
 
 // TODO: 매핑 관련 개선
 // extends DefaultActivity => extends ReceiveActivity
-public class Event extends ReceiveActivity implements MessageListener {
+public class Event extends ReceiveActivity implements MessageListener, Validatable {
 
     public static final String STOP_ACTIVITY = "STOP_ACTIVITY";
     public static final String PASS_ACTIVITY = "PASS_ACTIVITY";
+
+    public static final String START_EVENT = "StartEvent";
+    public static final String END_EVENT = "EndEvent";
+    public static final String CATCH_EVENT = "CatchEvent";
+    public static final String THROW_EVENT = "ThrowEvent";
+    public static final String BOUNDARY_EVENT = "BoundaryEvent";
 
     // String activityStop;
     // @Face(displayName="호출한 상위 엑티비티 종료",
@@ -73,6 +84,16 @@ public class Event extends ReceiveActivity implements MessageListener {
         this.eventType = eventType;
     }
 
+    String eventKey;
+
+    public String getEventKey() {
+        return eventKey;
+    }
+
+    public void setEventKey(String eventKey) {
+        this.eventKey = eventKey;
+    }
+
     boolean intermediate;
 
     // @Hidden
@@ -92,6 +113,17 @@ public class Event extends ReceiveActivity implements MessageListener {
             if (isCancelActivity()) {
                 Activity activity = getProcessDefinition().getActivity(getAttachedToRef());
                 activity.stop(instance);
+                if (getParentActivity() instanceof ComplexActivity) {
+                    ComplexActivity complexActivity = (ComplexActivity) getParentActivity();
+                    for (Activity child : complexActivity.getChildActivities()) {
+                        if (child instanceof Event && ((Event) child).getAttachedToRef() != null) {
+                            if (!child.getTracingTag().equals(activity.getTracingTag())
+                                    && ((Event) child).getAttachedToRef().contains(activity.getTracingTag())) {
+                                child.stop(instance);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -128,4 +160,25 @@ public class Event extends ReceiveActivity implements MessageListener {
     @Override
     public void afterUnregistered(ProcessInstance instance) throws Exception {
     }
+
+    @Override
+    public ValidationContext validate(Map options) {
+        ValidationContext vc = new ValidationContext();
+
+        if (getAttachedToRef() != null) {
+            if (getOutgoingSequenceFlows().size() < 1) {
+                vc.add("해당 이벤트에서 호출하는 태스크가 존재하지 않습니다.");
+            }
+        } else {
+            if (getOutgoingSequenceFlows().size() < 1) {
+                vc.add("해당 이벤트에서 나가는 시퀀스 플로우가 존재하지 않습니다.");
+            }
+            if (getIncomingSequenceFlows().size() < 1) {
+                vc.add("해당 이벤트에 들어오는 시퀀스 플로우가 존재하지 않습니다.");
+            }
+        }
+
+        return vc;
+    }
+
 }
