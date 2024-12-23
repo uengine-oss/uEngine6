@@ -17,4 +17,30 @@ public class SignalIntermediateCatchEvent extends SignalEvent implements Interme
 		super();
 		setEventType(Event.CATCH_EVENT);
 	}
+
+	String signalType;
+
+	public String getSignalType() {
+		return signalType;
+	}
+
+	public void setSignalType(String signalType) {
+		this.signalType = signalType;
+	}
+
+	public static Map<String, SignalEventInstance> getSignalEvents(ProcessInstance instance) throws Exception {
+		Map<String, SignalEventInstance> signals = (Map<String, SignalEventInstance>) instance.getProperty("",
+				SIGNAL_EVENTS);
+
+		if (signals == null)
+			signals = new HashMap<>();
+
+		return signals;
+	}
+
+	public static void setSignalEvents(ProcessInstance instance, Map<String, SignalEventInstance> signals)
+			throws Exception {
+		instance/* .getRootProcessInstance() */.setProperty("", SIGNAL_EVENTS, (Serializable) signals);
+	}
+
 }
