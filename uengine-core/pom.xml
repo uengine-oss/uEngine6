@@ -23,11 +23,6 @@
 			<artifactId>uengine-resource-manager</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.uengine</groupId>
-			<artifactId>uengine-five-api</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<!-- <dependency>
 			<groupId>org.uengine</groupId>
 			<artifactId>uengine-uml</artifactId>
