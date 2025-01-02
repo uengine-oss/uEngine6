@@ -111,12 +111,13 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
             if (options != null) {
                 if (options.containsKey(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)) {
                     getProcessInstanceEntity()
-                            .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME));
+                            .setName((String) options.get(AbstractProcessInstance.INIT_OPTION_INSTANCE_NAME)
+                                    + instanceId);
 
                 }
             }
 
-            getProcessInstanceEntity().setName(getProcessDefinition().getName() + instanceId);
+            getProcessInstanceEntity().setName(getProcessDefinition().getName());
             getProcessInstanceEntity().setDefId(procDefinition.getId());
             getProcessInstanceEntity().setCorrKey(UUID.randomUUID().toString());
             getProcessInstanceEntity().setStatus(Activity.STATUS_READY);
@@ -478,6 +479,56 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
     public void setExt5(String value) {
         if (getProcessInstanceEntity() != null)
             getProcessInstanceEntity().setExt5(value);
+    }
+
+    public Date getStartedDate() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getStartedDate();
+        else
+            return null;
+    }
+
+    public void setStartedDate(Date value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setStartedDate(value);
+    }
+
+    public Date getFinishedDate() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getFinishedDate();
+        else
+            return null;
+    }
+
+    public void setFinishedDate(Date value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setFinishedDate(value);
+    }
+
+    public String getInitEp() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getInitEp();
+        else
+            return null;
+    }
+
+    public void setInitEp(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setInitEp(value);
+    }
+
+    @Override
+    public String getGroups() {
+        if (getProcessInstanceEntity() != null)
+            return getProcessInstanceEntity().getGroups();
+        else
+            return null;
+    }
+
+    @Override
+    public void setGroups(String value) {
+        if (getProcessInstanceEntity() != null)
+            getProcessInstanceEntity().setGroups(value);
     }
 
     public Date getDueDate2() {

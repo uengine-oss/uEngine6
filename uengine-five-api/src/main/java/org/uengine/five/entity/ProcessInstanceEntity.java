@@ -36,7 +36,7 @@ class DummyRoleMapping extends RoleMappingEntity {
 @Table(name = "BPM_PROCINST")
 @RepositoryEventHandler(ProcessInstanceEntity.class)
 @Component
-public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
+public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     @Transient
     private List<DummyWorkList> dummyWorkLists;
@@ -46,6 +46,7 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     private String prevCurrRsNm;
     private String currEp;
     private String currRsNm;
+    private String groups;
 
     public List<DummyWorkList> getDummyWorkLists() {
         return dummyWorkLists;
@@ -134,17 +135,17 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
 
     String corrKey;
 
-
     @Lob
     @JsonIgnore
     byte[] varLob;
-        public byte[] getVarLob() {
-            return varLob;
-        }
-        public void setVarLob(byte[] varLob) {
-            this.varLob = varLob;
-        }
 
+    public byte[] getVarLob() {
+        return varLob;
+    }
+
+    public void setVarLob(byte[] varLob) {
+        this.varLob = varLob;
+    }
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "processInstance")
     List<WorklistEntity> workLists;
@@ -271,19 +272,19 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public boolean isDeleted() {
         return deleted;
     }
-    
+
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
     }
-    
+
     public boolean isAdhoc() {
         return adhoc;
     }
-    
+
     public void setAdhoc(boolean adhoc) {
         this.adhoc = adhoc;
     }
@@ -291,15 +292,15 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     public boolean isSubProcess() {
         return subProcess;
     }
-    
+
     public void setSubProcess(boolean subProcess) {
         this.subProcess = subProcess;
     }
-    
+
     public boolean isEventHandler() {
         return eventHandler;
     }
-    
+
     public void setEventHandler(boolean eventHandler) {
         this.eventHandler = eventHandler;
     }
@@ -335,6 +336,7 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     public void setMainExecScope(String mainExecScope) {
         this.mainExecScope = mainExecScope;
     }
+
     public Long getMainDefVerId() {
         return mainDefVerId;
     }
@@ -342,11 +344,11 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
     public void setMainDefVerId(Long mainDefVerId) {
         this.mainDefVerId = mainDefVerId;
     }
-    
+
     public boolean isArchive() {
         return archive;
     }
-    
+
     public void setArchive(boolean archive) {
         this.archive = archive;
     }
@@ -415,7 +417,6 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
 
     }
 
-
     public String getInitComCd() {
         return initComCd;
     }
@@ -431,55 +432,60 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
         this.saveWithRelations(instance);
     }
 
-//    @HandleBeforeSave
-//    public void handleBeforeSave(ProcessInstanceEntity instance) {
-//        this.saveWithRelations(instance);
-//    }
+    // @HandleBeforeSave
+    // public void handleBeforeSave(ProcessInstanceEntity instance) {
+    // this.saveWithRelations(instance);
+    // }
 
     private void saveWithRelations(ProcessInstanceEntity instance) {
-        if(instance.getDefId()!=null) return; //only when the instance is unstructured (social talk, not a BPM process)
+        if (instance.getDefId() != null)
+            return; // only when the instance is unstructured (social talk, not a BPM process)
 
-        //it is enough to just derive the role mappings and worklist data from the instance data and user token data.
+        // it is enough to just derive the role mappings and worklist data from the
+        // instance data and user token data.
 
-        instance.setRoleMappings(new ArrayList<RoleMappingEntity>());{
+        instance.setRoleMappings(new ArrayList<RoleMappingEntity>());
+        {
             RoleMappingEntity roleMapping = new RoleMappingEntity();
             roleMapping.setRoleName("initiator");
-            roleMapping.setEndpoint("jyjang"); //TODO: replaced by user id from Spring security
+            roleMapping.setEndpoint("jyjang"); // TODO: replaced by user id from Spring security
             roleMapping.setProcessInstance(instance);
             instance.getRoleMappings().add(roleMapping);
         }
 
-        instance.setWorkLists(new ArrayList<WorklistEntity>());{
+        instance.setWorkLists(new ArrayList<WorklistEntity>());
+        {
             WorklistEntity workList = new WorklistEntity();
             workList.setProcessInstance(instance);
             workList.setRoleName("initiator");
-            workList.setEndpoint("jyjang"); //TODO: replaced by user id from Spring security
+            workList.setEndpoint("jyjang"); // TODO: replaced by user id from Spring security
             instance.getWorkLists().add(workList);
         }
 
-
         // maybe someday useful:
-//        if (instance.getDummyRoleMappings() != null && instance.getDummyRoleMappings().size() > 0) {
-//            instance.setRoleMappings(new ArrayList<RoleMappingEntity>());
-//            for (DummyRoleMapping dummyRoleMapping : instance.getDummyRoleMappings()) {
-//                Map map = new ObjectMapper().convertValue(dummyRoleMapping, Map.class);
-//                RoleMappingEntity roleMapping = new ObjectMapper().convertValue(map, RoleMappingEntity.class);
-//                roleMapping.setProcessInstance(instance);
-//                instance.getRoleMappings().add(roleMapping);
-//            }
-//        }
-//
-//        if (instance.getDummyWorkLists() != null && instance.getDummyWorkLists().size() > 0) {
-//            instance.setWorkLists(new ArrayList<WorklistEntity>());
-//            for (DummyWorkList dummyWorkList : instance.getDummyWorkLists()) {
-//                Map map = new ObjectMapper().convertValue(dummyWorkList, Map.class);
-//                WorklistEntity workList = new ObjectMapper().convertValue(map, WorklistEntity.class);
-//                workList.setProcessInstance(instance);
-//                instance.getWorkLists().add(workList);
-//            }
-//        }
-
-
+        // if (instance.getDummyRoleMappings() != null &&
+        // instance.getDummyRoleMappings().size() > 0) {
+        // instance.setRoleMappings(new ArrayList<RoleMappingEntity>());
+        // for (DummyRoleMapping dummyRoleMapping : instance.getDummyRoleMappings()) {
+        // Map map = new ObjectMapper().convertValue(dummyRoleMapping, Map.class);
+        // RoleMappingEntity roleMapping = new ObjectMapper().convertValue(map,
+        // RoleMappingEntity.class);
+        // roleMapping.setProcessInstance(instance);
+        // instance.getRoleMappings().add(roleMapping);
+        // }
+        // }
+        //
+        // if (instance.getDummyWorkLists() != null &&
+        // instance.getDummyWorkLists().size() > 0) {
+        // instance.setWorkLists(new ArrayList<WorklistEntity>());
+        // for (DummyWorkList dummyWorkList : instance.getDummyWorkLists()) {
+        // Map map = new ObjectMapper().convertValue(dummyWorkList, Map.class);
+        // WorklistEntity workList = new ObjectMapper().convertValue(map,
+        // WorklistEntity.class);
+        // workList.setProcessInstance(instance);
+        // instance.getWorkLists().add(workList);
+        // }
+        // }
 
     }
 
@@ -531,6 +537,13 @@ public class ProcessInstanceEntity {//implements ProcessInstanceDAO {
         this.currRsNm = currRsNm;
     }
 
+    public String getGroups() {
+        return groups;
+    }
+
+    public void setGroups(String groups) {
+        this.groups = groups;
+    }
 
     public String getCorrKey() {
         return corrKey;

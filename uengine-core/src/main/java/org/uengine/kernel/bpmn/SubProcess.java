@@ -216,8 +216,9 @@ public class SubProcess extends ScopeActivity {
 
         // Vector subprocessInstanceList = getSubProcesses(instance);
         // for (int i = 0; i < subprocessInstanceList.size(); i++) {
-        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
-            
+        // ProcessInstance thePI = ((ProcessInstance)
+        // subprocessInstanceList.elementAt(i));
+
         // }
     }
 
@@ -244,13 +245,14 @@ public class SubProcess extends ScopeActivity {
             }
         }
         // for (int i = 0; i < subprocessInstanceList.size(); i++) {
-        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
-        //     RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
-        //     if (deletedRoleMappings.containsKey(subRoleMapping.getEndpoint())) {
-        //         thePI.stop();
-        //         spInstIds.remove(i);
-        //         spInstLabels.remove(i);
-        //     }
+        // ProcessInstance thePI = ((ProcessInstance)
+        // subprocessInstanceList.elementAt(i));
+        // RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
+        // if (deletedRoleMappings.containsKey(subRoleMapping.getEndpoint())) {
+        // thePI.stop();
+        // spInstIds.remove(i);
+        // spInstLabels.remove(i);
+        // }
 
         // }
 
@@ -371,7 +373,8 @@ public class SubProcess extends ScopeActivity {
         for (int i = 0; i < subprocessInstanceList.size(); i++) {
             String spId = (String) subprocessInstanceList.elementAt(i);
             ProcessInstance thePI = AbstractProcessInstance.create().getInstance(spId);
-            // ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
+            // ProcessInstance thePI = ((ProcessInstance)
+            // subprocessInstanceList.elementAt(i));
             RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
 
             subprocessInstanceIds.add(thePI.getInstanceId());
@@ -380,11 +383,12 @@ public class SubProcess extends ScopeActivity {
 
         // Vector subprocessInstanceList = getSubProcesses(instance);
         // for (int i = 0; i < subprocessInstanceList.size(); i++) {
-        //     ProcessInstance thePI = ((ProcessInstance) subprocessInstanceList.elementAt(i));
-        //     RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
+        // ProcessInstance thePI = ((ProcessInstance)
+        // subprocessInstanceList.elementAt(i));
+        // RoleMapping subRoleMapping = thePI.getRoleMapping(boundRoleName);
 
-        //     subprocessInstanceIds.add(thePI.getInstanceId());
-        //     subprocessLabels.add(subRoleMapping.getResourceName());
+        // subprocessInstanceIds.add(thePI.getInstanceId());
+        // subprocessLabels.add(subRoleMapping.getResourceName());
         // }
 
         setSubprocessIds(instance, subprocessInstanceIds, SUBPROCESS_INST_ID);
@@ -393,7 +397,7 @@ public class SubProcess extends ScopeActivity {
         if (!isConnectedMultipleSubProcesses)
             for (int i = 0; i < subprocessInstances.size(); i++) {
                 ProcessInstance thePI = ((ProcessInstance) subprocessInstances.elementAt(i));
-
+                thePI.setGroups(instance.getGroups());
                 thePI.execute();
             }
 
@@ -532,7 +536,8 @@ public class SubProcess extends ScopeActivity {
 
         } else if (getForEachVariable() != null) {
 
-            instance.addDebugInfo("[SubProcessActivity] Splitting multiple instances by Variable: ", getForEachVariable());
+            instance.addDebugInfo("[SubProcessActivity] Splitting multiple instances by Variable: ",
+                    getForEachVariable());
 
             ProcessVariableValue pvv = getForEachVariable().getMultiple(instance, "");
             instance.addDebugInfo("  values are: ", pvv);
@@ -1073,7 +1078,7 @@ public class SubProcess extends ScopeActivity {
             List<Activity> childActivities = getChildActivities();
             for (int y = 0; y < childActivities.size(); y++) {
                 Activity act = childActivities.get(y);
-                
+
                 act.compensate(pi);
             }
         }
@@ -1081,13 +1086,13 @@ public class SubProcess extends ScopeActivity {
         // List<ActivityEventListener> eventListeners = getActivityEventListeners();
         // getActivityEventListeners().clear();
         // for(int x = 0; x < eventListeners.size(); x++) {
-        //     ActivityEventListener listener = eventListeners.get(x);
-        //     // listener.
+        // ActivityEventListener listener = eventListeners.get(x);
+        // // listener.
         // }
 
         instance.setExecutionScope(null);
         reset(instance);
-        
+
         super.compensate(instance);
         // super.reset
         // instance.setStatus(getTracingTag(), STATUS_READY);

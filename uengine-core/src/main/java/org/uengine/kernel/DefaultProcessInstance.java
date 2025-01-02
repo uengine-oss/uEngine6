@@ -1070,4 +1070,13 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 	public boolean sendBroadcast(String eventType, Object payload) throws Exception {
 		return false;
 	}
+
+	@Override
+	public String getGroups() {
+		return null;
+	}
+
+	@Override
+	public void setGroups(String value) {
+	}
 }

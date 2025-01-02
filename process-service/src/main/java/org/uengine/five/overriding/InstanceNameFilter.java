@@ -1,7 +1,10 @@
 package org.uengine.five.overriding;
 
-import org.uengine.five.entity.AuditEntity;
-import org.uengine.five.repository.AuditEntityRepository;
+import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.ProcessDefinition;
@@ -18,10 +21,23 @@ public class InstanceNameFilter implements ActivityFilter {
 
     @Override
     public void afterExecute(Activity activity, ProcessInstance instance) throws Exception {
-        if(activity.getProcessDefinition().getInstanceNamePattern()!=null){
-            StringBuffer instanceName = activity.getProcessDefinition().evaluateContent(instance, activity.getProcessDefinition().getInstanceNamePattern());
+        if (activity.getProcessDefinition().getInstanceNamePattern() != null
+                && activity.getProcessDefinition().getInstanceNamePattern().length() > 0) {
+            StringBuffer instanceName = activity.getProcessDefinition().evaluateContent(instance,
+                    activity.getProcessDefinition().getInstanceNamePattern());
 
-            if(instanceName!=null){
+            if (instanceName != null) {
+                instance.setName(instanceName.toString());
+            }
+        } else {
+            Date date = (Date) Activity.getSpecialKeyValues(activity, instance, "instance.startedDate", null);
+            String formattedDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
+
+            String defaultPattern = activity.getProcessDefinition().getName()
+                    + "_<%=instance.initEp%>_" + formattedDate;
+            StringBuffer instanceName = activity.getProcessDefinition().evaluateContent(instance, defaultPattern);
+
+            if (instanceName != null) {
                 instance.setName(instanceName.toString());
             }
         }
@@ -34,7 +50,8 @@ public class InstanceNameFilter implements ActivityFilter {
     }
 
     @Override
-    public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue) throws Exception {
+    public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue)
+            throws Exception {
 
     }
 

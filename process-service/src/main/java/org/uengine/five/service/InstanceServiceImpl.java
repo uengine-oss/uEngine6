@@ -94,6 +94,7 @@ import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
+import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
@@ -161,6 +162,7 @@ public class InstanceServiceImpl implements InstanceService {
         boolean simulation = command.getSimulation();
         String filePath = command.getProcessDefinitionId();
         String corrKeyValue = command.getCorrelationKeyValue();
+        String groups = command.getGroups();
 
         Object definition;
         try {
@@ -201,6 +203,11 @@ public class InstanceServiceImpl implements InstanceService {
                 if (corrKeyValue != null) {
                     ((JPAProcessInstance) instance).getProcessInstanceEntity().setCorrKey(corrKeyValue);
                 }
+
+                if (groups != null) {
+                    instance.setGroups(groups);
+                }
+
                 ((JPAProcessInstance) instance).getProcessInstanceEntity().setDefVerId(processDefinition.getVersion());
                 // instance.setDefinitionVersionId(processDefinition.getVersion());
                 instance.execute();
@@ -327,12 +334,18 @@ public class InstanceServiceImpl implements InstanceService {
         Vector messageListener = (Vector) instance.getMessageListeners("event");
         Vector<Map<String, String>> eventList = new Vector<>();
         for (Object listener : messageListener) {
-            String event = (String) listener;
-            Activity act = instance.getProcessDefinition().getActivity(event);
+            String eventListener = (String) listener;
+            Activity act = instance.getProcessDefinition().getActivity(eventListener);
+            if (!instance.getStatus(eventListener).equals("Running"))
+                continue;
             String name = act.getName();
             Map<String, String> eventMap = new HashMap<>();
-            eventMap.put("tracingTag", event);
+            eventMap.put("tracingTag", eventListener);
             eventMap.put("name", name);
+            if (act instanceof Event) {
+                Event event = (Event) act;
+                eventMap.put("type", event.getClass().getSimpleName().replace("Event", ""));
+            }
             eventList.add(eventMap);
         }
 

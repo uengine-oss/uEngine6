@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 // import org.metaworks.dwr.MetaworksRemoteService;
 import org.uengine.contexts.TextContext;
 import org.uengine.kernel.bpmn.EndEvent;
+import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.StartEvent;
 //import org.uengine.modeling.HasThumbnail;
@@ -931,6 +932,13 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 								// TODO: what's happening?
 								throw e;
 							}
+						}
+					} else if (targetActivity instanceof Event) {
+						Event event = (Event) targetActivity;
+						Map<String, String> eventMap = (Map<String, String>) payload;
+						if (event.getTracingTag().equals(eventMap.get("tracingTag"))) {
+							activityAsMessageListener.onMessage(instance, event.getTracingTag());
+							ack = true;
 						}
 					} else {
 						if (activityAsMessageListener.onMessage(instance, payload))

@@ -411,7 +411,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         if (!isConnectedMultipleSubProcesses)
             for (int i = 0; i < subprocessInstances.size(); i++) {
                 ProcessInstance thePI = ((ProcessInstance) subprocessInstances.elementAt(i));
-
+                thePI.setGroups(instance.getGroups());
                 thePI.execute();
             }
 
@@ -541,6 +541,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
         if (!isConnectedMultipleSubProcesses)
             for (int i = 0; i < subprocessInstances.size(); i++) {
                 ProcessInstance thePI = ((ProcessInstance) subprocessInstances.elementAt(i));
+                thePI.setGroups(instance.getGroups());
                 thePI.execute();
             }
 
@@ -1187,6 +1188,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
                 transferValues(instance, theSubProcessInstance, null, theValue, theOrder);
             }
 
+            theSubProcessInstance.setGroups(instance.getGroups());
             theSubProcessInstance.execute();
 
             return;
