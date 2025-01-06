@@ -38,7 +38,10 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
                         "and (:finishedDate is null or :finishedDate >= pi.finishedDate )" +
                         "and (:subProcess is null or :subProcess = pi.subProcess )" +
                         "and (:initEp is null or pi.initEp like CONCAT('%',:initEp,'%'))" +
-                        "and (regexp_like(pi.initEp, :rolePattern) = true)" +
+                        "and (:currEp is null or pi.currEp like CONCAT('%',:currEp,'%'))" +
+                        "and (:prevCurrEp is null or pi.prevCurrEp like CONCAT('%',:prevCurrEp,'%'))" +
+                        "and ((:rolePattern is null or (regexp_like(pi.currEp, :rolePattern) = true))" +
+                        "or (:namePattern is null or (regexp_like(pi.currEp, :namePattern) = true)))" +
                         "group by pi.instId, pi.startedDate " + // Added GROUP BY clause
                         "order by pi.startedDate desc")
         Page<ProcessInstanceEntity> findFilterICanSee(
@@ -50,8 +53,11 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("startedDate") Date startedDate,
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Param("finishedDate") Date finishedDate,
                         @Param("initEp") String initEp,
+                        @Param("prevCurrEp") String prevCurrEp,
+                        @Param("currEp") String currEp,
                         @Param("subProcess") Boolean subProcess,
                         @Param("rolePattern") String rolePattern,
+                        @Param("namePattern") String namePattern,
                         Pageable pageable
         // Temporal 이 먹지않거나 시작일 검색이 제대로 기능하지않는다면 (String to Date Type error)시 아래 주석해제후
         // 이내용으로 하시면됩니다.

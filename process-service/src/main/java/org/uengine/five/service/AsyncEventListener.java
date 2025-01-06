@@ -1,23 +1,17 @@
 package org.uengine.five.service;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.uengine.contexts.EventSynchronization;
-import org.uengine.five.dto.InstanceResource;
+import org.uengine.five.Streams;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.entity.ProcessInstanceEntity;
@@ -27,15 +21,11 @@ import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DefaultProcessInstance;
-import org.uengine.kernel.FieldDescriptor;
-import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.bpmn.Event;
-import org.uengine.five.dto.RoleMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.uengine.five.Streams;
 
 // import javax.transaction.Transactional;
 
