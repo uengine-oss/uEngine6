@@ -365,7 +365,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (definitionPath.indexOf(".") != -1) {
             definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "bpmn");
         }
-        IResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
+        IResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
         resourceManager.delete(resource);
 
     }

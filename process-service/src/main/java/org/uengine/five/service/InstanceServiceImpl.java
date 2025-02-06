@@ -1443,27 +1443,34 @@ public class InstanceServiceImpl implements InstanceService {
         }
     }
 
-    @ProcessTransactional(readOnly = true)
-    @RequestMapping(value = "/dry-run/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Object dryRun(HttpServletRequest request) throws Exception {
-        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        String definitionPath = path.substring("/dry-run".length() + 1);
+    // @ProcessTransactional(readOnly = true)
+    // @RequestMapping(value = "/dry-run/**", method = RequestMethod.POST, produces
+    // = "application/json;charset=UTF-8")
+    // public Object dryRun(HttpServletRequest request, ProcessExecutionCommand
+    // command) throws Exception {
+    // String path = (String)
+    // request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+    // String definitionPath = path.substring("/dry-run".length() + 1);
 
-        return dryRun(definitionPath);
-    }
+    // return dryRun(definitionPath, request, command);
+    // }
 
     //
 
     @ProcessTransactional(readOnly = true)
-    @RequestMapping(value = "/dry-run/{defId:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public Object dryRun(@PathVariable("defId") String defId) throws Exception {
-        ProcessExecutionCommand command = new ProcessExecutionCommand();
-        command.setProcessDefinitionId(defId);
+    @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    public Object dryRun(@RequestBody ProcessExecutionCommand command) throws Exception {
+        ProcessExecutionCommand processCommand = new ProcessExecutionCommand();
+        processCommand.setProcessDefinitionId(command.getProcessDefinitionId());
+
+        if (command.getRoleMappings() != null) {
+            processCommand.setRoleMappings(command.getRoleMappings());
+        }
 
         Object definition;
         try {
-            String version = findHighestNumberedFileName(defId);
-            definition = definitionService.getDefinition(defId, version);
+            String version = findHighestNumberedFileName(processCommand.getProcessDefinitionId());
+            definition = definitionService.getDefinition(processCommand.getProcessDefinitionId(), version);
         } catch (ClassNotFoundException cnfe) {
             // ClassNotFoundException을 처리하고, 500 Internal Server Error 반환
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Class not found", cnfe);
@@ -1477,18 +1484,18 @@ public class InstanceServiceImpl implements InstanceService {
 
             try {
                 org.uengine.kernel.ProcessInstance instance = AbstractProcessInstance.create(processDefinition,
-                        command.getInstanceName(), null);
+                        processCommand.getInstanceName(), null);
 
-                org.uengine.five.dto.RoleMapping[] roleMappings = command.getRoleMappings();
+                org.uengine.five.dto.RoleMapping[] roleMappings = processCommand.getRoleMappings();
                 if (roleMappings != null) {
                     for (org.uengine.five.dto.RoleMapping roleMapping : roleMappings) {
                         instance.putRoleMapping(roleMapping.getName(), roleMapping.toKernelRoleMapping());
                     }
                 }
 
-                if (command.getCorrelationKeyValue() != null) {
+                if (processCommand.getCorrelationKeyValue() != null) {
                     ((JPAProcessInstance) instance).getProcessInstanceEntity()
-                            .setCorrKey(command.getCorrelationKeyValue());
+                            .setCorrKey(processCommand.getCorrelationKeyValue());
                 }
 
                 instance.execute();

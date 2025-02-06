@@ -3,6 +3,8 @@ package org.uengine.five.service;
 import java.io.Serializable;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.MediaType;
@@ -113,8 +115,8 @@ public interface InstanceService {
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;
 
-        @RequestMapping(value = "/dry-run/{defId}", method = RequestMethod.GET)
-        public Object dryRun(@PathVariable("defId") String defId) throws Exception;
+        @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public Object dryRun(@RequestBody ProcessExecutionCommand command) throws Exception;
 
         @RequestMapping(value = "/start-and-complete", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
         public InstanceResource startAndComplete(@RequestBody StartAndCompleteCommand command,
