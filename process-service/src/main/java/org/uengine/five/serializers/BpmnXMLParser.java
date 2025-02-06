@@ -1050,7 +1050,12 @@ public class BpmnXMLParser {
 
             return processDefinition;
         } catch (Exception e) {
-            throw new RuntimeException("Error parsing BPMN XML", e);
+            e.printStackTrace();
+            StringBuilder errorMessage = new StringBuilder();
+            for (StackTraceElement element : e.getStackTrace()) {
+                errorMessage.append(element.toString()).append("\n");
+            }
+            throw new RuntimeException("Error parsing BPMN XML \n" + errorMessage.toString(), e);
         }
     }
 }

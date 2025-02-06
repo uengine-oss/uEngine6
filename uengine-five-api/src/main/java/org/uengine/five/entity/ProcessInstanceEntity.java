@@ -17,6 +17,8 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 //import org.metaworks.annotation.AddMetadataLink;
 import org.springframework.data.rest.core.annotation.HandleBeforeCreate;
 import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
@@ -69,6 +71,7 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @JsonProperty("instId")
     Long instId;
 
     String defVerId;
