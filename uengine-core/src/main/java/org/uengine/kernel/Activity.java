@@ -803,6 +803,15 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		} else if (command.equals(ACTIVITY_COMPENSATED)) {
 			if (getParentActivity() != null)
 				getParentActivity().onEvent(CHILD_COMPENSATED, instance, payload);
+			for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+				if (childActivity instanceof CompensateEvent) {
+					CompensateEvent compensateEvent = (CompensateEvent) childActivity;
+					if (compensateEvent.getAttachedToRef() != null
+							&& compensateEvent.getAttachedToRef().equals(getTracingTag())) {
+						compensateEvent.onMessage(instance, compensateEvent.getTracingTag());
+					}
+				}
+			}
 		} else if (command.equals(ACTIVITY_SKIPPED)) {
 			instance.setStatus(getTracingTag(), STATUS_SKIPPED);
 
@@ -848,10 +857,14 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		for (ActivityInstanceContext activityInstanceContext : runningActivities) {
 			Activity activity = activityInstanceContext.getActivity();
 			int runningDepth = getProcessDefinition().getDepthFromStartEvent(activity);
-			if (runningDepth < depth) {
-				throw new UEngineException(
-						"Activity [" + getTracingTag() + "] is next for [" + activity.getTracingTag() + "]");
+
+			if (runningDepth != -1) {
+				if (runningDepth < depth) {
+					throw new UEngineException(
+							"Activity [" + getTracingTag() + "] is next for [" + activity.getTracingTag() + "]");
+				}
 			}
+
 			if (activity.getTracingTag().equals(getTracingTag())) {
 				throw new UEngineException("Activity [" + getTracingTag() + "] is already running.");
 			}
