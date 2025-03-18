@@ -1051,6 +1051,7 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 
 		for (Activity activity : getChildActivities()) {
 			setFeedbackWithActivity(activity);
+			setFeedbackForBoundaryEvents(activity);
 		}
 
 		// healTracingTagCollision();

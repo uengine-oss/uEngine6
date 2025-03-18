@@ -277,6 +277,10 @@ public class ScopeActivity extends FlowActivity implements MessageListener {
 						if (conditionalEvent.onMessage(instance, conditionalEvent.getTracingTag())) {
 							return;
 						}
+					} else if (eventHandlers[i].getTriggeringMethod() == EventHandler.TRIGGERING_BY_COMPENSATION) {
+						if (conditionalEvent.onMessage(instance, conditionalEvent.getTracingTag())) {
+							return;
+						}
 					} else if (eventHandlers[i].getHandlerActivity() == childActivityHasBeenDone) {
 						return; // ignore CHILD_DONE event from the event handlers
 					}

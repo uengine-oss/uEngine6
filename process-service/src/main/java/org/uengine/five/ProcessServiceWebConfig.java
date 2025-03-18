@@ -4,11 +4,12 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.uengine.five.overriding.CLOBProcessInstance;
+import org.uengine.five.overriding.EmailServiceLocalImpl;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.InstanceServiceLocalImpl;
 import org.uengine.five.overriding.JPAProcessInstance;
@@ -21,11 +22,16 @@ import org.uengine.modeling.resource.CachedResourceManager;
 import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
+import org.uengine.processmanager.EMailServiceLocal;
 import org.uengine.processmanager.InstanceServiceLocal;
 import org.uengine.webservices.worklist.WorkList;
 
 @EnableWebMvc
 @Configuration
+@ComponentScan(basePackages = {
+        "org.uengine.five",
+        "org.uengine.kernel"
+})
 public class ProcessServiceWebConfig {
 
     // @Override
@@ -141,6 +147,11 @@ public class ProcessServiceWebConfig {
     @Bean
     public InstanceServiceLocal instanceServiceLocal() {
         return new InstanceServiceLocalImpl();
+    }
+
+    @Bean
+    public EMailServiceLocal emailServiceLocal() {
+        return new EmailServiceLocalImpl();
     }
 
     @Bean

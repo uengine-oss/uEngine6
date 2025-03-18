@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.uengine.contexts.DynamicVariables;
+import org.uengine.processmanager.EMailServiceLocal;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.SimulatorTransactionContext;
 import org.uengine.util.ActivityForLoop;
@@ -346,15 +347,11 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		if (sourceValue instanceof IndexedProcessVariableMap) {
 			ProcessVariableValue pvv = getMultiple(scopeByTracingTag, key);
 			if (getExecutionScopeContextTree() != null && getExecutionScopeContext() != null) {
-				if (getExecutionScopeContextTree().getExecutionScope() != null) {
-					int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
-					if (executionOrder > -1) {
-						pvv.setCursor(executionOrder);
-					}
-					sourceValue = pvv.getValue();
-				} else {
-					sourceValue = pvv.getValues();
+				int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
+				if (executionOrder > -1) {
+					pvv.setCursor(executionOrder);
 				}
+				sourceValue = pvv.getValue();
 			} else {
 				sourceValue = pvv;
 			}
@@ -1069,6 +1066,11 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 	@Override
 	public boolean sendBroadcast(String eventType, Object payload) throws Exception {
 		return false;
+	}
+
+	@Override
+	public EMailServiceLocal getEmailService() {
+		return null;
 	}
 
 	@Override
