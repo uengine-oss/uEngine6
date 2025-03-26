@@ -280,6 +280,51 @@ public class FlowActivity extends ComplexActivity {
         }
     }
 
+    public void setFeedbackForBoundaryEvents(Activity activity) {
+        Set<String> visited = new HashSet<>();
+        setFeedbackRecursive(activity, visited, new HashSet<>());
+    }
+
+    private boolean setFeedbackRecursive(Activity activity, Set<String> visited, Set<SequenceFlow> feedbackFlows) {
+        if (activity == null || visited.contains(activity.getTracingTag())) {
+            return false;
+        }
+
+        visited.add(activity.getTracingTag());
+
+        boolean foundBoundaryEvent = false;
+
+        for (SequenceFlow incomingFlow : activity.getIncomingSequenceFlows()) {
+            Activity sourceActivity = incomingFlow.getSourceActivity();
+
+            if (isBoundaryEvent(sourceActivity)) {
+                foundBoundaryEvent = true;
+            } else if (setFeedbackRecursive(sourceActivity, visited, feedbackFlows)) {
+                foundBoundaryEvent = true;
+            }
+
+            if (foundBoundaryEvent) {
+                feedbackFlows.add(incomingFlow);
+            }
+        }
+
+        for (SequenceFlow flow : feedbackFlows) {
+            flow.setFeedback(true);
+        }
+
+        return foundBoundaryEvent;
+    }
+
+    private boolean isBoundaryEvent(Activity activity) {
+        if (activity instanceof Event) {
+            Event event = (Event) activity;
+            if (event.getAttachedToRef() != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void afterDeserialization() {
         super.afterDeserialization();

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.uengine.contexts.DynamicVariables;
+import org.uengine.processmanager.EMailServiceLocal;
 import org.uengine.processmanager.ProcessTransactionContext;
 import org.uengine.processmanager.SimulatorTransactionContext;
 import org.uengine.util.ActivityForLoop;
@@ -1080,6 +1081,11 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 	@Override
 	public boolean sendBroadcast(String eventType, Object payload) throws Exception {
 		return false;
+	}
+
+	@Override
+	public EMailServiceLocal getEmailService() {
+		return null;
 	}
 
 	@Override

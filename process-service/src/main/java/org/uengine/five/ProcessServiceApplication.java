@@ -1,20 +1,23 @@
 package org.uengine.five;
 
-import org.hibernate.event.spi.AbstractEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.uengine.five.overriding.ActivityQueue;
 import org.uengine.five.overriding.EventMappingDeployFilter;
 import org.uengine.five.overriding.InstanceNameFilter;
 import org.uengine.five.overriding.PayloadFilter;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.overriding.SpringComponentFactory;
+import org.uengine.five.service.DefinitionServiceUtil;
+import org.uengine.five.service.LocalFileDefinitionServiceUtil;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 
@@ -23,14 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.event.EventListener;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-// import org.uengine.five.config.kafka.KafkaProcessor;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 
 @SpringBootApplication
 @EnableBinding(Streams.class)
@@ -50,7 +45,6 @@ public class ProcessServiceApplication {
     public static void main(String[] args) {
         applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
         GlobalContext.setComponentFactory(new SpringComponentFactory());
-
     }
 
     // @EventListener(ApplicationReadyEvent.class)
@@ -101,6 +95,13 @@ public class ProcessServiceApplication {
     @Bean
     public ActivityQueue activityQueue() {
         return new ActivityQueue();
+    }
+
+    @Bean
+    @Primary
+    public DefinitionServiceUtil definitionServiceUtil() {
+        // return new SupabaseDefinitionServiceUtil();
+        return new LocalFileDefinitionServiceUtil();
     }
 
     public static ObjectMapper createTypedJsonObjectMapper() {

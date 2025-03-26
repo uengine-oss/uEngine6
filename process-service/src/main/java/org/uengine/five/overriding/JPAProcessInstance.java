@@ -35,6 +35,7 @@ import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Serializer;
+import org.uengine.processmanager.EMailServiceLocal;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.webservices.worklist.WorkList;
 
@@ -63,6 +64,9 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Autowired
     ProcessInstanceRepository processInstanceRepository;
+
+    @Autowired
+    EMailServiceLocal emailService;
 
     ProcessInstanceEntity processInstanceEntity;
 
@@ -602,5 +606,10 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                         .setHeader("type", eventType)
                         .build());
         return sent;
+    }
+
+    @Override
+    public EMailServiceLocal getEmailService() {
+        return emailService;
     }
 }
