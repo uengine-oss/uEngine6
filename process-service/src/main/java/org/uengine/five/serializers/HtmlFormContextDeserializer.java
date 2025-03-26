@@ -63,7 +63,9 @@ public class HtmlFormContextDeserializer extends JsonDeserializer<HtmlFormContex
     }
 
     private Serializable parseNode(JsonNode node, ObjectMapper mapper) {
-        if (node.has("_type")) {
+        if(node.isTextual()){
+            return node.asText();
+        } else if (node.has("_type")) {
             String type = node.get("_type").asText();
             try {
                 Class<?> clazz = Class.forName(type);
