@@ -28,13 +28,10 @@ services:
     networks:
       - app-network
 
-
   process-service:
-    image: m6023m/process-service:1.0.0
+    image: process-service:v0.0.1
     depends_on:
       - kafka
-    ports:
-      - 9094:9094
     volumes:
       - ../archive:/app/archive
       - ../definitions:/app/definitions
@@ -45,11 +42,9 @@ services:
     - app-network
 
   definition-service:
-    image: m6023m/definition-service:1.0.0
+    image: definition-service:v0.0.1
     depends_on:
       - kafka
-    ports:
-      - 9093:9093
     volumes:
       - ../archive:/app/archive
       - ../definitions:/app/definitions
@@ -58,6 +53,57 @@ services:
       - ../test:/app/test
     networks:
     - app-network
+  frontend:
+    image: frontend:0.0.7
+    environment:
+      - VITE_KEYCLOAK_URL=http://keycloak:8080
+      - VITE_KEYCLOAK_REALM=uengine
+      - VITE_KEYCLOAK_CLIENT_ID=uengine
+    networks:
+      - app-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.1
+    ports:
+      - 8080:8080
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_LOGLEVEL: debug
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KC_SPI_THEME_DEFAULT: keycloak
+      KC_SPI_THEME_WELCOME_THEME: keycloak
+      KEYCLOAK_EXTRA_ARGS: "--spi-theme-static-max-age=-1 --spi-theme-cache-themes=false --spi-theme-cache-templates=false"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    command: ["start-dev", "--import-realm"]
+    networks:
+      - app-network
+  
+  gateway:
+    image: keycloak-gateway:0.0.5
+    ports:
+      - 8088:8080
+    depends_on:
+      - process-service
+      - definition-service
+      - frontend
+      - keycloak
+    environment:
+      - KEYCLOAK_URI=http://keycloak:8080
+      - KEYCLOAK_REALM=uengine
+      - KEYCLOAK_CLIENT_ID=uengine
+      - KEYCLOAK_CLIENT_SECRET=66LpF19OpkpgKKpWHdgiCEKisx5AXqLA
+      - GATEWAY_URI=http://localhost:8088
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: on-failure
+    healthcheck:
+      interval: 5s
+      retries: 3
+    networks:
+      - app-network
 
 volumes:
   archive:
@@ -69,3 +115,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
+

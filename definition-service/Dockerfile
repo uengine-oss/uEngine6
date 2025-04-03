@@ -7,8 +7,8 @@
 FROM openjdk:11.0.11-jre-slim
 COPY /target/*-SNAPSHOT.jar definition.jar
 COPY src/main/resources/application.yml /app/application.yml
-EXPOSE 9093
-ENV JAVA_OPTS="-Xmx400M -Djava.security.egd=file:/dev/./urandom -Dserver.port=9093"
+EXPOSE 8080
+ENV JAVA_OPTS="-Xmx400M -Djava.security.egd=file:/dev/./urandom -Dserver.port=8080"
 ENV SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS="kafka:29092,localhost:9092"
 ENV SERVICE_HOST="localhost"
 ENV UENGINE_DEFINITION_BASEPATH="/app"

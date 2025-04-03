@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay   # TokenRelay 필터 추가
+      routes:
+        - id: definition-service
+          uri: http://definition-service:8080
+          predicates:
+            - Path=/definition/**, /version/**, /versions/**
+        - id: process-service
+          uri: http://process-service:8080
+          predicates:
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/** 
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_URI:http://keycloak:8080}/realms/${KEYCLOAK_REALM:uengine}
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID:uengine}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:66LpF19OpkpgKKpWHdgiCEKisx5AXqLA}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${GATEWAY_URI:http://localhost:8088}/login/oauth2/code/uengine
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_URI:http://keycloak:8080}/realms/${KEYCLOAK_REALM:uengine}/protocol/openid-connect/certs

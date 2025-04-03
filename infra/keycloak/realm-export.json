@@ -1,0 +1,178 @@
+{
+    "id": "uengine",
+    "realm": "uengine",
+    "displayName": "UEngine BPM",
+    "enabled": true,
+    "sslRequired": "external",
+    "registrationAllowed": false,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "resetPasswordAllowed": true,
+    "editUsernameAllowed": false,
+    "bruteForceProtected": true,
+    "defaultRoles": ["user"],
+    "roles": {
+      "realm": [
+        {
+          "name": "user",
+          "description": "일반 사용자 역할"
+        },
+        {
+          "name": "admin",
+          "description": "관리자 역할"
+        },
+        {
+          "name": "process-manager",
+          "description": "프로세스 관리자 역할"
+        }
+      ]
+    },
+    "users": [
+      {
+        "username": "admin",
+        "email": "admin@uengine.org",
+        "enabled": true,
+        "emailVerified": true,
+        "firstName": "관리자",
+        "lastName": "UEngine",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "admin",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["admin", "user"],
+        "attributes": {
+          "department": ["IT부서"]
+        }
+      },
+      {
+        "username": "hong",
+        "email": "hong@uengine.org",
+        "enabled": true,
+        "emailVerified": true,
+        "firstName": "홍",
+        "lastName": "길동",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "1234",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["user"],
+        "attributes": {
+          "department": ["영업부서"]
+        }
+      },
+      {
+        "username": "유",
+        "email": "you@uengine.org",
+        "enabled": true,
+        "emailVerified": true,
+        "firstName": "유",
+        "lastName": "길동",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "1234",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["user"],
+        "attributes": {
+          "department": ["영업부서"]
+        }
+      }
+    ],
+    "clients": [
+      {
+        "clientId": "uengine",
+        "name": "UEngine BPM 애플리케이션",
+        "description": "UEngine BPM 시스템을 위한 클라이언트",
+        "rootUrl": "http://localhost:8088",
+        "adminUrl": "http://localhost:8088",
+        "baseUrl": "http://localhost:8088",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "66LpF19OpkpgKKpWHdgiCEKisx5AXqLA",
+        "redirectUris": [
+          "http://localhost:8088/*"
+        ],
+        "webOrigins": ["+"],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": true,
+        "publicClient": true,
+        "frontchannelLogout": false,
+        "protocol": "openid-connect",
+        "attributes": {
+          "access.token.lifespan": "1800",
+          "saml.force.post.binding": "false",
+          "saml.multivalued.roles": "false",
+          "oauth2.device.authorization.grant.enabled": "false",
+          "backchannel.logout.revoke.offline.tokens": "false",
+          "saml.server.signature": "false",
+          "saml.server.signature.keyinfo.ext": "false",
+          "use.refresh.tokens": "true",
+          "exclude.session.state.from.auth.response": "false",
+          "backchannel.logout.session.required": "true",
+          "client_credentials.use_refresh_token": "false",
+          "saml_force_name_id_format": "false",
+          "saml.client.signature": "false",
+          "tls.client.certificate.bound.access.tokens": "false",
+          "require.pushed.authorization.requests": "false",
+          "saml.assertion.signature": "false",
+          "id.token.as.detached.signature": "false",
+          "saml.encrypt": "false",
+          "saml.authnstatement": "false",
+          "display.on.consent.screen": "false",
+          "saml.onetimeuse.condition": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "defaultClientScopes": [
+          "web-origins",
+          "roles",
+          "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ],
+        "access": {
+          "view": true,
+          "configure": true,
+          "manage": true
+        }
+      }
+    ],
+    "groups": [
+      {
+        "name": "IT부서",
+        "path": "/IT부서",
+        "attributes": {},
+        "realmRoles": ["admin"],
+        "clientRoles": {},
+        "subGroups": []
+      },
+      {
+        "name": "영업부서",
+        "path": "/영업부서",
+        "attributes": {},
+        "realmRoles": ["user"],
+        "clientRoles": {},
+        "subGroups": []
+      }
+    ]
+  }
