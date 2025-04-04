@@ -33,11 +33,11 @@ services:
     depends_on:
       - kafka
     volumes:
-      - ../archive:/app/archive
-      - ../definitions:/app/definitions
-      - ../instances:/app/instances
-      - ../payloads:/app/payloads
-      - ../test:/app/test
+      - ./archive:/app/archive
+      - ./definitions:/app/definitions
+      - ./instances:/app/instances
+      - ./payloads:/app/payloads
+      - ./test:/app/test
     networks:
     - app-network
 
@@ -46,11 +46,11 @@ services:
     depends_on:
       - kafka
     volumes:
-      - ../archive:/app/archive
-      - ../definitions:/app/definitions
-      - ../instances:/app/instances
-      - ../payloads:/app/payloads
-      - ../test:/app/test
+      - ./archive:/app/archive
+      - ./definitions:/app/definitions
+      - ./instances:/app/instances
+      - ./payloads:/app/payloads
+      - ./test:/app/test
     networks:
     - app-network
   frontend:
