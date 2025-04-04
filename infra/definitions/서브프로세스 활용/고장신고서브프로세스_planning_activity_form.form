@@ -1,0 +1,1 @@
+<section>  <row-layout name="review_section" alias="검토 섹션" is_multidata_mode="false" v-model="formValues" v-slot="slotProps"><div class="row"><div class="col-sm-12">      <boolean-field name="review_complete" alias="검토 완료 여부" disabled="false" readonly="false" v-model="slotProps.modelValue['review_complete']"></boolean-field>    </div></div></row-layout></section>
