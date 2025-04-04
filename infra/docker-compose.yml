@@ -29,7 +29,7 @@ services:
       - app-network
 
   process-service:
-    image: sooheon45/process-service:1.0.0
+    image: sooheon45/process-service:1.0.1
     depends_on:
       - kafka
     volumes:
