@@ -48,6 +48,25 @@
         }
       },
       {
+        "username": "tester",
+        "email": "tester@uengine.org",
+        "enabled": true,
+        "emailVerified": true,
+        "firstName": "tester",
+        "lastName": "UEngine",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "tester",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["user"],
+        "attributes": {
+          "department": ["영업부서"]
+        }
+      },
+      {
         "username": "hong",
         "email": "hong@uengine.org",
         "enabled": true,
