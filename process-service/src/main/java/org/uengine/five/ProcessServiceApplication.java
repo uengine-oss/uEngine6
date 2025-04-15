@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.uengine.five.overriding.ActivityQueue;
+import org.uengine.five.overriding.DueDateSettingWhenCompensationFilter;
 import org.uengine.five.overriding.EventMappingDeployFilter;
 import org.uengine.five.overriding.InstanceNameFilter;
 import org.uengine.five.overriding.PayloadFilter;
@@ -18,6 +19,7 @@ import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.overriding.SpringComponentFactory;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.LocalFileDefinitionServiceUtil;
+import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 
@@ -82,6 +84,11 @@ public class ProcessServiceApplication {
     public InstanceNameFilter instanceNameFilter() {
         return new InstanceNameFilter();
     }
+
+    // @Bean
+    // public ActivityFilter DueDateSettingWhenCompensationFilter() {
+    //     return new DueDateSettingWhenCompensationFilter();
+    // }
 
     @Value("${filter.payload.enabled:true}")
     private boolean isPayloadFilterEnabled;
