@@ -341,8 +341,21 @@ public class BpmnXMLParser {
                 }
                 Element bounds = (Element) shape.getElementsByTagName("dc:Bounds").item(0);
                 if (bounds != null) {
-                    int y = Integer.parseInt(bounds.getAttribute("y"));
-                    yValues.put(bpmnElement, y);
+                    // int y = Integer.parseInt(bounds.getAttribute("y"));
+                    // yValues.put(bpmnElement, y);
+
+                    String yStr = bounds.getAttribute("y");
+                    try {
+                        if (yStr.contains(".")) {
+                            yValues.put(bpmnElement, (int) Double.parseDouble(yStr));
+                        } else {
+                            yValues.put(bpmnElement, Integer.parseInt(yStr));
+                        }
+                    } catch (NumberFormatException e) {
+                        // 예외 처리
+                        e.printStackTrace();
+                    }
+
                 }
             }
         }
@@ -364,8 +377,20 @@ public class BpmnXMLParser {
                 }
                 Element bounds = (Element) shape.getElementsByTagName("dc:Bounds").item(0);
                 if (bounds != null) {
-                    int x = Integer.parseInt(bounds.getAttribute("x"));
-                    xValues.put(bpmnElement, x);
+                    // int x = Integer.parseInt(bounds.getAttribute("x"));
+                    // xValues.put(bpmnElement, x);
+
+                    String xStr = bounds.getAttribute("x");
+                    try {
+                        if (xStr.contains(".")) {
+                            xValues.put(bpmnElement, (int) Double.parseDouble(xStr));
+                        } else {
+                            xValues.put(bpmnElement, Integer.parseInt(xStr));
+                        }
+                    } catch (NumberFormatException e) {
+                        // 예외 처리
+                        e.printStackTrace();
+                    }
                 }
             }
         }
