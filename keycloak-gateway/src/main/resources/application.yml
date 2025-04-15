@@ -1,4 +1,56 @@
 server:
+  port: 8088
+---
+spring:
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay   # TokenRelay 필터 추가
+      routes:
+        - id: definition-service
+          uri: http://localhost:9093
+          predicates:
+            - Path=/definition/**, /version/**, /versions/**
+        - id: process-service
+          uri: http://localhost:9094
+          predicates:
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
+        - id: frontend
+          uri: http://localhost:5173
+          predicates:
+            - Path=/** 
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/uengine
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: uengine
+            client-secret: 66LpF19OpkpgKKpWHdgiCEKisx5AXqLA
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8088/login/oauth2/code/uengine
+            scope: openid
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/realms/uengine/protocol/openid-connect/certs
+---
+server:
   port: 8080
 
 spring:

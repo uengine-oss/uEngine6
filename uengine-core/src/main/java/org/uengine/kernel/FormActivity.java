@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 
 // import org.metaworks.Type;
@@ -68,16 +69,48 @@ public class FormActivity extends HumanActivity {
 	// this.mappingContext = mappingContext;
 	// }
 
-	ProcessVariable variableForHtmlFormContext;
+	// ProcessVariable variableForHtmlFormContext;
 
-	public ProcessVariable getVariableForHtmlFormContext() {
-		return variableForHtmlFormContext;
+	// public ProcessVariable getVariableForHtmlFormContext() {
+	// 	return variableForHtmlFormContext;
+	// }
+
+	// public void setVariableForHtmlFormContext(
+	// 		ProcessVariable variableForHtmlFormContext) {
+	// 	this.variableForHtmlFormContext = variableForHtmlFormContext;
+	// }
+
+	public ParameterContext getOutParameterContext() {
+		for (ParameterContext parameter : getParameters()) {
+			if ("OUT".equalsIgnoreCase(parameter.getDirection())) {
+				return parameter;
+			}
+		}
+		return null;
 	}
 
-	public void setVariableForHtmlFormContext(
-			ProcessVariable variableForHtmlFormContext) {
-		this.variableForHtmlFormContext = variableForHtmlFormContext;
+	public ParameterContext[] getInParameterContexts() {
+		List<ParameterContext> inParameters = new ArrayList<>();
+		ParameterContext[] parameters = getParameters();
+		if (parameters != null) {
+			for (ParameterContext parameter : parameters) {
+				if (parameter.getDirection() != null && parameter.getDirection().toUpperCase().contains("IN")) {
+					inParameters.add(parameter);
+				}
+			}
+		}
+		return inParameters.toArray(new ParameterContext[inParameters.size()]);
 	}
+
+	// boolean isMultiple;
+
+	// public boolean isMultiple() {
+	// 	return isMultiple;
+	// }
+
+	// public void setMultiple(boolean isMultiple) {
+	// 	this.isMultiple = isMultiple;
+	// }
 
 	boolean mappingWhenSave;
 
@@ -233,7 +266,6 @@ public class FormActivity extends HumanActivity {
 	// // // }
 	// // }
 	// // }
-	// // }
 	// }
 
 	// protected void mappingOut(ProcessInstance instance, ParameterContext[]
@@ -361,7 +393,46 @@ public class FormActivity extends HumanActivity {
 				}
 
 				if (value instanceof HtmlFormContext) {
-					formData = (HtmlFormContext) value;
+					boolean subResolvePartNeeded = key.indexOf('.') > 0;
+					if (subResolvePartNeeded) {
+						String subFirstPart = key.substring(0,key.indexOf('.'));
+						ArrayList<Serializable> list = null;
+						if(instance.getExecutionScopeContextTree() != null && instance.getExecutionScopeContextTree().getChilds() != null){
+							ExecutionScopeContext originalScope = instance.getExecutionScopeContext();
+							for (ExecutionScopeContext scope : instance.getExecutionScopeContextTree().getChilds()) {
+								instance.setExecutionScopeContext(scope);
+								String srcVariableName = param.getVariable().getName();
+								value = instance.getBeanProperty(srcVariableName);
+								
+								if (value instanceof ProcessVariableValue) {
+									ProcessVariableValue pvv = (ProcessVariableValue) value;
+									pvv.beforeFirst();
+									
+									// 기존 데이터 가져오기
+									Object existingData = formData.getBeanProperty(subFirstPart);
+									if (existingData instanceof ProcessVariableValue) {
+										list = (ArrayList<Serializable>) ((ProcessVariableValue)existingData).getValues();
+									} else {
+										list = new ArrayList<Serializable>();
+									}
+								
+									do {
+										Serializable pvvValue = pvv.getValue();
+										if (pvvValue instanceof HtmlFormContext) {
+											HtmlFormContext formContext = (HtmlFormContext) pvvValue;
+											list.add((Serializable) formContext.getValueMap());
+										} else {
+											list.add(pvvValue);
+										}
+									} while (pvv.next());
+									formData.setBeanProperty(subFirstPart, list);
+								}
+							}
+							instance.setExecutionScopeContext(originalScope);
+						}
+					} else {
+						formData = (HtmlFormContext) value;	
+					}
 				} else {
 					if (value instanceof ProcessVariableValue) {
 						ProcessVariableValue pvv = (ProcessVariableValue) value;
@@ -376,6 +447,10 @@ public class FormActivity extends HumanActivity {
 								list.add(pvvValue);
 							}
 						} while (pvv.next());
+						formData.setBeanProperty(key, list);
+					} else if(value instanceof HashMap) {
+						ArrayList<Serializable> list = new ArrayList<Serializable>();
+						list.add((Serializable) value);
 						formData.setBeanProperty(key, list);
 					} else {
 						formData.setBeanProperty(key, value);
@@ -428,9 +503,10 @@ public class FormActivity extends HumanActivity {
 
 		boolean isMapping = true;
 		Map mappedResult = new HashMap();
+
 		HtmlFormContext formContext = instance == null
-				? (HtmlFormContext) (getVariableForHtmlFormContext().getDefaultValue())
-				: (HtmlFormContext) (getVariableForHtmlFormContext().get(instance, ""));
+				? (HtmlFormContext) (getOutParameterContext().getVariable().getDefaultValue())
+				: (HtmlFormContext) (getOutParameterContext().getVariable().get(instance, ""));
 
 		if (formContext == null) {
 			return mappedResult;
@@ -465,7 +541,7 @@ public class FormActivity extends HumanActivity {
 					targetFormField = targetFormField.replace('.', '@');
 					String[] targetFormFieldName = targetFormField.split("@");
 
-					if (getVariableForHtmlFormContext().getName().equals(targetFormFieldName[0])) {
+					if (getOutParameterContext().getVariable().getName().equals(targetFormFieldName[0])) {
 						objName = targetFormFieldName[1];
 
 						if (param.getTransformerMapping() != null) {
@@ -611,7 +687,7 @@ public class FormActivity extends HumanActivity {
 			HtmlFormContext newFormCtx = new HtmlFormContext();
 			newFormCtx.setValueMap(valueMap);
 
-			getVariableForHtmlFormContext().set(instance, "", newFormCtx);
+			getOutParameterContext().getVariable().set(instance, "", newFormCtx);
 			return;
 		}
 
@@ -641,7 +717,7 @@ public class FormActivity extends HumanActivity {
 		GlobalContext.serialize(valueMap, fos, HashMap.class);
 		fos.close();
 
-		HtmlFormContext formDefInfo = (HtmlFormContext) getVariableForHtmlFormContext().getDefaultValue();
+		HtmlFormContext formDefInfo = (HtmlFormContext) getOutParameterContext().getVariable().getDefaultValue();
 		String[] formDefID = formDefInfo.getFormDefId().split("@");
 
 		HtmlFormContext newFormCtx = new HtmlFormContext();
@@ -658,7 +734,7 @@ public class FormActivity extends HumanActivity {
 			instance.addDebugInfo("");
 		}
 
-		getVariableForHtmlFormContext().set(instance, "", newFormCtx);
+		getOutParameterContext().getVariable().set(instance, "", newFormCtx);
 	}
 
 	// private void saveFormHTML(ProcessInstance instance, Map valueMap, String
@@ -811,8 +887,7 @@ public class FormActivity extends HumanActivity {
 			for (ProcessVariable v : instance.getProcessDefinition().getProcessVariables()) {
 				if (v.getDefaultValue() instanceof HtmlFormContext) {
 					HtmlFormContext defaultValue = (HtmlFormContext) v.getDefaultValue();
-					if (defaultValue.getFormDefId() != null
-							&& v.name.equals(getVariableForHtmlFormContext().getName())) {
+					if (defaultValue.getFormDefId() != null && v.name.equals(getOutParameterContext().getVariable().getName())) {
 						formContext = defaultValue;
 					}
 				}
@@ -847,7 +922,7 @@ public class FormActivity extends HumanActivity {
 		// TODO Auto-generated method stub
 		ValidationContext superVC = super.validate(options);
 
-		if (getVariableForHtmlFormContext() == null)
+		if (getOutParameterContext() == null)
 			superVC.add(getActivityLabel() + "Variable For HTMLContext should not be null");
 
 		return superVC;

@@ -11,11 +11,11 @@ spring:
         - id: definition-service
           uri: http://localhost:9093
           predicates:
-            - Path=/definition/**, /version/**
-        - id: instance-service
+            - Path=/definition/**, /version/**, /versions/**
+        - id: process-service
           uri: http://localhost:9094
           predicates:
-            - Path=/worklist/**, /instance/**, /work-item/**
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
         - id: frontend
           uri: http://localhost:5173
           predicates:
@@ -39,22 +39,18 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: muv-service-master-data
-          uri: http://muv-service-master-data:8080
+        - id: definition-service
+          uri: http://definition-service:8080
           predicates:
-            - Path=/cars/**, /customers/**, /products/**, /branchStores/**, /affiliateDiscountRates/**, /parkingLots/**
-        - id: muv-service-car-preparation
-          uri: http://muv-service-car-preparation:8080
+            - Path=/definition/**, /version/**, /versions/**
+        - id: process-service
+          uri: http://process-service:8080
           predicates:
-            - Path=/carPreparations/**, /parkingStatuses/**
-        - id: muv-service-notice
-          uri: http://muv-service-notice:8080
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
+        - id: frontend
+          uri: http://frontend:8080
           predicates:
-            - Path=/notices/** 
-        - id: muv-service-short-period-reservation
-          uri: http://muv-service-short-period-reservation:8080
-          predicates:
-            - Path=/reservations/** 
+            - Path=/** 
       globalcors:
         corsConfigurations:
           '[/**]':

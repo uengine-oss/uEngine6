@@ -123,6 +123,24 @@ public class SubProcess extends ScopeActivity {
         this.forEachVariable = forEachVariable;
     }
 
+    String subProcessNamePattern;
+
+    public String getSubProcessNamePattern() {
+        return subProcessNamePattern;
+    }
+
+    public void setSubProcessNamePattern(String subProcessNamePattern) {
+        this.subProcessNamePattern = subProcessNamePattern;
+    }
+
+    public void setSubProcessLabel(ProcessInstance instance, String label) throws Exception {
+        instance.setProperty(getTracingTag(), "subProcessLabel", label);
+    }
+
+    public String getSubProcessLabel(ProcessInstance instance) throws Exception {
+        return (String) instance.getProperty(getTracingTag(), "subProcessLabel");
+    }
+
     // boolean viewAlsoInMainProcess;
     // public boolean isViewAlsoInMainProcess() {
     // return viewAlsoInMainProcess;
@@ -875,11 +893,24 @@ public class SubProcess extends ScopeActivity {
     }
 
     protected ProcessInstance initiateSubProcess(ProcessInstance instance, RoleMapping currentRoleMapping,
-            Serializable currentVariableValue,
-            boolean isConnectedMultipleSubProcesses, int mappingIndex) throws Exception {
-        String subProcessInstanceName = evaluateContent(instance, getInstanceId()).toString();
+        Serializable currentVariableValue,
+        boolean isConnectedMultipleSubProcesses, int mappingIndex) throws Exception {
+        // String subProcessInstanceName = evaluateContent(instance, getInstanceId()).toString();
+        String subProcessInstanceName;
+        
+        if (getSubProcessNamePattern() != null && !getSubProcessNamePattern().trim().isEmpty()) {
+            // subProcessNamePattern이 설정되어 있으면 이를 평가하여 사용
+            subProcessInstanceName = evaluateContent(instance, getSubProcessNamePattern()).toString();
+        } else {
+            // 기존 로직 유지
+            subProcessInstanceName = evaluateContent(instance, getInstanceId()).toString();
+        }
+        // 생성된 서브프로세스의 이름 설정
+        setSubProcessLabel(instance, subProcessInstanceName);
+
         transferValues(instance, instance, currentRoleMapping, currentVariableValue, mappingIndex);
         super.executeActivity(instance);
+ 
         return instance;
     }
 

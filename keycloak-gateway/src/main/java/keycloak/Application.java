@@ -5,9 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 
-@SpringBootApplication(
-    exclude = ReactiveUserDetailsServiceAutoConfiguration.class
-)
+@SpringBootApplication(exclude = ReactiveUserDetailsServiceAutoConfiguration.class)
 public class Application {
 
     public static ApplicationContext applicationContext;

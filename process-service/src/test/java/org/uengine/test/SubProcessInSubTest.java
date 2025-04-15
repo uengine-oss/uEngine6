@@ -126,7 +126,7 @@ public class SubProcessInSubTest {
             workItemResource.setParameterValues(new HashMap<String, Object>());
             instanceService.setVariableWithTaskId(instanceId, worklistEntity.getTaskId().toString(),
                     "TroubleReportForm", json);
-            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource);
+            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource, "false");
         }
         json = "{\"formDefId\":\"SelectWorker\",\"filePath\":\"SelectWorker.form\",\"valueMap\":{\"Worker1\":\"manager\",\"Worker2\":\"\",\"Worker3\":\"\",\"_type\":\"java.util.HashMap\"},\"_type\":\"org.uengine.contexts.HtmlFormContext\"}";
         workList = worklistRepository.findToDo();
@@ -137,7 +137,7 @@ public class SubProcessInSubTest {
             workItemResource.setParameterValues(new HashMap<String, Object>());
             instanceService.setVariableWithTaskId(instanceId, worklistEntity.getTaskId().toString(),
                     "SelectWorkerForm", json);
-            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource);
+            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource, "false");
         }
 
         json = "{"
@@ -215,7 +215,7 @@ public class SubProcessInSubTest {
             workItemResource.setParameterValues(new HashMap<String, Object>());
             instanceService.setVariableWithTaskId(instanceId, worklistEntity.getTaskId().toString(),
                     "TroubleReportForm", i == 0 ? json : json2);
-            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource);
+            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource, "false");
         }
 
         json = "{"
@@ -330,7 +330,7 @@ public class SubProcessInSubTest {
 
             instanceService.setVariableWithTaskId(instanceId, worklistEntity.getTaskId().toString(),
                     "TroubleReportForm", variable);
-            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource);
+            instanceService.putWorkItemComplete(worklistEntity.getTaskId().toString(), workItemResource, "false");
         }
 
         workList = worklistRepository.findToDo();

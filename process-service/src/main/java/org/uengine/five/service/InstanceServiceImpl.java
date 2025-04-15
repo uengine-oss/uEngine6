@@ -60,6 +60,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
+import org.uengine.contexts.HtmlFormContext;
 import org.uengine.five.ProcessServiceApplication;
 import org.uengine.five.Streams;
 import org.uengine.five.dto.InstanceResource;
@@ -503,15 +504,49 @@ public class InstanceServiceImpl implements InstanceService {
         WorkItemResource workItem = getWorkItem(taskId);
         ExecutionScopeContext oldExecutionScopeContext = instance.getExecutionScopeContext();
 
-        if (workItem.getWorklist().getExecScope() != null) {
+        // original code
+        // if (workItem.getWorklist().getExecScope() != null) {
+        //     if (instance.getExecutionScopeContext() == null) {
+        //         ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
+        //         executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
+        //         instance.setExecutionScopeContext(executionScopeContext);
+        //     }
+        // }
+        // result = instance.get("", varName);
+        // instance.setExecutionScopeContext(oldExecutionScopeContext);
+
+        // 서브 프로세스 관련.
+        if (workItem.getWorklist().getExecScope() == null) {
+            if(instance.getExecutionScopeContextTree() != null && instance.getExecutionScopeContextTree().getChilds() != null) {
+                ArrayList<Serializable> resultList = new ArrayList<>();
+                instance.getExecutionScopeContextTree().getChilds().forEach(child -> {
+                    ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
+                    executionScopeContext.setExecutionScope(child.getExecutionScope());
+                    instance.setExecutionScopeContext(executionScopeContext);
+                    try {
+                        // if(child.getRootActivityInTheScope().getStatus(instance) == 'Completed'){}
+                        HtmlFormContext htmlFormContext = (HtmlFormContext) instance.get("", varName);
+                        htmlFormContext.setSubProcessLabel(((SubProcess)child.getRootActivityInTheScope()).getSubProcessLabel(instance));
+                        resultList.add(htmlFormContext);
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                });  
+                result = resultList;
+            } else {
+                result = instance.get("", varName);
+            }
+        } else {
             if (instance.getExecutionScopeContext() == null) {
                 ExecutionScopeContext executionScopeContext = new ExecutionScopeContext();
                 executionScopeContext.setExecutionScope(workItem.getWorklist().getExecScope());
                 instance.setExecutionScopeContext(executionScopeContext);
             }
+            result = instance.get("", varName);
         }
-        result = instance.get("", varName);
         instance.setExecutionScopeContext(oldExecutionScopeContext);
+
         return result;
     }
 
