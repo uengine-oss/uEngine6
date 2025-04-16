@@ -8,6 +8,12 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: execution
+          uri: http://localhost:8000
+          predicates:
+            - Path=/complete/**, /vision-complete/**, /execution/**
+          filters:
+            - RewritePath=/execution/?(?<segment>.*), /$\{segment}
         - id: definition-service
           uri: http://localhost:9093
           predicates:
