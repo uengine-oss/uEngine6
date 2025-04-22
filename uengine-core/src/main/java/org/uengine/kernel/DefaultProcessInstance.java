@@ -1,6 +1,7 @@
 package org.uengine.kernel;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -347,15 +348,11 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		if (sourceValue instanceof IndexedProcessVariableMap) {
 			ProcessVariableValue pvv = getMultiple(scopeByTracingTag, key);
 			if (getExecutionScopeContextTree() != null && getExecutionScopeContext() != null) {
-				if (getExecutionScopeContextTree().getExecutionScope() != null) {
-					int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
-					if (executionOrder > -1) {
-						pvv.setCursor(executionOrder);
-					}
-					sourceValue = pvv.getValue();
-				} else {
-					sourceValue = pvv.getValues();
+				int executionOrder = getExecutionScopeOrder(getExecutionScopeContextTree());
+				if (executionOrder > -1) {
+					pvv.setCursor(executionOrder);
 				}
+				sourceValue = pvv.getValue();
 			} else {
 				sourceValue = pvv;
 			}
@@ -375,6 +372,20 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 			return ((VariablePointer) sourceValue).getValue(this);
 		}
 
+		// // 서브 프로세스 관련.
+		// if(sourceValue == null && getExecutionScopeContextTree() != null){
+		// 	ExecutionScopeContext originalScope = getExecutionScopeContext();
+		// 	if(originalScope == null && getExecutionScopeContextTree().getChilds() != null){
+		// 		for (ExecutionScopeContext scope : getExecutionScopeContextTree().getChilds()) {
+		// 			setExecutionScopeContext(scope);
+		// 			sourceValue = getSourceValue(scopeByTracingTag, firstPart);
+		// 			if (sourceValue != null) {
+		// 				break;
+		// 			}
+		// 		}
+		// 		setExecutionScopeContext(originalScope);
+		// 	}
+		// }
 		return sourceValue;
 	}
 
