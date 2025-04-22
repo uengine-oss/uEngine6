@@ -29,7 +29,7 @@ services:
       - app-network
 
   process-service:
-    image: sooheon45/process-service:1.0.0
+    image: process-service:v0.0.1
     depends_on:
       - kafka
     volumes:
@@ -42,7 +42,7 @@ services:
     - app-network
 
   definition-service:
-    image: sooheon45/definition-service:1.0.0
+    image: definition-service:v0.0.1
     depends_on:
       - kafka
     volumes:
@@ -54,7 +54,7 @@ services:
     networks:
     - app-network
   frontend:
-    image: sooheon45/frontend:1.0.0
+    image: frontend:0.0.7
     environment:
       - VITE_KEYCLOAK_URL=http://keycloak:8080
       - VITE_KEYCLOAK_REALM=uengine
@@ -83,7 +83,7 @@ services:
       - app-network
   
   gateway:
-    image: sooheon45/keycloak-gateway:1.0.0
+    image: keycloak-gateway:0.0.5
     ports:
       - 8088:8080
     depends_on:
@@ -92,8 +92,6 @@ services:
       - frontend
       - keycloak
     environment:
-      - KEYCLOAK_INTERNAL_URI=http://keycloak:8080
-      - KEYCLOAK_EXTERNAL_URI=http://localhost:8080
       - KEYCLOAK_URI=http://keycloak:8080
       - KEYCLOAK_REALM=uengine
       - KEYCLOAK_CLIENT_ID=uengine
