@@ -298,17 +298,6 @@ public class HtmlFormContext
 		return filePath;
 	}
 
-	String subProcessLabel;
-
-	public void setSubProcessLabel(String subProcessLabel) {
-		this.subProcessLabel = subProcessLabel;
-	}
-	
-	public String getSubProcessLabel() {
-		return subProcessLabel;
-	}
-	
-	
 	// public String getHtmlPath() {
 	// return getFilePath() != null ? getFilePath().replace(".xml", ".html") : null;
 	// }
