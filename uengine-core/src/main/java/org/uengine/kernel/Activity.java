@@ -48,6 +48,7 @@ import org.uengine.modeling.IElement;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 /**
  * This class plays the most important role in the uEngine
@@ -154,6 +155,17 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public void setViewId(String viewId) {
 		this.viewId = viewId;
+	}
+
+	@JsonSetter("role")
+	public void setRole(String role) {
+		if (role == null) {
+			if (getExtendedAttributes() != null) {
+				getExtendedAttributes().remove("role");
+			}
+		} else {
+			setExtendedAttribute("role", role);
+		}
 	}
 
 	boolean breakpoint;

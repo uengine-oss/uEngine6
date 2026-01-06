@@ -1423,7 +1423,8 @@ public class InstanceServiceImpl implements InstanceService {
                 invokeDeployFilters(definition, defPath);
             }
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Post CreatedRawDefinition : " + e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Post CreatedRawDefinition : " + e.getMessage(), e);
         }
 
     }

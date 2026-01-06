@@ -1,8 +1,10 @@
 package org.uengine.five.service;
 
+import java.nio.charset.StandardCharsets;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -24,6 +26,8 @@ import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.bpmn.Event;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AsyncEventListener {
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
+    private static final Pattern NUMERIC_CSV = Pattern.compile("^\\s*\\d+(\\s*,\\s*\\d+)*\\s*$");
 
     @Autowired
     ProcessInstanceRepository processInstanceRepository;
@@ -61,9 +66,30 @@ public class AsyncEventListener {
     public void wheneverEvent(@Payload String eventBody, @Header("type") String typeHeader) {
         System.out.println("\n\n##### listener wheneverEvent : " + eventBody + "\n\n");
         try {
+            // 기본은 raw 헤더 문자열로 매칭. 실패하면 숫자 CSV(예: "76,79,65,...")를 디코딩해서 재시도.
+            String eventType = typeHeader;
 
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            objectMapper.setVisibilityChecker(objectMapper.getSerializationConfig()
+                    .getDefaultVisibilityChecker()
+                    .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+                    .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+                    .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+                    .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
             HashMap<String, Object> eventContent = objectMapper.readValue(eventBody, HashMap.class);
-            EventMappingEntity eventMappingEntity = eventMappingRepository.findEventMappingByEventType(typeHeader);
+
+            EventMappingEntity eventMappingEntity = eventMappingRepository.findEventMappingByEventType(eventType);
+            if (eventMappingEntity == null) {
+                String decoded = decodeNumericCsvIfNeeded(typeHeader);
+                if (!decoded.equals(typeHeader)) {
+                    eventType = decoded;
+                    eventMappingEntity = eventMappingRepository.findEventMappingByEventType(eventType);
+                }
+            }
 
             if (eventMappingEntity == null)
                 throw new Exception("EventMappingEntity is null");
@@ -93,7 +119,7 @@ public class AsyncEventListener {
 
                     for (Activity activity : instance.getCurrentRunningActivities()) {
                         if (activity.getEventSynchronization() != null
-                                && activity.getEventSynchronization().getEventType().equals(typeHeader)) {
+                                && activity.getEventSynchronization().getEventType().equals(eventType)) {
                             // set eventData.
                             // ((DefaultProcessInstance)instance).setProperty(activity.getTracingTag(),
                             // "eventJson", (Serializable) eventContent);
@@ -128,7 +154,7 @@ public class AsyncEventListener {
                             if (activity instanceof Event) {
                                 Event event = (Event) activity;
                                 if (event.getEventKey() != null &&
-                                        event.getEventKey().equals(typeHeader) &&
+                                        event.getEventKey().equals(eventType) &&
                                         !Event.THROW_EVENT.equals(event.getEventType())) {
                                     event.onMessage(instance, event.getTracingTag());
                                 }
@@ -147,5 +173,38 @@ public class AsyncEventListener {
             throw new RuntimeException("Error wheneverEvent :" + e.getMessage(), e);
         }
 
+    }
+
+    private static String decodeNumericCsvIfNeeded(String raw) {
+        String result = "";
+        try {
+            if (raw == null)
+                return "";
+
+            String trimmed = raw.trim();
+            // 혹시 "[76, 79, ...]" 형태로 올 경우 대괄호 제거
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+
+            if (!NUMERIC_CSV.matcher(trimmed).matches()) {
+                return raw;
+            }
+
+            String[] parts = trimmed.split("\\s*,\\s*");
+            byte[] bytes = new byte[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                int v = Integer.parseInt(parts[i]);
+                bytes[i] = (byte) v;
+            }
+
+            result = new String(bytes, StandardCharsets.UTF_8).trim();
+            return result;
+        } catch (Exception ignored) {
+            return "";
+        } finally {
+            if (result == null)
+                result = "";
+        }
     }
 }

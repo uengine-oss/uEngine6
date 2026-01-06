@@ -1,36 +1,51 @@
+
 server:
   port: 8088
 
 ---
+
+
+keycloak-client:
+  server-url: http://localhost:9090
+  realm: uengine
 
 spring:
   profiles: default
   cloud:
     gateway:
       routes:
-        - id: definition-service
+        - id: execution
+          uri: http://localhost:8000
+          predicates:
+            - Path=/complete/**, /vision-complete/**, /execution/**
+          filters:
+            - RewritePath=/execution/?(?<segment>.*), /$\{segment}
+        - id: definition-servicce
           uri: http://localhost:9093
           predicates:
-            - Path=/definition/**, /version/**
-        - id: instance-service
+            - Path=/definition/**, /version/**, /versions/**
+        - id: instance-servicce
           uri: http://localhost:9094
           predicates:
-            - Path=/worklist/**, /instance/**, /work-item/**
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
+        - id: inventory-service
+          uri: http://localhost:8080
+          predicates: 
+            - Path=/inventories/**, /url-test/**
         - id: frontend
           uri: http://localhost:5173
           predicates:
-            - Path=/** 
+            - Path=/**
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
+            allowedOriginPatterns:
               - "*"
             allowedMethods:
               - "*"
             allowedHeaders:
               - "*"
             allowCredentials: true
-
 
 ---
 
@@ -39,22 +54,10 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: muv-service-master-data
-          uri: http://muv-service-master-data:8080
+        - id: execution
+          uri: http://localhost:8000
           predicates:
-            - Path=/cars/**, /customers/**, /products/**, /branchStores/**, /affiliateDiscountRates/**, /parkingLots/**
-        - id: muv-service-car-preparation
-          uri: http://muv-service-car-preparation:8080
-          predicates:
-            - Path=/carPreparations/**, /parkingStatuses/**
-        - id: muv-service-notice
-          uri: http://muv-service-notice:8080
-          predicates:
-            - Path=/notices/** 
-        - id: muv-service-short-period-reservation
-          uri: http://muv-service-short-period-reservation:8080
-          predicates:
-            - Path=/reservations/** 
+            - Path=/complete/**, /vision-complete/**,  
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -65,6 +68,23 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}
+            user-name-attribute: preferred_username
+        registration:
+          keycloak:
+            client-id: supabase
+            client-secret: oZ2Hj8a48f2jsfgMibXqg17YwqYGHPEc
+            redirect-uri: http://127.0.0.1:8088/login/oauth2/code/supabase
+            authorization-grant-type: authorization_code
+            scope: openid, execution
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs
 
 server:
   port: 8080
