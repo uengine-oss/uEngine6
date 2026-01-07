@@ -12,7 +12,7 @@ spring:
 ---
 uengine:
   definition:
-    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6
+    basePath: ${UENGINE_BASEPATH:/Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6}
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
@@ -43,6 +43,9 @@ spring:
         bpm-out:
           destination: bpm-topic
           contentType: application/json
+        bpm-brodcast:
+          destination: bpm-brodcast
+          contentType: application/json
 
 logging:
   level:
@@ -69,6 +72,13 @@ mail:
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
 
+keycloak:
+  url: http://localhost:9090
+  realm: master
+  clientId: admin-cli
+  username: ${KEYCLOAK_USERNAME}
+  password: ${KEYCLOAK_PASSWORD}
+
 
 
 ---
@@ -89,6 +99,13 @@ spring:
                 value:
                   serde: org.apache.kafka.common.serialization.Serdes$StringSerde
       bindings:
-        bpm-topic:
-          destination: bpm.topic
+        bpm-in:
+          group: bpm
+          destination: bpm-topic
+          contentType: application/json
+        bpm-out:
+          destination: bpm-topic
+          contentType: application/json
+        bpm-brodcast:
+          destination: bpm-brodcast
           contentType: application/json

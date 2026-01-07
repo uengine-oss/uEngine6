@@ -3,7 +3,6 @@ package org.uengine.five.overriding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.repository.EventMappingRepository;
-import org.uengine.five.service.InstanceService;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.FieldDescriptor;
@@ -107,6 +106,10 @@ public class EventMappingDeployFilter implements DeployFilter {
                 if (event.getEventType() == null)
                     return;
 
+                // event_type는 PK(@Id)라 null/blank면 저장 시 예외가 발생할 수 있음.
+                if (eventKey == null || eventKey.trim().isEmpty())
+                    return;
+
                 EventMappingEntity eventMappingEntity = new EventMappingEntity();
                 eventMappingEntity.setEventType(eventKey);
                 eventMappingEntity.setCorrelationKey(event.getEventType());
@@ -132,15 +135,26 @@ public class EventMappingDeployFilter implements DeployFilter {
             throws Exception {
         try {
             String corrKey = null;
+
+            // eventType / attributes가 null인 정의가 존재할 수 있으므로 방어적으로 처리한다.
+            if (activity.getEventSynchronization() == null)
+                return;
+
+            String eventType = activity.getEventSynchronization().getEventType();
+            if (eventType == null || eventType.trim().isEmpty())
+                return;
+
             FieldDescriptor[] attributes = activity.getEventSynchronization().getAttributes();
-            FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)
-                    .toArray(FieldDescriptor[]::new);
-            if (corrKeyFields.length > 0) {
-                corrKey = corrKeyFields[0].getName();
+            if (attributes != null) {
+                FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)
+                        .toArray(FieldDescriptor[]::new);
+                if (corrKeyFields.length > 0) {
+                    corrKey = corrKeyFields[0].getName();
+                }
             }
 
             EventMappingEntity eventMappingEntity = new EventMappingEntity();
-            eventMappingEntity.setEventType(activity.getEventSynchronization().getEventType());
+            eventMappingEntity.setEventType(eventType);
             eventMappingEntity.setDefinitionId(definition.getId());
             eventMappingEntity.setCorrelationKey(corrKey);
             eventMappingEntity.setTracingTag(activity.getTracingTag());

@@ -28,15 +28,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.context.expression.MapAccessor;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.MimeTypeUtils;
 import org.uengine.contexts.EventSynchronization;
 //import org.springframework.expression.spel.standard.SpelExpressionParser;
 //import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.uengine.contexts.TextContext;
-import org.uengine.kernel.bpmn.BlockFinder;
 import org.uengine.kernel.bpmn.CompensateEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SequenceFlow;
@@ -1016,6 +1011,65 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 		// recognize this is completed.
 		if (!(this instanceof ProcessDefinition))
 			instance.getActivityCompletionHistory().add(getTracingTag());
+
+		// Notify completion listeners after successful commit (safe for DB rollback
+		// scenarios).
+		// Implementations are discovered via GlobalContext (e.g.,
+		// SpringComponentFactory).
+		try {
+			if (instance != null && instance.getProcessTransactionContext() != null) {
+				final String hookKey = "__activityCompletionHookRegistered__:" + instance.getInstanceId() + ":"
+						+ getTracingTag();
+
+				if (instance.getProcessTransactionContext().getSharedContext(hookKey) == null) {
+					instance.getProcessTransactionContext().setSharedContext(hookKey, Boolean.TRUE);
+
+					final Activity completedActivity = this;
+					final ProcessInstance completedInstance = instance;
+
+					instance.getProcessTransactionContext().addTransactionListener(new TransactionListener() {
+						@Override
+						public void beforeCommit(org.uengine.processmanager.TransactionContext tx) throws Exception {
+						}
+
+						@Override
+						public void beforeRollback(org.uengine.processmanager.TransactionContext tx) throws Exception {
+						}
+
+						@Override
+						public void afterCommit(org.uengine.processmanager.TransactionContext tx) throws Exception {
+							try {
+								Map<String, IActivityCompletionListener> listeners = GlobalContext
+										.getComponents(IActivityCompletionListener.class);
+
+								if (listeners != null) {
+									for (IActivityCompletionListener listener : listeners.values()) {
+										if (listener == null)
+											continue;
+										try {
+											listener.onActivityCompleted(completedInstance, completedActivity);
+										} catch (Exception e) {
+											// best-effort only; never break engine flow
+											e.printStackTrace();
+										}
+									}
+								}
+							} catch (Exception e) {
+								// best-effort only; never break engine flow
+								e.printStackTrace();
+							}
+						}
+
+						@Override
+						public void afterRollback(org.uengine.processmanager.TransactionContext tx) throws Exception {
+						}
+					});
+				}
+			}
+		} catch (Exception e) {
+			// best-effort only
+			e.printStackTrace();
+		}
 
 		setTokenCount(instance, 0);
 		onEvent(ACTIVITY_DONE, instance, this);

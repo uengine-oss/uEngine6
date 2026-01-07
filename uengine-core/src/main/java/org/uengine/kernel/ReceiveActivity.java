@@ -14,6 +14,8 @@ import org.uengine.processdesigner.mapper.Transformer;
 import org.uengine.processdesigner.mapper.TransformerMapping;
 import org.uengine.util.UEngineUtil;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 public class ReceiveActivity extends DefaultActivity implements MessageListener, NeedArrangementToSerialize {
     private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 
@@ -45,49 +47,52 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     EventHandler[] eventHandlers;
 
-	public EventHandler[] getEventHandlers() {
-		return eventHandlers;
-	}
+    public EventHandler[] getEventHandlers() {
+        return eventHandlers;
+    }
 
-	public void setEventHandlers(EventHandler[] eventHandlers) {
+    public void setEventHandlers(EventHandler[] eventHandlers) {
 
-		this.eventHandlers = eventHandlers;
-		if (eventHandlers != null) {
-			for (int i = 0; i < eventHandlers.length; i++) {
-				Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
+        this.eventHandlers = eventHandlers;
+        if (eventHandlers != null) {
+            for (int i = 0; i < eventHandlers.length; i++) {
+                Activity eventHandlingActivity = eventHandlers[i].getHandlerActivity();
 
-				eventHandlingActivity.setParentActivity(this);
-				autoTag(eventHandlingActivity);
+                eventHandlingActivity.setParentActivity(this);
+                autoTag(eventHandlingActivity);
 
-				if (getProcessDefinition() != null)
-					getProcessDefinition().registerActivity(eventHandlingActivity);
-			}
-		}
-	}
+                if (getProcessDefinition() != null)
+                    getProcessDefinition().registerActivity(eventHandlingActivity);
+            }
+        }
+    }
 
-    protected void autoTag(Activity child){
-		//		child.setTracingTag(getTracingTag() + "_" + getChildActivities().size());
-		if(getProcessDefinition()==null) return;
+    protected void autoTag(Activity child) {
+        // child.setTracingTag(getTracingTag() + "_" + getChildActivities().size());
+        if (getProcessDefinition() == null)
+            return;
 
-		if(child.getTracingTag()==null
-				/*|| 
-				(
-						getProcessDefinition().wholeChildActivities!=null &&
-						getProcessDefinition().wholeChildActivities.containsKey(child.getTracingTag())						
-				)
-				 */		){
-			child.setTracingTag(""+getProcessDefinition().getNextActivitySequence());
-		}
+        if (child.getTracingTag() == null
+        /*
+         * ||
+         * (
+         * getProcessDefinition().wholeChildActivities!=null &&
+         * getProcessDefinition().wholeChildActivities.containsKey(child.getTracingTag()
+         * )
+         * )
+         */ ) {
+            child.setTracingTag("" + getProcessDefinition().getNextActivitySequence());
+        }
 
-		if(child instanceof ComplexActivity){
-			ComplexActivity complexActivity = (ComplexActivity)child;
+        if (child instanceof ComplexActivity) {
+            ComplexActivity complexActivity = (ComplexActivity) child;
 
-			for(int i=0; i < complexActivity.getChildActivities().size(); i++){
-				Activity childAct = (Activity)complexActivity.getChildActivities().get(i);	
-				autoTag(childAct);
-			}
-		}
-	}
+            for (int i = 0; i < complexActivity.getChildActivities().size(); i++) {
+                Activity childAct = (Activity) complexActivity.getChildActivities().get(i);
+                autoTag(childAct);
+            }
+        }
+    }
 
     ParameterContext[] parameters;
 
@@ -107,6 +112,21 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
 
     public void setFromRole(Role role) {
         fromRole = role;
+    }
+
+    @Override
+    @JsonSetter("role")
+    public void setRole(String roleName) {
+        super.setRole(roleName);
+
+        if (roleName == null || roleName.trim().isEmpty()) {
+            setFromRole((Role) null);
+            return;
+        }
+
+        Role role = new Role();
+        role.setName(roleName);
+        setFromRole(role);
     }
 
     /////////////////////////
