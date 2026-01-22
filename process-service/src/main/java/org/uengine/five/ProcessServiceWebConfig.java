@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.uengine.five.overriding.EmailServiceLocalImpl;
+import org.uengine.five.overriding.BusinessRuleTaskAutoEvaluatorFilter;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.InstanceServiceLocalImpl;
 import org.uengine.five.overriding.JPAProcessInstance;
@@ -23,6 +24,7 @@ import org.uengine.modeling.resource.LocalFileStorage;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.modeling.resource.Storage;
 import org.uengine.processmanager.EMailServiceLocal;
+import org.uengine.processmanager.DefinitionServiceLocal;
 import org.uengine.processmanager.InstanceServiceLocal;
 import org.uengine.webservices.worklist.WorkList;
 
@@ -108,7 +110,7 @@ public class ProcessServiceWebConfig {
 
     @Bean
     @Scope("prototype")
-    public ProcessInstance processInstance(ProcessDefinition procDefinition, String instanceId, Map options)
+    public ProcessInstance processInstance(ProcessDefinition procDefinition, String instanceId, Map<?, ?> options)
             throws Exception {
         return new JPAProcessInstance(procDefinition, instanceId, options);
         // return new CLOBProcessInstance(procDefinition, instanceId, options);
@@ -117,6 +119,11 @@ public class ProcessServiceWebConfig {
     @Bean
     public ActivityFilter instanceDataAppendingFilter() {
         return new InstanceDataAppendingActivityFilter();
+    }
+
+    @Bean
+    public ActivityFilter businessRuleTaskAutoEvaluatorFilter() {
+        return new BusinessRuleTaskAutoEvaluatorFilter();
     }
 
     @Bean
@@ -147,6 +154,11 @@ public class ProcessServiceWebConfig {
     @Bean
     public InstanceServiceLocal instanceServiceLocal() {
         return new InstanceServiceLocalImpl();
+    }
+
+    @Bean
+    public DefinitionServiceLocal definitionServiceLocal() {
+        return new org.uengine.five.overriding.DefinitionServiceLocalImpl();
     }
 
     @Bean

@@ -1,12 +1,9 @@
 package org.uengine.five.service;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -14,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -46,7 +42,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 // import org.uengine.five.serializers.BpmnXMLParser;
-import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.NeedArrangementToSerialize;
 import org.uengine.kernel.ProcessDefinition;
@@ -105,10 +100,22 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     public void init() {
     }
 
-    @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
+    @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/hal+json;charset=UTF-8")
     @Override
     public CollectionModel<DefinitionResource> listDefinition(String basePath) throws Exception {
         return _listDefinition(RESOURCE_ROOT, basePath);
+    }
+
+    /**
+     * Non-HAL JSON listing for lightweight clients.
+     * Used by process-service to enumerate business rule files.
+     */
+    @Override
+    @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public String listDefinitionRaw(@RequestParam(value = "basePath", required = false) String basePath)
+            throws Exception {
+        CollectionModel<DefinitionResource> model = listDefinition(basePath);
+        return new ObjectMapper().writeValueAsString(model);
     }
 
     @RequestMapping(value = "/versions/**", method = RequestMethod.GET)
@@ -152,8 +159,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             }
         }));
 
-        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
-        return halResources;
+        return CollectionModel.of(definitions);
     }
 
     private CollectionModel<DefinitionResource> _listDefinition(String resourceRoot, String basePath) throws Exception {
@@ -173,8 +179,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definition.path = definition.path.replace("definitions/", "");
         }
 
-        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
-        return halResources;
+        return CollectionModel.of(definitions);
     }
 
     @RequestMapping(value = "/version/{version}" + DEFINITION + "/", method = RequestMethod.GET)
@@ -195,8 +200,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             versionResources.add(versionResource);
         }
 
-        CollectionModel<VersionResource> halResources = new CollectionModel<VersionResource>(versionResources);
-        return halResources;
+        return CollectionModel.of(versionResources);
     }
 
     @RequestMapping(value = "/version", method = RequestMethod.POST)
@@ -260,6 +264,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = DEFINITION
             + "/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @Override
+    @SuppressWarnings("rawtypes")
     public RepresentationModel getDefinition(@PathVariable("defPath") String definitionPath) throws Exception {
 
         // case of directory:
@@ -332,7 +337,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String definitionPath = path.substring(DEFINITION.length());
 
         if (newResource == null) {
-            IResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
             if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
                 IContainer container = new ContainerResource();
                 container.setPath(RESOURCE_ROOT + "/" + definitionPath);
@@ -362,9 +366,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String definitionPath = path.substring(DEFINITION.length());
-        if (definitionPath.indexOf(".") != -1) {
+        if (path.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "bpmn");
         }
+
         IResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
         resourceManager.delete(resource);
 
@@ -372,6 +377,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     // ----------------- raw definition services -------------------- //
 
+    @SuppressWarnings("deprecation")
     public static ObjectMapper createTypedJsonObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -398,6 +404,41 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
      * @param definition
      * @throws Exception
      */
+    @Override
+    @RequestMapping(value = DEFINITION_RAW
+            + "/{defPath:.+}", method = RequestMethod.PUT, produces = "application/json;charset=UTF-8")
+    public DefinitionResource putRawDefinition(@PathVariable("defPath") String definitionPath,
+            @RequestBody DefinitionRequest definitionRequest) throws Exception {
+
+        String dp = definitionPath;
+        if (!dp.startsWith("/")) {
+            dp = "/" + dp;
+        }
+
+        // directory
+        if (dp.indexOf(".") == -1) {
+            IContainer container = new ContainerResource();
+            container.setPath(RESOURCE_ROOT + dp);
+            resourceManager.createFolder(container);
+            return new DefinitionResource(container);
+        }
+
+        String fileExt = UEngineUtil.getFileExt(dp);
+
+        // archive only for bpmn versions
+        if (definitionRequest != null && definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
+            DefaultResource versionResource = new DefaultResource(
+                    "/archive" + dp + "/" + definitionRequest.getVersion() + ".bpmn");
+            resourceManager.save(versionResource, definitionRequest.getDefinition());
+        }
+
+        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + dp);
+        resourceManager.save(resource, definitionRequest.getDefinition());
+        instanceService.postCreatedRawDefinition(dp);
+
+        return new DefinitionResource(resource);
+    }
+
     @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
     public DefinitionResource putRawDefinition(@RequestBody DefinitionRequest definitionRequest,
             HttpServletRequest request)
@@ -415,22 +456,21 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         // definitionPath = definitionPath + ".bpmn";
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
-        // 무조건 xml 파일로 결국 저장됨.
-        if (definitionRequest.getVersion() != null) {
+        // 버전 아카이브는 BPMN에 대해서만 저장
+        if (definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
             DefaultResource versionResource = new DefaultResource(
                     "/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
             resourceManager.save(versionResource, definitionRequest.getDefinition());
         }
 
         DefaultResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
-        Object definitionDeployed = null;
-
         resourceManager.save(resource, definitionRequest.getDefinition());
-        instanceService.postCreatedRawDefinition(definitionPath);
 
-        // TODO: deploy filter 로 등록된 bean 들을 호출:
-        if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
-            invokeDeployFilters((ProcessDefinition) definitionDeployed, resource.getPath());
+        // Only BPMN definitions should trigger deploy pipeline in process-service.
+        // For businessRules/*.rule (and other non-bpmn raw files), do not call
+        // /definition-changes.
+        if ("bpmn".equalsIgnoreCase(fileExt)) {
+            instanceService.postCreatedRawDefinition(definitionPath);
         }
 
         return new DefinitionResource(resource);
@@ -469,6 +509,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     }
 
+    /**
+     * Feign-friendly raw definition getter (full path via query param).
+     */
+    @RequestMapping(value = DEFINITION_RAW, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getRawDefinitionByParam(@RequestParam("defPath") String definitionPath) throws Exception {
+        return getRawDefinition(definitionPath);
+    }
+
     @RequestMapping(value = DEFINITION_RAW
             + "/**", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getRawDefinition(HttpServletRequest request/* , @RequestParam("unwrap") boolean unwrap */)
@@ -479,6 +527,15 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         return getRawDefinition(definitionPath);
 
+    }
+
+    /**
+     * Feign-friendly raw definition saver (full path via query param).
+     */
+    @RequestMapping(value = DEFINITION_RAW, method = RequestMethod.PUT, produces = "application/json;charset=UTF-8")
+    public DefinitionResource putRawDefinitionByParam(@RequestParam("defPath") String definitionPath,
+            @RequestBody DefinitionRequest definitionRequest) throws Exception {
+        return putRawDefinition(definitionPath, definitionRequest);
     }
 
     @RequestMapping(value = DEFINITION_SYSTEM + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
@@ -499,18 +556,10 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
 
-        Object definitionDeployed = null;
-
         if (fileExt.endsWith("json")) {
             resourceManager.save(resource, definition);
         } else {
             throw new Exception("unknown resource type: " + definitionPath);
-        }
-
-        // TODO: deploy filter 로 등록된 bean 들을 호출:
-        if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
-            invokeDeployFilters((ProcessDefinition) definitionDeployed,
-                    resource.getPath().substring(RESOURCE_ROOT.length() + 2));
         }
 
         return new DefinitionResource(resource);
@@ -535,40 +584,17 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
 
-        Object definitionDeployed = null;
-
         if (fileExt.endsWith("json")) {
             resourceManager.save(resource, definition);
         } else {
             throw new Exception("unknown resource type: " + definitionPath);
         }
 
-        // TODO: deploy filter 로 등록된 bean 들을 호출:
-        if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
-            invokeDeployFilters((ProcessDefinition) definitionDeployed,
-                    resource.getPath().substring(RESOURCE_ROOT.length() + 2));
-        }
-
         return new DefinitionResource(resource);
     }
 
-    private void invokeDeployFilters(ProcessDefinition definitionDeployed, String path) throws UEngineException {
-
-        Map<String, DeployFilter> filters = GlobalContext.getComponents(DeployFilter.class);
-        if (filters != null && filters.size() > 0) {
-            for (DeployFilter theFilter : filters.values()) {
-                try {
-                    theFilter.beforeDeploy(definitionDeployed, null, path, true);
-                } catch (Exception e) {
-                    throw new UEngineException("Error when to invoke DeployFilter: " + theFilter.getClass().getName(),
-                            e);
-                }
-            }
-        }
-    }
-
     @RequestMapping(value = DEFINITION_SYSTEM, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public RepresentationModel getSystem() throws Exception {
+    public RepresentationModel<?> getSystem() throws Exception {
 
         // case of directory:
         IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
@@ -595,13 +621,12 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             definitions.add(definition);
         }
 
-        CollectionModel<DefinitionResource> halResources = new CollectionModel<DefinitionResource>(definitions);
-        return halResources;
+        return CollectionModel.of(definitions);
     }
 
     @RequestMapping(value = DEFINITION
             + "/release/{releaseVerison}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public ResponseEntity releaseVersions(@PathVariable("releaseVerison") String releaseVerison) throws Exception {
+    public ResponseEntity<?> releaseVersions(@PathVariable("releaseVerison") String releaseVerison) throws Exception {
 
         // // case of directory:
         // IResource resource = new DefaultResource(RESOURCE_ROOT + "/");

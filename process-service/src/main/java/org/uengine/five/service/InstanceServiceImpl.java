@@ -5,8 +5,6 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,10 +12,8 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,14 +36,8 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,7 +51,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
-import org.uengine.five.Streams;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -76,6 +65,8 @@ import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.repository.ProcessInstanceRepository;
 import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.repository.WorklistRepository;
+import org.uengine.five.businessrule.BusinessRuleStore;
+import org.uengine.five.businessrule.BusinessRuleEvaluator;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
@@ -145,8 +136,15 @@ public class InstanceServiceImpl implements InstanceService {
     @Autowired
     private ApplicationContext context;
 
+    @Autowired
+    BusinessRuleStore businessRuleStore;
+
+    @Autowired
+    BusinessRuleEvaluator businessRuleEvaluator;
+
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
+    static ObjectMapper plainObjectMapper = new ObjectMapper();
 
     // ----------------- execution services -------------------- //
     @RequestMapping(value = "/instance", consumes = "application/json;charset=UTF-8", method = { RequestMethod.POST,
@@ -1352,6 +1350,14 @@ public class InstanceServiceImpl implements InstanceService {
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
+            // Preserve HTTP-friendly error for frontend (e.g. 422 on DMN input mismatch)
+            if (e instanceof org.springframework.web.server.ResponseStatusException) {
+                throw (org.springframework.web.server.ResponseStatusException) e;
+            }
+            if (e.getCause() instanceof org.springframework.web.server.ResponseStatusException) {
+                throw (org.springframework.web.server.ResponseStatusException) e.getCause();
+            }
+
             throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
                     humanActivity);
         }
@@ -1412,15 +1418,33 @@ public class InstanceServiceImpl implements InstanceService {
     @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
     public void postCreatedRawDefinition(@RequestBody String defPath) throws Exception {
         try {
+            if (defPath == null) {
+                return;
+            }
 
-            if (defPath.endsWith("form"))
+            String p = defPath.trim().replace("\\", "/");
+            if (p.startsWith("/")) {
+                p = p.substring(1);
+            }
+
+            // Not a BPMN definition: ignore raw changes for business rules / json / rule
+            // files
+            if (p.startsWith("businessRules/")
+                    || p.endsWith(".rule")
+                    || p.startsWith("buisnessRules/")
+                    || p.endsWith(".json")
+                    || "map.json".equals(p)) {
+                return;
+            }
+
+            if (p.endsWith("form"))
                 return;
 
-            ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(defPath);
-            definition.setId(defPath);
+            ProcessDefinition definition = (ProcessDefinition) definitionService.getDefinition(p);
+            definition.setId(p);
 
             if (definition != null && definition instanceof ProcessDefinition) {
-                invokeDeployFilters(definition, defPath);
+                invokeDeployFilters(definition, p);
             }
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1666,6 +1690,71 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
         return null;
+    }
+
+    /**
+     * Execute business rule by ruleId.
+     * 
+     * @param ruleId  Business rule ID
+     * @param request Request body containing inputs map
+     * @return Execution result with outcome, note, matchedRuleIndex, and
+     *         executionTime
+     */
+    @PostMapping(value = "/business-rules/{ruleId}/execute", produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public Map<String, Object> executeBusinessRule(@PathVariable("ruleId") String ruleId,
+            @RequestBody Map<String, Object> request) throws Exception {
+
+        // 입력값 검증
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> inputs = (Map<String, Object>) request.get("inputs");
+        if (inputs == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "inputs field is required");
+        }
+
+        // 실행 시간 측정 시작
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // 룰 조회
+            BusinessRuleStore.BusinessRuleFile ruleFile = businessRuleStore.loadOrThrow(ruleId);
+            JsonNode ruleJson = ruleFile.getRuleJson();
+
+            // dmnXml 필드 확인
+            JsonNode dmnXmlNode = ruleJson.get("dmnXml");
+            if (dmnXmlNode == null || !dmnXmlNode.isTextual() || dmnXmlNode.asText().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "DMN XML is not defined in the rule");
+            }
+
+            // DMN 실행
+            Map<String, Object> evaluationResult = businessRuleEvaluator.evaluate(ruleJson, inputs);
+
+            // 실행 시간 측정 종료
+            long executionTime = System.currentTimeMillis() - startTime;
+
+            // 결과 포맷팅
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("outcome", evaluationResult.get("outcome"));
+            response.put("note", evaluationResult.get("note"));
+            response.put("matchedRuleIndex", evaluationResult.get("matchedRuleIndex"));
+            response.put("executionTime", executionTime);
+
+            return response;
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (IllegalArgumentException e) {
+            // DMN 파싱 실패 등
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "DMN execution error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error executing business rule: " + e.getMessage(), e);
+        }
     }
 
 }

@@ -5,9 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -21,8 +26,10 @@ import org.uengine.kernel.FieldDescriptor;
 import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.MappingElement;
 import org.uengine.kernel.ProcessDefinition;
+import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
+import org.uengine.kernel.bpmn.BusinessRuleTask;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
@@ -64,6 +71,7 @@ public class BpmnXMLParserTest {
 
         try {
             ProcessDefinition processDefinition = parser.parse(xml);
+            @SuppressWarnings("unchecked")
             Map<String, Activity> tasks = processDefinition.getWholeChildActivities();
             assertEquals(2, tasks.size());
             assertTrue(tasks.containsKey("Activity_08cur5j"));
@@ -86,6 +94,109 @@ public class BpmnXMLParserTest {
         } catch (Exception e) {
             fail("Failed to parse PurchaseRequest.bpmn due to: " + e.getMessage());
         }
+    }
+
+    // 사용자가 제공한 "신용 평가/creditRating" BPMN 파싱 테스트
+    @Test
+    public void testParseCreditRatingBpmn() {
+        BpmnXMLParser parser = new BpmnXMLParser();
+        String bpmnFilePath = "src/test/resources/bpmn/creditRating-from-user.bpmn";
+
+        try {
+            String bpmnContent = new String(Files.readAllBytes(Paths.get(bpmnFilePath)), StandardCharsets.UTF_8);
+            assertNotNull("BPMN content should not be null", bpmnContent);
+
+            ProcessDefinition processDefinition = parser.parse(bpmnContent);
+            assertNotNull("ProcessDefinition should not be null", processDefinition);
+
+            // 프로세스 변수 파싱 확인
+            assertNotNull("ProcessVariable '이름' should not be null", processDefinition.getProcessVariable("이름"));
+            assertEquals("Variable '이름' type should be String", "java.lang.String",
+                    processDefinition.getProcessVariable("이름").getType().getName());
+
+            assertNotNull("ProcessVariable '신용도' should not be null", processDefinition.getProcessVariable("신용도"));
+            assertEquals("Variable '신용도' type should be Number", "java.lang.Number",
+                    processDefinition.getProcessVariable("신용도").getType().getName());
+
+            assertNotNull("ProcessVariable '자산' should not be null", processDefinition.getProcessVariable("자산"));
+            assertEquals("Variable '자산' type should be Number", "java.lang.Number",
+                    processDefinition.getProcessVariable("자산").getType().getName());
+
+            // 핵심 노드 존재 및 이름 확인
+            @SuppressWarnings("unchecked")
+            Map<String, Activity> activities = processDefinition.getWholeChildActivities();
+            assertTrue("Should contain start event", activities.containsKey("Event_1ybsllu"));
+            assertTrue("Should contain end event", activities.containsKey("Event_154l6se"));
+
+            assertTrue("Should contain user task '정보 입력'", activities.containsKey("Activity_1ryshns"));
+            assertEquals("정보 입력", activities.get("Activity_1ryshns").getName());
+
+            assertTrue("Should contain business rule task '신용 평가'", activities.containsKey("Activity_08t0fd8"));
+            assertEquals("신용 평가", activities.get("Activity_08t0fd8").getName());
+            assertTrue("Business rule task should be BusinessRuleTask",
+                    activities.get("Activity_08t0fd8") instanceof BusinessRuleTask);
+            BusinessRuleTask brt = (BusinessRuleTask) activities.get("Activity_08t0fd8");
+            assertEquals("businessRuleId should be parsed from businessRuleId field (uengine:json)",
+                    "33b0c450-5a80-461d-87ba-9de83cfd3ac0", brt.getBusinessRuleId());
+            assertTrue("BusinessRuleTask message should be namespaced", brt.getMessage().startsWith("businessRule:"));
+
+            assertTrue("Should contain gateway", activities.containsKey("Gateway_0jyvfmo"));
+            assertTrue("Should contain gateway", activities.containsKey("Gateway_167hew2"));
+
+            assertTrue("Should contain approval task", activities.containsKey("Activity_0wrvb96"));
+            assertEquals("승인", activities.get("Activity_0wrvb96").getName());
+
+            assertTrue("Should contain reject task", activities.containsKey("Activity_1889mjy"));
+            assertEquals("거절", activities.get("Activity_1889mjy").getName());
+
+            // 역할 매핑(휴먼 태스크의 role) 확인
+            HumanActivity inputTask = (HumanActivity) processDefinition.getActivity("Activity_1ryshns");
+            assertNotNull("Role should not be null for '정보 입력'", inputTask.getRole());
+            assertEquals("상담사", inputTask.getRole().getName());
+
+            HumanActivity approveTask = (HumanActivity) processDefinition.getActivity("Activity_0wrvb96");
+            assertNotNull("Role should not be null for '승인'", approveTask.getRole());
+            assertEquals("시스템", approveTask.getRole().getName());
+
+            HumanActivity rejectTask = (HumanActivity) processDefinition.getActivity("Activity_1889mjy");
+            assertNotNull("Role should not be null for '거절'", rejectTask.getRole());
+            assertEquals("시스템", rejectTask.getRole().getName());
+
+            // 시퀀스 플로우 갯수(8개) 확인
+            assertEquals("SequenceFlow count should be 8", 8, processDefinition.getSequenceFlows().size());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Failed to parse creditRating.bpmn due to: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBusinessRuleTaskMappingContext_NullSafeAndIO() throws Exception {
+        BpmnXMLParser parser = new BpmnXMLParser();
+        String bpmnFilePath = "src/test/resources/bpmn/creditRating-from-user.bpmn";
+
+        String bpmnContent = new String(Files.readAllBytes(Paths.get(bpmnFilePath)), StandardCharsets.UTF_8);
+        ProcessDefinition processDefinition = parser.parse(bpmnContent);
+        assertNotNull("ProcessDefinition should not be null", processDefinition);
+
+        Activity act = processDefinition.getActivity("Activity_08t0fd8");
+        assertNotNull("BusinessRuleTask Activity_08t0fd8 should not be null", act);
+        assertTrue("Activity_08t0fd8 should be BusinessRuleTask", act instanceof BusinessRuleTask);
+        BusinessRuleTask task = (BusinessRuleTask) act;
+
+        ProcessInstance instance = mock(ProcessInstance.class);
+        when(instance.getBeanProperty("신용도")).thenReturn(700);
+        when(instance.getBeanProperty("자산")).thenReturn(1000000);
+
+        Map<String, Object> inputs = task.getMappingInValues(instance);
+        assertNotNull("Mapping inputs should not be null", inputs);
+        assertEquals("Should build 2 DMN inputs from mappingElements", 2, inputs.size());
+        assertTrue("Inputs should include credit score value", inputs.containsValue(700));
+        assertTrue("Inputs should include asset value", inputs.containsValue(1000000));
+
+        task.applyRuleOutputs(instance, Map.of("outcome", "승인"));
+        verify(instance).setBeanProperty(eq("평가결과"), eq("승인"));
     }
 
     // 시퀀스플로우 파싱 테스트
@@ -398,6 +509,7 @@ public class BpmnXMLParserTest {
 
         try {
             ProcessDefinition processDefinition = parser.parse(xml);
+            @SuppressWarnings("unchecked")
             Map<String, Activity> flowElements = processDefinition.getWholeChildActivities();
 
             // Test for Gateway

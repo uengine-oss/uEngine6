@@ -1,9 +1,8 @@
 package org.uengine.five.service;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;

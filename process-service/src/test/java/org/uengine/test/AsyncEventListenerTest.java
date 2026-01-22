@@ -1,10 +1,11 @@
 package org.uengine.test;
 
-import java.util.ArrayList;
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
+import org.junit.Before;
 import org.junit.Test; // junit4
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 // import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,15 +16,8 @@ import org.uengine.five.Streams;
 import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.overriding.SpringComponentFactory;
 import org.uengine.five.repository.EventMappingRepository;
-import org.uengine.five.repository.WorklistRepository;
 // import org.uengine.five.service.AsyncEventListener;
-import org.uengine.five.service.InstanceService;
-import org.uengine.five.service.InstanceServiceImpl;
-import org.uengine.kernel.Activity;
-// import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.GlobalContext;
-import org.uengine.kernel.HumanActivity;
-import org.uengine.kernel.ProcessInstance;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +28,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
 // import org.uengine.five.config.kafka.KafkaProcessor;
 // import org.uengine.five.dto.InstanceResource;
-import org.uengine.five.dto.ProcessExecutionCommand;
 // import org.springframework.cloud.stream.test.binder.MessageCollector;
 
 import org.uengine.contexts.UserContext;
@@ -66,16 +59,7 @@ public class AsyncEventListenerTest {
     // @Autowired
     // private MessageCollector messageCollector;
 
-    // @InjectMocks
-    @Autowired
-    private InstanceService instanceService;
-
-    // @InjectMocks
-    @Autowired
-    private InstanceServiceImpl instanceServiceImpl;
-
-
-    @BeforeEach
+    @Before
     public void setup() {
         ProcessServiceApplication.applicationContext = applicationContext;
         GlobalContext.setComponentFactory(new SpringComponentFactory());
@@ -83,6 +67,13 @@ public class AsyncEventListenerTest {
         UserContext.getThreadLocalInstance().setUserId("initiator@uengine.org");
         UserContext.getThreadLocalInstance().setScopes(new ArrayList<String>());
         UserContext.getThreadLocalInstance().getScopes().add("manager");
+
+        // 최소 테스트 세팅: 이벤트 타입 매핑이 없으면 AsyncEventListener가 예외를 던짐
+        EventMappingEntity mapping = new EventMappingEntity();
+        mapping.setEventType("TroubleIssued");
+        mapping.setCorrelationKey("id"); // TroubleIssued JSON에 존재
+        mapping.setIsStartEvent(false);  // start 로직/인스턴스 생성은 테스트에서 스킵
+        eventMappingRepository.save(mapping);
     }
 
     @Test
