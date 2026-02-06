@@ -24,6 +24,7 @@ import org.codehaus.janino.samples.ScriptDemo;
 import org.mozilla.javascript.NativeObject;
 import org.springframework.beans.BeanUtils;
 import org.uengine.util.TreeVisitor;
+import org.uengine.webservices.worklist.WorkList;
 
 /**
  * @author Jinyoung Jang
@@ -213,6 +214,29 @@ public class ScriptActivity extends DefaultActivity {
 		}
 
 		fireComplete(instance);
+	}
+
+	/**
+	 * compensate 처리 시 completed가 아닌 compensated 상태로 설정한다.
+	 */
+	@Override
+	public void compensate(ProcessInstance instance) throws Exception {
+		try {
+			WorkList worklist = instance.getWorkList();
+			String[] taskIds = getTaskIds(instance);
+			
+			if (taskIds != null) {
+				KeyedParameter[] params = new KeyedParameter[] {};
+				for (String taskId : taskIds) {
+					worklist.compensateWorkItem(taskId, params, instance.getProcessTransactionContext());
+				}
+			}
+		} catch (Exception e) {
+			instance.addDebugInfo("failed to cancel workitem in the middle of compensation since: " + e.getMessage());
+		}
+
+		super.compensate(instance);
+		setTaskIds(instance, null);
 	}
 	
 	public static void main(String [] args) throws Exception{

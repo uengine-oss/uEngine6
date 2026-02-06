@@ -6,18 +6,20 @@ package org.uengine.webservices.worklist;
 import java.rmi.RemoteException;
 
 import org.uengine.kernel.KeyedParameter;
+import org.uengine.kernel.RoleMapping;
 import org.uengine.processmanager.TransactionContext;
 
 /**
  * @author Jinyoung Jang
  */
 public interface WorkList {
-	public String reserveWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
-	public String addWorkItem(String taskId, String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
-	public String addWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
+	public String reserveWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
+	public String addWorkItem(String taskId, RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
+	public String addWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
 
-	public void updateWorkItem(String taskId, String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
+	public void updateWorkItem(String taskId, RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException;
 	public void cancelWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException;
+	public void compensateWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException;
 	public void completeWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException;
 	
 	//status of workitem maybe..

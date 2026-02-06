@@ -99,6 +99,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	final public static String STATUS_CANCELLED = "Cancelled";
 	final public static String STATUS_ALLCOMMIT = "AllCommit";
 	final public static String STATUS_MULTIPLE = "Multiple";
+	final public static String STATUS_COMPENSATED = "Compensated";
 
 	final public static String VAR_START_TIME = "_start_time";
 	final public static String VAR_END_TIME = "_end_time";
@@ -671,6 +672,31 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	}
 
 	/**
+	 * 태스크 정상 완료 시 붙어 있는 boundary event의 상태를 Ready로 설정한다.
+	 * (정상 완료 시 이벤트는 Running이 아닌 Ready 상태로 두어 보상 대기 상태를 나타냄)
+	 */
+	private void setAttachedBoundaryEventsToReady(ProcessInstance instance) throws Exception {
+		for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+			setAttachedBoundaryEventsToReadyRecursive(childActivity, instance);
+		}
+	}
+
+	private void setAttachedBoundaryEventsToReadyRecursive(Activity activity, ProcessInstance instance) throws Exception {
+		if (activity instanceof Event) {
+			Event event = (Event) activity;
+			if (event.getAttachedToRef() != null && this.getTracingTag().equals(event.getAttachedToRef())) {
+				instance.setStatus(event.getTracingTag(), STATUS_READY);
+			}
+		}
+		if (activity instanceof ScopeActivity) {
+			ScopeActivity scopeActivity = (ScopeActivity) activity;
+			for (Activity childActivity : scopeActivity.getChildActivities()) {
+				setAttachedBoundaryEventsToReadyRecursive(childActivity, instance);
+			}
+		}
+	}
+
+	/**
 	 * This callback method would be called just after the fireCompleted() method.
 	 * The usual invocation sequence is createInstance ?--> beforeExecute -->?
 	 * executeActivity -->? afterExecute --> fireComplete() --> onEvent (if done or
@@ -802,7 +828,11 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 			setStatus(instance, STATUS_COMPLETED);
 			// review: Ensure subclasses are not overrided this method.
+			afterExecute(instance);
 			afterComplete(instance);
+
+			// 태스크 정상 완료 시 붙어 있는 boundary event는 Running이 아닌 Ready 상태로 설정
+			setAttachedBoundaryEventsToReady(instance);
 
 			if (!isFaultTolerant() && getParentActivity() != null)
 				getParentActivity().onEvent(CHILD_DONE, instance, this);
@@ -825,6 +855,10 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 				}
 			}
 		} else if (command.equals(ACTIVITY_SKIPPED)) {
+			// SKIP도 "완료"와 동일하게 토큰을 소진시켜 다음 플로우가 진행될 수 있게 한다.
+			// (FlowActivity는 CHILD_DONE을 기준으로 다음 시퀀스를 큐잉하므로, tokenCount가 남아있으면
+			// 게이트웨이/조인 판단에서 다음으로 진행되지 않는 케이스가 생길 수 있음)
+			setTokenCount(instance, 0);
 			instance.setStatus(getTracingTag(), STATUS_SKIPPED);
 
 			if (getParentActivity() != null)
@@ -922,6 +956,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 		// return new InstanceResource(instance);
 	}
+
 
 	public void resetFlow(ProcessInstance instance) throws Exception {
 		if (getIncomingSequenceFlows().size() > 0) {
@@ -1091,7 +1126,12 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	}
 
 	public void reset(ProcessInstance instance) throws Exception {
-		instance.setStatus(getTracingTag(), STATUS_READY);
+		// instance.setStatus(getTracingTag(), STATUS_READY);
+		reset(instance, STATUS_READY);
+	}
+
+	public void reset(ProcessInstance instance, String status) throws Exception {
+		instance.setStatus(getTracingTag(), status);
 	}
 
 	public void skip(ProcessInstance instance) throws Exception {
@@ -1135,7 +1175,7 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 	}
 
 	public void compensate(ProcessInstance instance) throws Exception {
-		reset(instance);
+		reset(instance, STATUS_COMPENSATED);
 
 		executeAttachedEvent(instance);
 
@@ -1398,17 +1438,20 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 
 	public static boolean isSkippable(String status) {
 		return !(status.equals(Activity.STATUS_SKIPPED) || status.equals(Activity.STATUS_READY)
-				|| status.equals(Activity.STATUS_CANCELLED) || status.equals(Activity.STATUS_COMPLETED));
+				|| status.equals(Activity.STATUS_CANCELLED) || status.equals(Activity.STATUS_COMPLETED)
+				|| status.equals(Activity.STATUS_COMPENSATED));
 	}
 
 	public static boolean isStoppable(String status) {
 		return !(status.equals(Activity.STATUS_READY) || status.equals(Activity.STATUS_CANCELLED)
-				|| status.equals(Activity.STATUS_COMPLETED) || status.equals(Activity.STATUS_TIMEOUT));
+				|| status.equals(Activity.STATUS_COMPLETED) || status.equals(Activity.STATUS_TIMEOUT)
+				|| status.equals(Activity.STATUS_COMPENSATED));
 	}
 
 	public static boolean isCompensatable(String status) {
 		return !(status.equals(Activity.STATUS_SKIPPED) || status.equals(Activity.STATUS_READY)
-				|| status.equals(Activity.STATUS_CANCELLED) || status.equals(Activity.STATUS_COMPLETED));
+				|| status.equals(Activity.STATUS_CANCELLED) || status.equals(Activity.STATUS_COMPLETED)
+				|| status.equals(Activity.STATUS_COMPENSATED));
 	}
 
 	public static boolean isResumable(String status) {
@@ -2010,6 +2053,23 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 				if (activity == Activity.this && ACTIVITY_COMPENSATED.equals(command)) {
 
 					instance.removeActivityEventInterceptor(this);
+
+					try {
+						// compensateToThis 시, 인터셉터가 ACTIVITY_COMPENSATED 이벤트를 가로채서(return true) 부모로의 전파를 막지만,
+						// 이로 인해 this 액티비티에 연결된 CompensateEvent 실행 로직(onEvent 내부)까지 도달하지 못하는 문제가 발생함.
+						// 따라서 인터셉터가 이벤트를 삼키기 전에, 여기서 직접 연결된 CompensateEvent를 찾아서 실행시켜줌.
+						for (Activity childActivity : getProcessDefinition().getChildActivities()) {
+							if (childActivity instanceof CompensateEvent) {
+								CompensateEvent compensateEvent = (CompensateEvent) childActivity;
+								if (compensateEvent.getAttachedToRef() != null
+										&& compensateEvent.getAttachedToRef().equals(getTracingTag())) {
+									compensateEvent.onMessage(instance, compensateEvent.getTracingTag());
+								}
+							}
+						}
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
 
 					return true;
 				}

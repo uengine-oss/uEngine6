@@ -7,6 +7,7 @@ import java.util.*;
 import java.rmi.RemoteException;
 
 import org.uengine.kernel.KeyedParameter;
+import org.uengine.kernel.RoleMapping;
 import org.uengine.processmanager.DefaultTransactionContext;
 import org.uengine.processmanager.TransactionContext;
 
@@ -23,6 +24,7 @@ public class DefaultWorkList implements WorkList{
 	public final static String WORKITEM_STATUS_REFERENCE= "REFERENCE";
 	public final static String WORKITEM_STATUS_COMPLETED= "COMPLETED";
 	public final static String WORKITEM_STATUS_CANCELLED= "CANCELLED";
+	public final static String WORKITEM_STATUS_COMPENSATED= "COMPENSATED";
 	public final static String WORKITEM_STATUS_SUSPENDED= "SUSPENDED";
 	//When user delegate a workitem, the workitem's status whould be changed to this status and another workitem.	
 	public final static String WORKITEM_STATUS_DELEGATED= "DELEGATED"; 
@@ -36,18 +38,21 @@ public class DefaultWorkList implements WorkList{
 
 	public String addWorkItem(
 		String taskId,
-		String userId,
+		RoleMapping roleMapping,
 		KeyedParameter[] parameters, TransactionContext tc)
 		throws RemoteException {
 
-		return addWorkItem(userId, parameters, tc);
+		return addWorkItem(roleMapping, parameters, tc);
 	}
 
-	public String addWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException{
+	public String addWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException{
 		return "";
 	}
 	
 	public void cancelWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException{
+	}
+
+	public void compensateWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException{
 	}
 	
 	public void completeWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc) throws RemoteException{
@@ -83,14 +88,14 @@ public class DefaultWorkList implements WorkList{
 	}
 
 	
-	public String reserveWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc)
+	public String reserveWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc)
 		throws RemoteException {
-		return addWorkItem(userId, parameters, tc);
+		return addWorkItem(roleMapping, parameters, tc);
 	}
 
 	public void updateWorkItem(
 		String taskId,
-		String userId,
+		RoleMapping roleMapping,
 		KeyedParameter[] parameters, TransactionContext tc)
 		throws RemoteException {
 

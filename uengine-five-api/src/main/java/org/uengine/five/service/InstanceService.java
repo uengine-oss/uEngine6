@@ -17,7 +17,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
+import org.uengine.five.dto.RoleMappingCommand;
 import org.uengine.five.dto.StartAndCompleteCommand;
+import org.uengine.five.dto.TaskReturnAvailability;
+import org.uengine.five.dto.TaskReturnCommand;
+import org.uengine.five.dto.TaskReturnResult;
+import org.uengine.five.dto.TaskSkipAvailability;
+import org.uengine.five.dto.TaskSkipCommand;
+import org.uengine.five.dto.TaskSkipResult;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
@@ -96,8 +103,11 @@ public interface InstanceService {
         // 수 있는 미디어타입을 xml 에 일일히 설정했었음.
         // produces 의 의미는. 리스폰스 헤더에 콘텐트타입을 설정해줌. 그래야 브라우저가 json 객체로 받아들인다.
         @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
-        public Object setRoleMapping(@PathVariable("instanceId") String instanceId,
-                        @PathVariable("roleName") String roleName, @RequestBody RoleMapping roleMapping)
+        public Object setRoleMapping(@PathVariable("instanceId") String instanceId, @PathVariable("roleName") String roleName, @RequestBody RoleMappingCommand roleMapping)
+                        throws Exception;
+
+        @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.PUT, produces = "application/json; charset=UTF-8")
+        public Object putRoleMapping(@PathVariable("instanceId") String instanceId, @PathVariable("roleName") String roleName, @RequestBody RoleMappingCommand roleMapping)
                         throws Exception;
 
         @RequestMapping(value = "/work-item/{taskId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
@@ -111,6 +121,49 @@ public interface InstanceService {
         public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
                         @RequestHeader("isSimulate") String isSimulate)
                         throws Exception;
+
+        /**
+         * WorkItem 위임(Delegation)
+         *
+         * delegateOnlyForWorkitem:
+         * - false(기본): 완전 이관(인스턴스 레벨 RoleMapping 변경 + 새 workitem 생성)
+         * - true: 원소유 유지(workitem만 위임, 인스턴스 레벨 RoleMapping 유지)
+         */
+        @RequestMapping(value = "/work-item/{taskId}/delegate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public WorkItemResource delegateWorkItem(
+                        @PathVariable("taskId") String taskId,
+                        @RequestBody RoleMappingCommand delegatedRoleMapping,
+                        @org.springframework.web.bind.annotation.RequestParam(value = "delegateOnlyForWorkitem", required = false, defaultValue = "false") boolean delegateOnlyForWorkitem)
+                        throws Exception;
+
+        /**
+         * 태스크 반송 가능여부 및 후보 목록 조회
+         * - 기본 응답: enabled + candidates
+         */
+        @RequestMapping(value = "/work-item/{taskId}/return/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+        public TaskReturnAvailability getTaskReturnAvailability(@PathVariable("taskId") String taskId) throws Exception;
+
+        /**
+         * 태스크 반송 실행
+         */
+        @RequestMapping(value = "/work-item/{taskId}/return", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public TaskReturnResult returnWorkItem(
+                        @PathVariable("taskId") String taskId,
+                        @RequestBody TaskReturnCommand command) throws Exception;
+
+        /**
+         * 태스크 SKIP 가능여부 조회
+         */
+        @RequestMapping(value = "/work-item/{taskId}/skip/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+        public TaskSkipAvailability getTaskSkipAvailability(@PathVariable("taskId") String taskId) throws Exception;
+
+        /**
+         * 태스크 SKIP 실행
+         */
+        @RequestMapping(value = "/work-item/{taskId}/skip", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public TaskSkipResult skipWorkItem(
+                        @PathVariable("taskId") String taskId,
+                        @RequestBody(required = false) TaskSkipCommand command) throws Exception;
 
         @RequestMapping(value = "/definition-changes", method = RequestMethod.POST)
         public void postCreatedRawDefinition(@RequestBody String definitionPath) throws Exception;

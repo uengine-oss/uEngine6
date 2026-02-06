@@ -21,6 +21,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.uengine.contexts.EventSynchronization;
 import org.uengine.kernel.*;
+import org.uengine.webservices.worklist.WorkList;
 
 import javax.net.ssl.SSLContext;
 import javax.security.cert.CertificateException;
@@ -213,12 +214,34 @@ public class ServiceTask extends DefaultActivity {
             if (isSkipIfNotFound() && "404".equals(e.getStatusCode())) {
                 // skip
             } else {
-                throw new UEngineException("A HTTP Exception: ", e);
+                throw new UEngineException("ServiceTask Exception: " + getName() + "(" + getTracingTag() + ")", e);
             }
         }
-
         super.executeActivity(instance);
     }
+
+    /**
+     * compensate 처리 시 completed가 아닌 compensated 상태로 설정한다.
+     */
+    @Override
+	public void compensate(ProcessInstance instance) throws Exception {
+		try {
+			WorkList worklist = instance.getWorkList();
+			String[] taskIds = getTaskIds(instance);
+			
+			if (taskIds != null) {
+				KeyedParameter[] params = new KeyedParameter[] {};
+				for (String taskId : taskIds) {
+					worklist.compensateWorkItem(taskId, params, instance.getProcessTransactionContext());
+				}
+			}
+		} catch (Exception e) {
+			instance.addDebugInfo("failed to cancel workitem in the middle of compensation since: " + e.getMessage());
+		}
+
+		super.compensate(instance);
+		setTaskIds(instance, null);
+	}
 
     private RestTemplate noValidatingRestTemplate() {
 
@@ -265,6 +288,7 @@ public class ServiceTask extends DefaultActivity {
             }
 
         if (localCallTarget != null) {
+            afterExecute(instance);
             fireComplete(instance);
             instance.execute(localCallTarget.getTracingTag()); // this must be after the fireComplete
 
