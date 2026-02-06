@@ -1,5 +1,10 @@
 server:
   port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: false
 spring:
   application:
     name: definition
@@ -7,7 +12,7 @@ spring:
 
 uengine:
   definition:
-    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6
+    basePath: /Users/heon/Documents/workspace/uEngine6-bpm
         
 spring:
   profiles: default

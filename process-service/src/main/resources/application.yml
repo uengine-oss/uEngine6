@@ -12,7 +12,7 @@ spring:
 ---
 uengine:
   definition:
-    basePath: /Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6
+    basePath: /Users/heon/Documents/workspace/uEngine6-bpm
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
@@ -51,6 +51,12 @@ logging:
 
 server:
   port: 9094
+  error:
+    include-message: always
+    include-binding-errors: always
+    # 기본은 message만 내려주고, 필요할 때만 `?trace=true`로 stacktrace를 노출
+    include-stacktrace: on_param
+    include-exception: false
 
 filter:
   payload:
@@ -66,8 +72,8 @@ mail:
       enable: true
     ssl:
       trust: smtp.gmail.com
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: lee #${MAIL_USERNAME}
+    password: 123 #${MAIL_PASSWORD}
 
 
 
