@@ -1049,10 +1049,12 @@ public class ProcessDefinition extends ScopeActivity implements Serializable {
 		// TODO: tuning point : does it need to load the hashmap again?
 		registerToProcessDefinition(false, false);
 
-		for (Activity activity : getChildActivities()) {
-			setFeedbackWithActivity(activity);
-			setFeedbackForBoundaryEvents(activity);
-		}
+		// for (Activity activity : getChildActivities()) {
+		// 	setFeedbackWithActivity(activity);
+		// 	setFeedbackForBoundaryEvents(activity);
+		// }
+		// NOTE: New logic to set feedback by depth from start
+		setFeedbackByDepthFromStart();
 
 		// healTracingTagCollision();
 

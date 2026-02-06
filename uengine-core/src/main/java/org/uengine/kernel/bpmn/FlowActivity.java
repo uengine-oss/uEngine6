@@ -124,6 +124,17 @@ public class FlowActivity extends ComplexActivity {
             Activity targetActivity = outgoingFlow.getTargetActivity();
             calculateDistanceRecursive(distancesFromStartEvent, targetActivity, distance + 1, visited);
         }
+        // NEW: 바운더리 이벤트 경로는 "나중에" 도달하므로 +2 부여해 되돌아가는 선(isFeedback) 판단에 반영
+        if (getChildActivities() != null) {
+            for (Object childObj : getChildActivities()) {
+                if (!(childObj instanceof Event))
+                    continue;
+                Event boundary = (Event) childObj;
+                if (boundary.getAttachedToRef() == null || !boundary.getAttachedToRef().equals(activity.getTracingTag()))
+                    continue;
+                calculateDistanceRecursive(distancesFromStartEvent, boundary, distance + 2, visited);
+            }
+        }
     }
 
     private Map<String, Integer> calculateDistancesFromEndEvent(EndEvent endEvent) {
@@ -323,6 +334,30 @@ public class FlowActivity extends ComplexActivity {
             }
         }
         return false;
+    }
+
+    /**
+     * isFeedback 의미: "이 선을 통해서 프로세스 흐름상 이전 태스크로 되돌아 갈 수 있다."
+     * startEvent 기준 depth가 target &lt; source 일 때만 true (되돌아가는 엣지).
+     * 루프 백엣지, 예외/보상 경로는 depth 비교로만 판단하므로 바운더리/엔드로 가는 선은 feedback 아님.
+     */
+    public void setFeedbackByDepthFromStart() {
+        if (getSequenceFlows() == null) {
+            return;
+        }
+        for (SequenceFlow sf : getSequenceFlows()) {
+            sf.setFeedback(false);
+            Activity src = sf.getSourceActivity();
+            Activity tgt = sf.getTargetActivity();
+            if (src == null || tgt == null) {
+                continue;
+            }
+            int depthSrc = getDepthFromStartEvent(src);
+            int depthTgt = getDepthFromStartEvent(tgt);
+            if (depthSrc >= 0 && depthTgt >= 0 && depthTgt < depthSrc) {
+                sf.setFeedback(true);
+            }
+        }
     }
 
     @Override
@@ -656,7 +691,10 @@ public class FlowActivity extends ComplexActivity {
     @Override
     protected void onEvent(String command, final ProcessInstance instance, Object payload) throws Exception {
 
-        if (command.equals(CHILD_DONE)) {
+        // if (command.equals(CHILD_DONE) { //original
+        // BPMN 그래프 실행에서는 다음 시퀀스 진행/워크아이템 생성이 CHILD_DONE 이벤트를 기준으로 수행된다.
+        // 따라서 CHILD_SKIPPED도 CHILD_DONE과 동일하게 취급하여 다음으로 진행해야 한다.
+        if (command.equals(CHILD_DONE) || command.equals(CHILD_SKIPPED)) {
 
             Boolean adhoc = (Boolean) instance.getProperty("", "__adhoc");
             if (adhoc != null && adhoc) {
@@ -701,11 +739,14 @@ public class FlowActivity extends ComplexActivity {
                             }
                         }
 
-                        if (completeAvail) {
-                            if (!currentActivity.checkStartsWithBoundaryEventActivity()) {
-                                setStatus(instance, STATUS_COMPLETED);
-                                fireComplete(instance);
-                            }
+                        // End Event 도달 시점에 인스턴스 완료 여부 판단: 실행 중인 액티비티가 없으면 완료
+                        if (completeAvail && currentActivity instanceof EndEvent) {
+                            setStatus(instance, STATUS_COMPLETED);
+                            fireComplete(instance);
+                        } else if (completeAvail && !currentActivity.checkStartsWithBoundaryEventActivity()) {
+                            // End Event가 아닌 터미널(드묾)인 경우 기존 boundary 체크 적용
+                            setStatus(instance, STATUS_COMPLETED);
+                            fireComplete(instance);
                         }
                     }
 
