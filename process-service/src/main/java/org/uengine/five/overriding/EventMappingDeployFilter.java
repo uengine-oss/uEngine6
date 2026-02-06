@@ -166,6 +166,11 @@ public class EventMappingDeployFilter implements DeployFilter {
             }
 
             String corrKey = null;
+
+            // eventType / attributes가 null인 정의가 존재할 수 있으므로 방어적으로 처리한다.
+            if (activity.getEventSynchronization() == null)
+                return;
+
             FieldDescriptor[] attributes = activity.getEventSynchronization().getAttributes();
             if (attributes == null) attributes = new FieldDescriptor[0];
             FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)

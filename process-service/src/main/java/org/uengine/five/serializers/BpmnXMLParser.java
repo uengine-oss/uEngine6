@@ -8,22 +8,15 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.uengine.contexts.HtmlFormContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.HumanActivity;
-import org.uengine.kernel.Otherwise;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.Role;
 import org.uengine.kernel.ScopeActivity;
-import org.uengine.kernel.bpmn.CompensateEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SequenceFlow;
@@ -36,7 +29,7 @@ import org.xml.sax.InputSource;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -74,6 +67,10 @@ public class BpmnXMLParser {
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int
                                                                                  // or boolean
 
+        // Be tolerant to forward-compatible BPMN extension fields (ex: conditionMode on
+        // SequenceFlow).
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
 
         return objectMapper;
@@ -92,6 +89,9 @@ public class BpmnXMLParser {
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL); // ignore null
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT); // ignore zero and false when it is int
                                                                                  // or boolean
+
+        // Be tolerant to forward-compatible BPMN extension fields.
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         objectMapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE, "_type");
 
@@ -440,8 +440,6 @@ public class BpmnXMLParser {
     private void parseNode(Element element, LaneInfo laneInfo, ScopeActivity processDefinition,
             ScopeActivity mainProcessDefinition)
             throws Exception {
-        String id = element.getAttribute("id");
-        String name = element.getAttribute("name");
         String nodeName = element.getNodeName();
         if (nodeName.contains(":")) {
             nodeName = nodeName.substring(nodeName.indexOf(":") + 1);
@@ -526,6 +524,15 @@ public class BpmnXMLParser {
                                 if (jsonNode.getNodeType() == Node.CDATA_SECTION_NODE
                                         || jsonNode.getNodeType() == Node.TEXT_NODE
                                         || jsonNode.getNodeType() == Node.ELEMENT_NODE) {
+                                    // Only accept the JSON directly under <uengine:properties>.
+                                    // (Skip nested <uengine:json> under <uengine:variable>, which can otherwise
+                                    // overwrite the activity object with an empty {}.)
+                                    Node parent = jsonNode.getParentNode();
+                                    if (parent != null && parent.getNodeType() == Node.ELEMENT_NODE
+                                            && !"uengine:properties".equals(parent.getNodeName())) {
+                                        continue;
+                                    }
+
                                     String jsonText = jsonNode.getTextContent();
                                     if (jsonText.contains("_type") && !className.contains("Event")) {
                                         clazz = Activity.class;

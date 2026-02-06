@@ -100,7 +100,6 @@ public class AsyncEventListener {
                 String coorKeyValue = eventContent.get(corrKey).toString();
 
                 if (eventMappingEntity.isStartEvent()) {
-                    // START
                     String startDefId = eventMappingEntity.getDefinitionId();
                     ProcessExecutionCommand processExecutionCommand = new ProcessExecutionCommand();
                     processExecutionCommand.setProcessDefinitionId(startDefId);
@@ -109,29 +108,7 @@ public class AsyncEventListener {
                     instanceService.start(processExecutionCommand);
                 }
 
-                // NEXT
-                // String tracingTag = eventMappingEntity.getTracingTag();
-                List<ProcessInstanceEntity> processInstanceList = processInstanceRepository
-                        .findByCorrKeyAndStatus(coorKeyValue, "Running");
-                for (ProcessInstanceEntity processInstanceEntity : processInstanceList) {
-                    ProcessInstance instance = instanceServiceImpl
-                            .getProcessInstanceLocal(processInstanceEntity.getInstId().toString());
-
-                    for (Activity activity : instance.getCurrentRunningActivities()) {
-                        if (activity.getEventSynchronization() != null
-                                && activity.getEventSynchronization().getEventType().equals(eventType)) {
-                            // set eventData.
-                            // ((DefaultProcessInstance)instance).setProperty(activity.getTracingTag(),
-                            // "eventJson", (Serializable) eventContent);
-                            ((DefaultProcessInstance) instance).set(activity.getTracingTag(), "eventData",
-                                    (Serializable) eventContent);
-
-                            ReceiveActivity receiveActivity = (ReceiveActivity) activity;
-                            receiveActivity.fireReceived(instance, eventContent);
-                            break;
-                        }
-                    }
-                }
+                triggerReceiveActivitiesByCorrKeyAndEventType(coorKeyValue, eventType, eventContent);
             } else {
                 String coorKeyValue = corrKey;
                 if (eventMappingEntity.isStartEvent()) {
@@ -142,6 +119,9 @@ public class AsyncEventListener {
                     processExecutionCommand.setCorrelationKeyValue(coorKeyValue);
 
                     instanceService.start(processExecutionCommand);
+
+                    // NEXT (요청사항: START 이후에도 동일 NEXT 로직 실행)
+                    triggerReceiveActivitiesByCorrKeyAndEventType(coorKeyValue, eventType, eventContent);
                 } else {
                     // 시작 이벤트가 아닐 경우 모든 인스턴스에서 이벤트를 발생시킨다.
                     List<ProcessInstanceEntity> processInstanceList = processInstanceRepository
@@ -173,6 +153,30 @@ public class AsyncEventListener {
             throw new RuntimeException("Error wheneverEvent :" + e.getMessage(), e);
         }
 
+    }
+
+    private void triggerReceiveActivitiesByCorrKeyAndEventType(String corrKeyValue, String eventType,
+            HashMap<String, Object> eventContent) throws Exception {
+        // NEXT
+        // String tracingTag = eventMappingEntity.getTracingTag();
+        List<ProcessInstanceEntity> processInstanceList = processInstanceRepository
+                .findByCorrKeyAndStatus(corrKeyValue, "Running");
+        for (ProcessInstanceEntity processInstanceEntity : processInstanceList) {
+            ProcessInstance instance = instanceServiceImpl
+                    .getProcessInstanceLocal(processInstanceEntity.getInstId().toString());
+
+            for (Activity activity : instance.getCurrentRunningActivities()) {
+                if (activity.getEventSynchronization() != null
+                        && activity.getEventSynchronization().getEventType().equals(eventType)) {
+                    ((DefaultProcessInstance) instance).set(activity.getTracingTag(), "eventData",
+                            (Serializable) eventContent);
+
+                    ReceiveActivity receiveActivity = (ReceiveActivity) activity;
+                    receiveActivity.fireReceived(instance, eventContent);
+                    break;
+                }
+            }
+        }
     }
 
     private static String decodeNumericCsvIfNeeded(String raw) {

@@ -420,7 +420,11 @@ public class DefinitionServiceImpl implements DefinitionService {
         Object definitionDeployed = null;
 
         resourceManager.save(resource, definitionRequest.getDefinition());
-        instanceService.postCreatedRawDefinition(resource.getPath());
+
+        // Only BPMN definitions should trigger deploy pipeline in process-service.
+        if ("bpmn".equalsIgnoreCase(fileExt)) {
+            instanceService.postCreatedRawDefinition(resource.getPath());
+        }
 
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {

@@ -18,11 +18,9 @@ import org.uengine.five.events.ActivityQueued;
 import org.uengine.five.events.DefinitionDeployed;
 import org.uengine.five.framework.ProcessTransactional;
 import org.uengine.five.overriding.ActivityQueue;
-import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.Activity;
-import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.UEngineException;
@@ -62,16 +60,12 @@ public class EventListener {
             }
             instance.execute(activityDone.getActivityInfo().getTracingTag());
 
-            // ActivityDone activityDone = new ActivityDone();
-            // activityDone.setActivityInfo(new ActivityInfo());
-            // activityDone.getActivityInfo().setInstanceId(activityQueued.getActivityInfo().getInstanceId());
-            // activityDone.getActivityInfo().setTracingTag(activityQueued.getActivityInfo().getTracingTag());
-
-            // MessageChannel messageChannel = streams.outboundChannel();
-            // messageChannel.send(MessageBuilder
-            // .withPayload(activityDone)
-            // .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
-            // .build());
+            // broadcast to a separate topic to avoid loop with bpm-in/bpm-out
+            MessageChannel messageChannel = streams.outboundBrodcastChannel();
+            messageChannel.send(MessageBuilder
+                    .withPayload(activityDone)
+                    .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
+                    .build());
 
         } catch (Exception e) {
 
@@ -130,7 +124,7 @@ public class EventListener {
             return;
 
         try {
-            if(activityFailed.getActivityInfo() == null) {
+            if (activityFailed.getActivityInfo() == null) {
                 return;
             }
             ProcessInstance instance = instanceService
@@ -226,8 +220,9 @@ public class EventListener {
 
         if (definitionPath != null)
             try {
-                Object definition = definitionServiceUtil.getDefinition(definitionPath);
-                // serviceRegisterDeployFilter.beforeDeploy((ProcessDefinition) definition, null, definitionPath, true);
+                definitionServiceUtil.getDefinition(definitionPath);
+                // serviceRegisterDeployFilter.beforeDeploy((ProcessDefinition) definition,
+                // null, definitionPath, true);
             } catch (Exception e) {
                 throw new RuntimeException("failed to register a service for :" + definitionDeployed.getDefintionId(),
                         e);

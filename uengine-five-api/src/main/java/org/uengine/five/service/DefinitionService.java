@@ -1,14 +1,8 @@
 package org.uengine.five.service;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.RepresentationModel;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 //import javax.ws.rs.QueryParam;
 
@@ -32,14 +26,24 @@ public interface DefinitionService {
     public static final String DEFINITION_MAP = "/definition/map";
     public static final String DEFINITION_SYSTEM = "/definition/system";
 
-    @RequestMapping(value = DEFINITION, method = RequestMethod.GET)
-    public RepresentationModel listDefinition(String basePath) throws Exception;
+    @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/hal+json;charset=UTF-8")
+    public RepresentationModel listDefinition(@RequestParam(value = "basePath", required = false) String basePath)
+            throws Exception;
+
+    /**
+     * Raw JSON (HAL) listing for callers that want to parse files themselves.
+     * Useful for non-HATEOAS clients (e.g. process-service business rules).
+     */
+    @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/json")
+    public String listDefinitionRaw(@RequestParam(value = "basePath", required = false) String basePath)
+            throws Exception;
 
     @RequestMapping(value = "/version/production", method = RequestMethod.GET)
     public RepresentationModel getProduction() throws Exception;
 
     @RequestMapping(value = "/version/{version}" + DEFINITION, method = RequestMethod.GET)
-    public RepresentationModel listVersionDefinitions(String version, String basePath) throws Exception;
+    public RepresentationModel listVersionDefinitions(@PathVariable("version") String version,
+            @RequestParam(value = "basePath", required = false) String basePath) throws Exception;
 
     @RequestMapping(value = "/version", method = RequestMethod.GET)
     public RepresentationModel listVersions() throws Exception;
@@ -48,22 +52,18 @@ public interface DefinitionService {
             + "/{defPath}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public RepresentationModel getDefinition(@PathVariable("defPath") String definitionPath) throws Exception;
 
-    @RequestMapping(value = DEFINITION_RAW + "/{defPath}", method = RequestMethod.GET)
-    public Object getRawDefinition(@PathVariable("defPath") String definitionPath/*
-                                                                                  * , @RequestParam(value = "unwrap",
-                                                                                  * required = false) boolean unwrap
-                                                                                  */) throws Exception;
+    /**
+     * Feign 안정성을 위해 raw definition 경로는 query parameter로 전달한다.
+     * (regex path variable {defPath:.+} 는 Feign contract 파싱에서 문제를 일으킬 수 있음)
+     */
+    @RequestMapping(value = DEFINITION_RAW, method = RequestMethod.GET)
+    public Object getRawDefinition(@RequestParam("defPath") String definitionPath) throws Exception;
 
-    @RequestMapping(value = DEFINITION_MAP + "/{defPath}", method = RequestMethod.GET)
+    @RequestMapping(value = DEFINITION_RAW, method = RequestMethod.PUT, consumes = "application/json")
+    public Object putRawDefinition(@RequestParam("defPath") String definitionPath,
+            @RequestBody DefinitionRequest definitionRequest) throws Exception;
+
+    @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET)
     public Object getRawDefinitionMap() throws Exception;
-
-    @RequestMapping(value = "/definition/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadDefinition(@RequestParam("file") MultipartFile file);
-
-    @RequestMapping(value = "/versions/**", method = RequestMethod.GET)
-    public RepresentationModel listDefinitionVersions(HttpServletRequest request) throws Exception;
-    // definiton/test.bpmn
-    // definiton/test.bpmn/versions
-    // version/test.bpmn
 
 }

@@ -3,14 +3,11 @@ package org.uengine.five.service;
 import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.ControllerLinkBuilder.methodOn;
 
-import java.util.List;
-
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 import org.springframework.hateoas.server.mvc.ControllerLinkBuilder;
 import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
-import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -22,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DefinitionResource extends RepresentationModel {
 
     String name;
+
     public DefinitionResource() {
     }
 
@@ -29,13 +27,12 @@ public class DefinitionResource extends RepresentationModel {
         setName(resource1.getName());
         setDirectory(resource1 instanceof IContainer);
         setPath(resource1.getPath());
-        
-        
+
         add(
                 linkTo(
                         methodOn(DefinitionServiceImpl.class)
                                 .getDefinition(
-                                    resource1.getPath()))
+                                        resource1.getPath()))
                         .withSelfRel());
 
         if (!isDirectory()) {
@@ -43,7 +40,7 @@ public class DefinitionResource extends RepresentationModel {
                     linkTo(
                             methodOn(DefinitionServiceImpl.class)
                                     .getRawDefinition(
-                                            UEngineUtil.getNamedExtFile(resource1.getPath(), "json")))
+                                            resource1.getPath()))
                             .withRel("raw"));
             // add(
             // linkTo(
@@ -93,6 +90,7 @@ public class DefinitionResource extends RepresentationModel {
     }
 
     public String version;
+
     public String getVersion() {
         return version;
     }
@@ -100,7 +98,5 @@ public class DefinitionResource extends RepresentationModel {
     public void setVersion(String version) {
         this.version = version;
     }
-    
-
 
 }
