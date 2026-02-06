@@ -1005,6 +1005,7 @@ public class BpmnXMLParser {
             laneRoleName = getRoleNameInLocation(laneInfo.laneCoordinate, xValue, yValue);
         }
         role.setName(laneRoleName);
+        role.setDisplayName(laneRoleName);
         return role;
     }
 
@@ -1049,6 +1050,18 @@ public class BpmnXMLParser {
             processDefinition.afterDeserialization();
 
             return processDefinition;
+        } catch (com.fasterxml.jackson.databind.exc.InvalidTypeIdException e) {
+            // InvalidTypeIdException은 roleResolutionContext의 _type 문제일 수 있음
+            // 이미 parseRole에서 처리했지만, 다른 곳에서도 발생할 수 있으므로 여기서도 처리
+            System.err.println("Warning: InvalidTypeIdException during BPMN parsing: " + e.getMessage());
+            System.err.println("Type ID: " + e.getTypeId());
+            e.printStackTrace();
+            
+            // 예외를 다시 throw하지 않고, 부분적으로 파싱된 ProcessDefinition 반환 시도
+            // 하지만 이미 예외가 발생했으므로, 더 안전하게 처리하기 위해 예외를 throw
+            // 다만 더 자세한 에러 메시지 제공
+            throw new RuntimeException("Error parsing BPMN XML - InvalidTypeIdException: " + e.getTypeId() + 
+                ". Please check if the class exists in classpath: " + e.getTypeId(), e);
         } catch (Exception e) {
             e.printStackTrace();
             StringBuilder errorMessage = new StringBuilder();

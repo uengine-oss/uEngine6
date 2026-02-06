@@ -10,6 +10,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.util.Date;
 import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactional;
 
 import java.util.List;
@@ -69,6 +70,20 @@ public interface ProcessInstanceRepository extends JpaRepository<ProcessInstance
 
         @Query("select pi from ProcessInstanceEntity pi where pi.rootInstId = :instId")
         List<ProcessInstanceEntity> findChild(@Param("instId") Long instId);
+
+        /**
+         * 인스턴스(루트 인스턴스) 기준으로 모든 태스크(워크리스트)를 조회합니다. (히스토리 표기용)
+         * - rootInstId: 서브프로세스 태스크까지 포함
+         */
+        @Query("select wl from WorklistEntity wl where wl.rootInstId = :rootInstId order by wl.startDate asc, wl.taskId asc")
+        List<WorklistEntity> findAllWorklistsByRootInstId(@Param("rootInstId") Number rootInstId);
+
+        /**
+         * BackToHere(반송) 후보 태스크만 조회합니다.
+         * - 정의: 상태가 COMPLETED 인 태스크만
+         */
+        @Query("select wl from WorklistEntity wl where wl.rootInstId = :rootInstId and wl.status = 'COMPLETED' order by wl.endDate desc, wl.taskId desc")
+        List<WorklistEntity> findReturnableWorklistsByRootInstId(@Param("rootInstId") Number rootInstId);
 
         @Query("select pi from ProcessInstanceEntity pi where (pi.corrKey = :corrKey and pi.status = :status)")
         List<ProcessInstanceEntity> findByCorrKeyAndStatus(@Param("corrKey") String corrKey,

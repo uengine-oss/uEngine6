@@ -281,9 +281,23 @@ public class ComplexActivity extends DefaultActivity implements NeedArrangementT
 			currStep++;
 			if (currStep < getChildActivities().size()) {
 				setCurrentStep(instance, currStep);
-				Activity childActivity = getChildActivities().get(currStep);
-				childActivity.reset(instance);
-				childActivity.suspend(instance);
+				// Activity childActivity = getChildActivities().get(currStep);
+				// childActivity.reset(instance);
+				// childActivity.suspend(instance);
+
+				// SKIP된 경우에도 다음 스텝으로 "진행"해야 한다.
+				// 기존 로직(reset + suspend)은 다음 액티비티를 멈춰버려서 다음 workitem 생성이 일어나지 않는다.
+				if (!instance.isSuspended(getTracingTag())) {
+					ExecutionScopeContext executionScopeContext = instance.getExecutionScopeContext();
+					instance.setExecutionScope(
+							instance.getParentExecutionScopeOf(executionScopeContext.getExecutionScope()));
+
+					executeActivity(instance); // execute next in the parent scope context.
+
+					instance.setExecutionScope(executionScopeContext.getExecutionScope());
+				} else {
+					System.out.println("this step is suspended:" + currStep);
+				}
 			} else {
 				super.skip(instance);
 			}

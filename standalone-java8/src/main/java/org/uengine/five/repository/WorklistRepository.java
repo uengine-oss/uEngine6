@@ -22,7 +22,20 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     // ?#{loggedUserId} or wl.endpoint in ?#{loggedUserScopes}) and (wl.status =
     // 'NEW' or wl.status = 'DRAFT')")
 
-    @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status != 'COMPLETED') ")
+    // ToDo:
+    // - 기본: endpoint 가 나(principal.userId) 이거나, endpoint 가 내 roles(principal.scopes) 중 하나인 workitem
+    // - 추가: dispatchOption=1(경합) 이면서 roleName 이 내 groups(principal.groups)에 포함되면 노출
+//     @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status != 'COMPLETED') ")
+    @Query("select wl from WorklistEntity wl " +
+            "where (" +
+            "   (wl.endpoint = ?#{T(org.uengine.contexts.UserContext).getThreadLocalInstance().getUserId()} " +
+            "       or wl.endpoint in ?#{T(org.springframework.util.CollectionUtils).isEmpty(T(org.uengine.contexts.UserContext).getThreadLocalInstance().getScopes()) " +
+            "           ? T(java.util.Collections).singletonList('__NO_SCOPE__') " +
+            "           : T(org.uengine.contexts.UserContext).getThreadLocalInstance().getScopes()})" +
+            "   or (wl.dispatchOption = 1 and wl.roleName in ?#{T(org.springframework.util.CollectionUtils).isEmpty(T(org.uengine.contexts.UserContext).getThreadLocalInstance().getGroups()) " +
+            "           ? T(java.util.Collections).singletonList('__NO_GROUP__') " +
+            "           : T(org.uengine.contexts.UserContext).getThreadLocalInstance().getGroups()})" +
+            ") and (wl.status != 'COMPLETED') ")
     public List<WorklistEntity> findToDo();
 
     // @Query("select wl from WorklistEntity wl where (wl.endpoint =
@@ -39,7 +52,10 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     // public List<WorklistEntity> findCompleted(Pageable pageable);
 
     @Query("select pi from WorklistEntity pi " +
-            "where (pi.endpoint = ?#{principal.userId} or pi.endpoint in ?#{principal.scopes}) " +
+            "where (pi.endpoint = ?#{T(org.uengine.contexts.UserContext).getThreadLocalInstance().getUserId()} " +
+            "   or pi.endpoint in ?#{T(org.springframework.util.CollectionUtils).isEmpty(T(org.uengine.contexts.UserContext).getThreadLocalInstance().getScopes()) " +
+            "       ? T(java.util.Collections).singletonList('__NO_SCOPE__') " +
+            "       : T(org.uengine.contexts.UserContext).getThreadLocalInstance().getScopes()}) " +
             "and (pi.status = 'COMPLETED')" )
     Page<WorklistEntity> findCompleted(Pageable pageable);
 
@@ -48,6 +64,19 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
 
     @Query("select wl from WorklistEntity wl where (wl.rootInstId = :rootInstId and (wl.status = 'NEW' or wl.status = 'RUNNING')) order by wl.endDate ")
     public List<WorklistEntity> findCurrentWorkItemByInstId(@Param(value = "rootInstId") Number rootInstId);
+
+    @Query("select wl from WorklistEntity wl " +
+            "where ( (wl.rootInstId = :rootInstId) or (wl.rootInstId is null and wl.instId = :rootInstId) ) " +
+            "  and wl.roleName = :roleName " +
+            "  and wl.scope = :scope " +
+            "  and wl.assignType = :assignType " +
+            "  and (wl.status = 'NEW' or wl.status = 'RUNNING') " +
+            "  and ( (:endpoint is null and wl.endpoint is null) or (:endpoint is not null and wl.endpoint = :endpoint) ) ")
+    public List<WorklistEntity> findSiblingsForClaimState(@Param("rootInstId") Long rootInstId,
+            @Param("roleName") String roleName,
+            @Param("scope") String scope,
+            @Param("assignType") Integer assignType,
+            @Param("endpoint") String endpoint);
     
 
     // // // TEST

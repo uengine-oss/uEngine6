@@ -190,13 +190,24 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                 getProcessInstanceEntity().setRootInstId(getProcessInstanceEntity().getInstId());
             }
         } else { // else, load the instance
-            processInstanceRepository.findById(Long.valueOf(getInstanceId())).ifPresent(entity -> {
-                setProcessInstanceEntity(entity);
-
-            });
+            String instanceIdStr = getInstanceId();
+            
+            // instanceId가 null, "undefined", 또는 빈 문자열인 경우 처리
+            if (instanceIdStr == null || instanceIdStr.trim().isEmpty() || "undefined".equals(instanceIdStr)) {
+                throw new UEngineException("Invalid instance ID: " + instanceIdStr + ". Cannot load process instance.");
+            }
+            
+            try {
+                Long instanceId = Long.valueOf(instanceIdStr);
+                processInstanceRepository.findById(instanceId).ifPresent(entity -> {
+                    setProcessInstanceEntity(entity);
+                });
+            } catch (NumberFormatException e) {
+                throw new UEngineException("Invalid instance ID format: " + instanceIdStr + ". Expected a numeric value.", e);
+            }
 
             if (getProcessInstanceEntity() == null)
-                throw new UEngineException("No such process instance where id = " + getInstanceId());
+                throw new UEngineException("No such process instance where id = " + instanceIdStr);
 
             Map variables = loadVariables();
             setVariables(variables);
@@ -205,8 +216,6 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
         setInstanceId(String.valueOf(getProcessInstanceEntity().getInstId()));
 
-        // Add this instance as transaction listener and register this so that it can be
-        // cached.
         ProcessTransactionContext.getThreadLocalInstance().addTransactionListener(this);
         ProcessTransactionContext.getThreadLocalInstance().registerProcessInstance(this);
 
@@ -329,31 +338,97 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public void afterCommit(TransactionContext tx) throws Exception {
-
+        // variablesPath에 설정된 경로가 아닌 이전 파일 삭제 (동일 인스턴스의 고아 파일 정리)
+        if (variablesPathPreviousBeforeTx != null && !variablesPathPreviousBeforeTx.equals(variablesPathCreatedThisTx)) {
+            try {
+                IResource prevResource = new DefaultResource(variablesPathPreviousBeforeTx);
+                if (resourceManager.exists(prevResource)) {
+                    resourceManager.delete(prevResource);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        variablesPathCreatedThisTx = null;
+        variablesPathPreviousBeforeTx = null;
     }
 
+    /** 롤백 시 이번 트랜잭션에서 생성한 새 파일만 삭제 → DB와 파일 일치. */
     @Override
     public void afterRollback(TransactionContext tx) throws Exception {
-
+        if (variablesPathCreatedThisTx != null) {
+            try {
+                IResource createdResource = new DefaultResource(variablesPathCreatedThisTx);
+                if (resourceManager.exists(createdResource)) {
+                    resourceManager.delete(createdResource);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            variablesPathCreatedThisTx = null;
+        }
+        variablesPathPreviousBeforeTx = null;
     }
 
-    protected Map loadVariables() throws Exception {
-        Date date = getProcessInstanceEntity().getStartedDate();
+    /** 이번 트랜잭션에서 생성한 변수 파일 경로. 롤백 시 삭제용. */
+    private transient String variablesPathCreatedThisTx;
+    /** 커밋 전 variablesPath. afterCommit에서 이전 파일 삭제용. */
+    private transient String variablesPathPreviousBeforeTx;
 
-        String currentYear = String.valueOf(date.getYear() + 1900);
-        String currentMonth = String.format("%02d", date.getMonth() + 1);
-        IResource resource = new DefaultResource(
-                "instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
+    /** DB에 저장된 경로가 있으면 사용, 없으면 startedDate 기준 계산 경로(하위 호환). */
+    protected String getInstanceVariablesPath() {
+        String path = getProcessInstanceEntity().getVariablesPath();
+        if (path != null && !path.isEmpty()) {
+            return path;
+        }
+        return computeDefaultVariablesPath();
+    }
+
+    /** startedDate 기준 인스턴스 디렉터리 경로 (instances/YYYY/MM/DD/instanceId). */
+    protected String computeDefaultVariablesPath() {
+        Date date = getProcessInstanceEntity().getStartedDate();
+        if (date == null) {
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
+            String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
+            String currentDay = String.format("%02d", calendar.get(java.util.Calendar.DAY_OF_MONTH));
+            return "instances/" + currentYear + "/" + currentMonth + "/" + currentDay + "/" + getInstanceId();
+        }
+        String year = String.valueOf(date.getYear() + 1900);
+        String month = String.format("%02d", date.getMonth() + 1);
+        String day = String.format("%02d", date.getDate());
+        return "instances/" + year + "/" + month + "/" + day + "/" + getInstanceId();
+    }
+
+    /** 트랜잭션마다 새 파일 경로 생성 (시간 순서). DB+파일 트랜잭션 일치를 위해 beforeCommit에서 사용. */
+    protected String generateNewVariablesPath() {
+        return computeDefaultVariablesPath() + "_" + System.currentTimeMillis();
+    }
+
+    /** variablesPath(또는 기본 경로)에서 변수 로드. */
+    protected Map loadVariables() throws Exception {
+        String path = getInstanceVariablesPath();
+        IResource resource = new DefaultResource(path);
         return (Map) resourceManager.getObject(resource);
     }
 
+    /**
+     * 변수 저장. JPAProcessInstance는 새 파일 경로에 저장·promote 후 variablesPath 갱신.
+     * CLOBProcessInstance는 varLob에만 저장(오버라이드).
+     */
     protected void saveVariables() throws Exception {
-        java.util.Calendar calendar = java.util.Calendar.getInstance();
-        String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
-        String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
-        IResource resource = new DefaultResource(
-                "instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
-        resourceManager.save(resource, getVariables());
+        // 이전 경로 기억 (afterCommit에서 이전 파일 삭제용)
+        variablesPathPreviousBeforeTx = getProcessInstanceEntity().getVariablesPath();
+        if (variablesPathPreviousBeforeTx != null) {
+            variablesPathPreviousBeforeTx = variablesPathPreviousBeforeTx.trim();
+            if (variablesPathPreviousBeforeTx.isEmpty()) {
+                variablesPathPreviousBeforeTx = null;
+            }
+        }
+        String newPath = generateNewVariablesPath();
+        resourceManager.save(new DefaultResource(newPath), getVariables());
+        getProcessInstanceEntity().setVariablesPath(newPath);
+        variablesPathCreatedThisTx = newPath;
     }
 
     public void setStatus(String scope, String status) throws Exception {
@@ -376,6 +451,7 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                     pi = getProcessInstanceEntity();
                 }
                 pi.setFinishedDate(new Date());
+                saveVariables();
             }
         }
 

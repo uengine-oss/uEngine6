@@ -295,7 +295,7 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
                 setStatus(tracingTag, Activity.STATUS_RUNNING);
 
                 activity.executeActivity(this);
-                activity.afterExecute(this);
+                // activity.afterExecute(this);
             }
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -311,6 +311,30 @@ public abstract class AbstractProcessInstance implements ProcessInstance, java.i
             fc.setFault(new UEngineException(e.getMessage(), e));
 
             this.setFault(tracingTag, fc);
+
+            // 실패한 액티비티를 worklist에 먼저 추가한 뒤 fireFault 호출 (에러 경로가 실행되며 추가되는 항목보다 실행 순서가 앞서도록)
+            setStatus(tracingTag, Activity.STATUS_FAULT);
+            ActivityFilter[] activityFilters = getProcessDefinition().getActivityFilters();
+            if (activityFilters != null) {
+                for (ActivityFilter f : activityFilters) {
+                    if (f != null) {
+                        try {
+                            f.afterFault(activity, this, fc);
+                        } catch (Exception ex) {
+                            logger.warn("ActivityFilter.afterFault failed for " + tracingTag, ex);
+                        }
+                    }
+                }
+            }
+
+            // Error Boundary Event가 붙어 있으면 인터셉터가 처리할 수 있도록 fireFault 호출
+            activity.fireFault(this, fc);
+
+            // 에러가 Boundary Event로 처리되었으면 예외를 다시 던지지 않음 (다음 태스크로 진행)
+            if (Boolean.TRUE.equals(getProcessTransactionContext().getSharedContext("faultTolerant"))) {
+                getProcessTransactionContext().setSharedContext("faultTolerant", null);
+                return;
+            }
             throw new Exception(e);
         }
 

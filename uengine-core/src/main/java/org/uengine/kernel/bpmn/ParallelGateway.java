@@ -32,7 +32,10 @@ public class ParallelGateway extends Gateway {
 		for (Iterator<SequenceFlow> it = getIncomingSequenceFlows().iterator(); it.hasNext(); ) {
 			sequenceFlow = it.next();
 			String status = (sequenceFlow.getSourceActivity()).getStatus(instance);
-			if (!status.equals(Activity.STATUS_COMPLETED)) {
+			// SKIP은 "완료"로 간주되어 join이 열려야 한다.
+			// (branch 중 하나가 SKIPPED이면 기존 로직은 join이 영원히 열리지 않음)
+			// if (!status.equals(Activity.STATUS_COMPLETED)) {
+			if (!(Activity.STATUS_COMPLETED.equals(status) || Activity.STATUS_SKIPPED.equals(status))) {
 				return false;
 			}
 		}

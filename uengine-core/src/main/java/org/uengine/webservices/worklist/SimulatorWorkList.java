@@ -7,7 +7,9 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 import org.uengine.kernel.KeyedParameter;
+import org.uengine.kernel.RoleMapping;
 import org.uengine.processmanager.DefaultTransactionContext;
+import org.uengine.processmanager.TransactionContext;
 
 /**
  * @author Jinyoung Jang
@@ -16,6 +18,29 @@ public class SimulatorWorkList extends DefaultWorkList{
 	
 	ArrayList worklist = new ArrayList();
 	static int currTaskId = 0;
+
+	@Override
+	public String reserveWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
+		return addWorkItem(roleMapping, parameters, tc);
+	}
+
+	@Override
+	public String addWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
+		String userId = roleMapping != null ? roleMapping.getEndpoint() : null;
+		return addWorkItem(userId, parameters);
+	}
+
+	@Override
+	public String addWorkItem(String taskId, RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
+		String userId = roleMapping != null ? roleMapping.getEndpoint() : null;
+		return addWorkItem(taskId, userId, parameters);
+	}
+
+	@Override
+	public void updateWorkItem(String taskId, RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
+		// 시뮬레이터는 기본적으로 update를 별도 처리하지 않음 (DefaultWorkList도 no-op)
+		super.updateWorkItem(taskId, roleMapping, parameters, tc);
+	}
 	
 	public String addWorkItem(String userId, KeyedParameter[] parameters)
 		throws RemoteException {
@@ -56,25 +81,19 @@ public class SimulatorWorkList extends DefaultWorkList{
 		super.completeWorkItem(taskID, options, tc);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.uengine.webservices.worklist.WorkList#reserveWorkItem(java.lang.String, org.uengine.webservices.worklist.KeyedParameter[])
-	 */
 	public String reserveWorkItem(String userId, KeyedParameter[] parameters)
 		throws RemoteException {
-		// TODO Auto-generated method stub
 		return addWorkItem(userId, parameters);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.uengine.webservices.worklist.WorkList#updateWorkItem(java.lang.String, java.lang.String, org.uengine.webservices.worklist.KeyedParameter[])
-	 */
 	public void updateWorkItem(
 		String taskId,
 		String userId,
 		KeyedParameter[] parameters, DefaultTransactionContext tc)
 		throws RemoteException {
-		// TODO Auto-generated method stub
-		super.updateWorkItem(taskId, userId, parameters, tc);
+		RoleMapping rm = RoleMapping.create();
+		if (rm != null) rm.setEndpoint(userId);
+		updateWorkItem(taskId, rm, parameters, tc);
 	}
 
 	public ArrayList getWorklist() {
