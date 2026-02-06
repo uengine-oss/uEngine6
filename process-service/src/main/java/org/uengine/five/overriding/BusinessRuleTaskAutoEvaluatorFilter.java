@@ -8,6 +8,7 @@ import org.uengine.five.businessrule.BusinessRuleEvaluator;
 import org.uengine.five.businessrule.BusinessRuleStore;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
+import org.uengine.kernel.FaultContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.bpmn.BusinessRuleTask;
@@ -102,5 +103,9 @@ public class BusinessRuleTaskAutoEvaluatorFilter implements ActivityFilter {
 
     @Override
     public void onDeploy(ProcessDefinition definition) throws Exception {
+    }
+
+    @Override
+    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
     }
 }

@@ -125,11 +125,10 @@ public class ProcessTransactionContext implements org.uengine.processmanager.Pro
     }
 
     private void afterCommit() throws Exception {
-
         for (TransactionListener tl : getTransactionListeners()) {
             tl.afterCommit(this);
         }
-
+        
     }
 
     public void rollback() throws Exception {

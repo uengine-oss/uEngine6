@@ -3156,6 +3156,8 @@ public class InstanceServiceImpl implements InstanceService {
         result.setSkippedTracingTag(humanActivity.getTracingTag());
         result.setCurrentTaskIds(currentTaskIds);
         return result;
+    }
+
     // ----------------- scenario API (delegates to ScenarioController) -------------------- //
 
     @GetMapping(value = "/scenarios/{processDefinitionId}", produces = "application/json;charset=UTF-8")
