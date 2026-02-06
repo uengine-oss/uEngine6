@@ -38,7 +38,7 @@ public class RoleAssignActivity extends DefaultActivity{
 			roleMapping.setEndpoint(resourceURI);
 			roleMapping.setName(getRole().getName());
 			
-		roleMapping.fill(instance);
+		roleMapping.fill();
 			
 		instance.putRoleMapping(roleMapping);
 		

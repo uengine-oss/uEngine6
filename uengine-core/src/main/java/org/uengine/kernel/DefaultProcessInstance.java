@@ -156,7 +156,7 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 		RoleMapping rp = RoleMapping.create();
 		rp.setName(name);
 		rp.setEndpoint(endpoint);
-		rp.fill(this);
+		rp.fill();
 
 		putRoleMapping(rp);
 	}

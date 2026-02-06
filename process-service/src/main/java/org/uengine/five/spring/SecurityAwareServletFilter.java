@@ -47,15 +47,19 @@ public class SecurityAwareServletFilter implements Filter {
                 accessToken = accessToken.split("Bearer ")[1];
                 DecodedJWT decodedJWT = JWT.decode(accessToken);
 
+                List<String> groups = decodedJWT.getClaim("groups").asList(String.class);
                 String userId = decodedJWT.getClaim("email").asString();
                 List<String> roles = (List<String>)decodedJWT.getClaim("realm_access").asMap().get("roles");
+                // static cache (legacy usages) + ThreadLocal(UserContext) 모두 세팅
+                SecurityAwareServletFilter.userId = userId;
                 // ProcessTransactionContext.getThreadLocalInstance().setSharedContext("loggedUserId",
                 // userId);
                 // TenantContext.getThreadLocalInstance().setUserId(userId);
 
-                UserContext.getThreadLocalInstance().setUserId(userId);
                 // UserContext.getThreadLocalInstance().setScopes(null);
+                UserContext.getThreadLocalInstance().setUserId(userId);
                 UserContext.getThreadLocalInstance().setScopes(roles);
+                UserContext.getThreadLocalInstance().setGroups(groups);
             } catch (Exception e) {
                 System.out.println("Error when to parse accesstoken: " + e.getMessage());
             }

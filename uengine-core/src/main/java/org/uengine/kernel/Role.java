@@ -17,13 +17,13 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	
 	public static final int DISPATCHINGOPTION_AUTO				= -1; // ����
-	public static final int DISPATCHINGOPTION_RACING			= 1; // ����
+	public static final int DISPATCHINGOPTION_RACING			= 1; // RACE(Claim)
 	public static final int DISPATCHINGOPTION_LOADBALANCED 		= 2; // �ε� ���
 	public static final int DISPATCHINGOPTION_ALL 				= 0; // ���
 	public static final int DISPATCHINGOPTION_SETBYRIGHTPERSON 	= 4; // ����ڿ� ���� ��d
 	public static final int DISPATCHINGOPTION_REFERENCE 		= 5; //����ڿ� ���� ��d
 	public static final int DISPATCHINGOPTION_RECEIVE 			= 6; //����ڿ� ���� ��d
-	public static final int DISPATCHINGOPTION_ANNOUNCEMENT 		= 7; //Notice Option
+	public static final int DISPATCHINGOPTION_ANNOUNCEMENT 		= 7; //Notice Option - Direct
 	
 	public static final int ASSIGNTYPE_USER		 	= 0;	
 	public static final int ASSIGNTYPE_DEPT 		= 2;	
@@ -228,7 +228,7 @@ public class Role implements IElement, java.io.Serializable, Cloneable {
 					mapping.setEndpoint(role.getDefaultEndpoint());
 					
 					if(role.isHumanWorker())
-						mapping.fill(inst);
+						mapping.fill();
 				}catch(Exception e){
 					
 					throw new UEngineException("Can't find user where the id ["+ role.getDefaultEndpoint()+ "] since: " + e.getMessage() + "\n Please contact to the process administrator.");

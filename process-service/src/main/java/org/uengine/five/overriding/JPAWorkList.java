@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.repository.WorklistRepository;
 import org.uengine.kernel.KeyedParameter;
+import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.Role;
 import org.uengine.processmanager.TransactionContext;
 import org.uengine.util.UEngineUtil;
@@ -22,29 +23,28 @@ import java.util.Map;
  */
 public class JPAWorkList implements WorkList {
 
-    public String reserveWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc)
-            throws RemoteException {
+    @Override
+    public String reserveWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
         Map parameterMap = getParameterMap(parameters);
-
-        return addWorkItemImpl(null, userId, parameterMap, true, tc);
+        return addWorkItemImpl(null, roleMapping, parameterMap, true, tc);
     }
 
-    public String addWorkItem(String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException{
+    @Override
+    public String addWorkItem(RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
         Map parameterMap = getParameterMap(parameters);
-
-        return addWorkItemImpl(null, userId, parameterMap, false, tc);
+        return addWorkItemImpl(null, roleMapping, parameterMap, false, tc);
     }
 
-    public String addWorkItem(String reservedTaskId, String userId, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
+    @Override
+    public String addWorkItem(String reservedTaskId, RoleMapping roleMapping, KeyedParameter[] parameters, TransactionContext tc) throws RemoteException {
         Map parameterMap = getParameterMap(parameters);
-
-        return addWorkItemImpl(reservedTaskId, userId, parameterMap, false, tc);
+        return addWorkItemImpl(reservedTaskId, roleMapping, parameterMap, false, tc);
     }
 
     @Autowired
     WorklistRepository worklistRepository;
 
-    protected String addWorkItemImpl(String reservedTaskId, String userId, Map parameterMap, boolean isReservation, TransactionContext tc) throws RemoteException {
+    protected String addWorkItemImpl(String reservedTaskId, RoleMapping roleMapping, Map parameterMap, boolean isReservation, TransactionContext tc) throws RemoteException {
 
         try{
 
@@ -116,7 +116,8 @@ public class JPAWorkList implements WorkList {
 
             wl.setPriority(priority);
             wl.setTool(""+parameterMap.get(KeyedParameter.TOOL));
-            wl.setEndpoint(userId);
+            String endpoint = roleMapping != null ? roleMapping.getEndpoint() : null;
+            wl.setEndpoint(endpoint);
 
             //modified
             Timestamp startedTime;
@@ -131,8 +132,49 @@ public class JPAWorkList implements WorkList {
             wl.setDefName(""+parameterMap.get(KeyedParameter.PROCESSDEFINITIONNAME));
             wl.setRoleName(""+parameterMap.get("roleName"));
             wl.setRefRoleName(""+parameterMap.get("referenceRoleName"));
-            wl.setResName(""+parameterMap.get("resourceName"));
+            // Diagram-aligned: fill() is triggered at WorkList save time.
+            // If resourceName is missing, call RoleMapping.fill() so that IAMService can populate it (Flyweight + isFilled prevents duplication).
+            Object resNameObj = parameterMap.get("resourceName");
+            String resName = resNameObj != null ? String.valueOf(resNameObj) : null;
+            if (!UEngineUtil.isNotEmpty(resName) || resName.equals(endpoint)) {
+                try {
+                    RoleMapping rm = roleMapping != null ? roleMapping : RoleMapping.create();
+                    if (rm != null) {
+                        if (!UEngineUtil.isNotEmpty(rm.getEndpoint()) && UEngineUtil.isNotEmpty(endpoint)) rm.setEndpoint(endpoint);
+
+                        Object scope = parameterMap.get("scope");
+                        if (scope != null && !UEngineUtil.isNotEmpty(rm.getScope())) rm.setScope(String.valueOf(scope));
+
+                        Object assignType = parameterMap.get("assignType");
+                        if (assignType != null && rm.getAssignType() == 0) {
+                            try {
+                                rm.setAssignType(Integer.parseInt(String.valueOf(assignType)));
+                            } catch (Exception ignore) {
+                            }
+                        }
+
+                        rm.fill();
+                        resName = rm.getResourceName();
+                    }
+                } catch (Exception ignore) {
+                }
+            }
+            wl.setResName(resName);
             wl.setDefVerId(""+parameterMap.get(KeyedParameter.PROCESSDEFINITIONVERSION));
+            wl.setScope(""+parameterMap.get("scope"));
+            wl.setAssignType(Integer.parseInt("" + parameterMap.get("assignType")));
+
+            if(parameterMap.containsKey("actType")){
+                wl.setActType((String) parameterMap.get("actType"));
+            }
+
+            if(parameterMap.containsKey("endDate")){
+                Object endDateObj = parameterMap.get("endDate");
+                if (endDateObj instanceof Date) {
+                    wl.setEndDate(new Timestamp(((Date)endDateObj).getTime()));
+                }
+            }
+
 //            int i=1;
 //            while(parameterMap.containsKey("dispatchParam" + i)){
 //                wl.setDispatchParam(" +i, ""+parameterMap.get("dispatchParam" + i));
@@ -198,10 +240,44 @@ public class JPAWorkList implements WorkList {
             if(wl==null) return;
 
             wl.setStatus(DefaultWorkList.WORKITEM_STATUS_CANCELLED);
-            for(int i=0; i<options.length; i++){
-                KeyedParameter parameter = options[i];
-                if("status".equals(parameter.getKey()) && UEngineUtil.isNotEmpty((String)parameter.getValue())){
-                    wl.setStatus(((String)parameter.getValue()).toUpperCase());
+            if(options != null) {
+                for(int i=0; i<options.length; i++){
+                    KeyedParameter parameter = options[i];
+                    if("status".equals(parameter.getKey()) && UEngineUtil.isNotEmpty((String)parameter.getValue())){
+                        String status = String.valueOf(parameter.getValue());
+                        if(UEngineUtil.isNotEmpty(status)){
+                            wl.setStatus(status.toUpperCase());
+                        }
+                    }
+                }
+            }
+
+            worklistRepository.save(wl);
+
+        }catch(Exception e){
+            throw new RemoteException("ExtWorkList", e);
+        }
+    }
+
+    public void compensateWorkItem(String taskID, KeyedParameter[] options, TransactionContext tc)
+            throws RemoteException {
+
+        try{
+
+            WorklistEntity wl = worklistRepository.findById(new Long(taskID)).get();
+
+            if(wl==null) return;
+
+            wl.setStatus(DefaultWorkList.WORKITEM_STATUS_COMPENSATED);
+            if(options != null) {
+                for(int i=0; i<options.length; i++){
+                    KeyedParameter parameter = options[i];
+                    if("status".equals(parameter.getKey()) && UEngineUtil.isNotEmpty((String)parameter.getValue())){
+                        String status = String.valueOf(parameter.getValue());
+                        if(UEngineUtil.isNotEmpty(status)){
+                            wl.setStatus(status.toUpperCase());
+                        }
+                    }
                 }
             }
 
@@ -231,7 +307,7 @@ public class JPAWorkList implements WorkList {
 
     public void updateWorkItem(
             String taskId,
-            String userId,
+            RoleMapping roleMapping,
             KeyedParameter[] parameters,
             TransactionContext tc)
             throws RemoteException {
@@ -240,8 +316,8 @@ public class JPAWorkList implements WorkList {
 
             WorklistEntity wlDAO = worklistRepository.findById(new Long(taskId)).get();
 
-            if(userId!=null)
-                wlDAO.setEndpoint(userId);
+            if (roleMapping != null && UEngineUtil.isNotEmpty(roleMapping.getEndpoint()))
+                wlDAO.setEndpoint(roleMapping.getEndpoint());
 
             for(int i=0; i<parameters.length; i++){
                 KeyedParameter parameter = parameters[i];

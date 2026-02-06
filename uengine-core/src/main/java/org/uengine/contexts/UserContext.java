@@ -20,6 +20,7 @@ public class UserContext {
 
     private String userId;
     private List<String> scopes;
+    private List<String> groups;
 
     public String getUserId() {
         return userId;
@@ -36,5 +37,14 @@ public class UserContext {
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
     }
+
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
+    }
+
 
 }

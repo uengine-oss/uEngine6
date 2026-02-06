@@ -697,22 +697,22 @@ public class HumanActivity extends ReceiveActivity {
 		}
 
 		if (roleMapping != null) {
+			// Map/Properties do not allow null keys/values
+			if (UEngineUtil.isNotEmpty(roleMapping.getScope())) {
+				kpv.put("scope", roleMapping.getScope());
+			}
+			kpv.put("assignType", "" + roleMapping.getAssignType());
+
 			if (!kpv.get(KeyedParameter.DISPATCHINGOPTION).equals("7")) {
 				int dispatchingOption = roleMapping.getDispatchingOption();
 
 				if (dispatchingOption == Role.DISPATCHINGOPTION_AUTO)
-					dispatchingOption = (roleMapping.size() > 1 ? Role.DISPATCHINGOPTION_RACING
-							: Role.DISPATCHINGOPTION_ALL);
+					dispatchingOption = (roleMapping.size() > 1 ? Role.DISPATCHINGOPTION_RACING : Role.DISPATCHINGOPTION_ALL);
 
 				kpv.put(KeyedParameter.DISPATCHINGOPTION, "" + dispatchingOption);
 			}
 
-			if (roleMapping.getResourceName() == null || roleMapping.getResourceName().equals(roleMapping.getEndpoint())
-					|| !UEngineUtil.isNotEmpty(roleMapping.getResourceName()))
-				roleMapping.fill(instance);
-
-			if (roleMapping.getResourceName() != null)
-				kpv.put("resourceName", roleMapping.getResourceName());
+			// resourceName(resName)은 WorkList 저장 시점(JPAWorkList)에서 fill()로 채움
 
 			String[] params = roleMapping.getDispatchingParameters();
 			if (params != null && params.length > 0) {
@@ -723,7 +723,10 @@ public class HumanActivity extends ReceiveActivity {
 				}
 			}
 		}
+		// If role mapping is not resolved at all, fall back to current user.
+		// NOTE: Do NOT collapse multi-mapping here. For racing/all distribution, every candidate should receive a workitem.
 		if (roleMapping == null || (roleMapping != null && roleMapping.size() > 1)) {
+		// if (roleMapping == null) {
 			/*
 			 * 2013/06/10
 			 * role mapping 이 되어있지 않은 경우에 경합모드로 변경
@@ -732,7 +735,7 @@ public class HumanActivity extends ReceiveActivity {
 			 */
 			// kpv.put(KeyedParameter.DISPATCHINGOPTION,
 			// ""+getRole().getDispatchingOption());
-			roleMapping = new RoleMapping();
+			roleMapping = RoleMapping.create();
 
 			// TODO: later spring security will be utilized
 			// Authentication authentication =
@@ -742,9 +745,7 @@ public class HumanActivity extends ReceiveActivity {
 			instance.putRoleMapping(getRole().getName(), roleMapping);
 			// roleMapping.setResourceName((String) principal.get("user"));
 
-			if (roleMapping.getResourceName() != null) {
-				kpv.put("resourceName", roleMapping.getResourceName());
-			}
+			// resourceName(resName)은 WorkList 저장 시점(JPAWorkList)에서 fill()로 채움
 			// kpv.put(KeyedParameter.DISPATCHINGOPTION, ""+Role.DISPATCHINGOPTION_RACING);
 		}
 
@@ -759,6 +760,8 @@ public class HumanActivity extends ReceiveActivity {
 				instance.putRoleMapping(referenceRoleMapping);
 			}
 		}
+
+		// resourceName(resName)은 WorkList 저장 시점(JPAWorkList)에서 fill()로 채움
 
 		// if(getRole().getRoleResolutionContext()!=null){
 		// String[] params =
@@ -796,8 +799,7 @@ public class HumanActivity extends ReceiveActivity {
 		}
 
 		if (tID == null) {
-			tID = worklist.addWorkItem(roleMapping != null ? roleMapping.getEndpoint() : null, parameters,
-					instance.getProcessTransactionContext());
+			tID = worklist.addWorkItem(roleMapping, parameters, instance.getProcessTransactionContext());
 		} else if (Activity.STATUS_SUSPENDED.equals(getStatus(instance))) {// if suspended
 			ResultPayload rp = new ResultPayload();
 			rp.setExtendedValue(
@@ -828,8 +830,7 @@ public class HumanActivity extends ReceiveActivity {
 			 * }
 			 */
 
-			worklist.addWorkItem(tID, roleMapping != null ? roleMapping.getEndpoint() : null, parameters,
-					instance.getProcessTransactionContext());
+			worklist.addWorkItem(tID, roleMapping, parameters, instance.getProcessTransactionContext());
 
 		}
 
@@ -870,6 +871,45 @@ public class HumanActivity extends ReceiveActivity {
 		worklist.completeWorkItem(taskId, parameters, instance.getProcessTransactionContext());
 
 		if (taskIds != null && taskIds.length > 1) {
+			// Racing(Claim) mode: once ONE candidate completes, the activity should complete
+			// and the other candidates' workitems should be cancelled.
+			int dispatchingOption = getRole() != null ? getRole().getDispatchingOption() : Role.DISPATCHINGOPTION_AUTO;
+			if (dispatchingOption == Role.DISPATCHINGOPTION_AUTO) {
+				// In AUTO mode, multi-mapping is treated as racing by default.
+				dispatchingOption = Role.DISPATCHINGOPTION_RACING;
+			}
+
+			if (dispatchingOption == Role.DISPATCHINGOPTION_RACING) {
+				// Fix the role mapping to the completing user (winner).
+				try {
+					String winner = UserContext.getThreadLocalInstance() != null
+							? UserContext.getThreadLocalInstance().getUserId()
+							: GlobalContext.getUserId();
+					if (UEngineUtil.isNotEmpty(winner) && getRole() != null) {
+						instance.putRoleMapping(getRole().getName(), winner);
+					}
+				} catch (Exception ignore) {
+				}
+
+				// Cancel other candidates' workitems.
+				for (int i = 0; i < taskIds.length; i++) {
+					String otherTaskId = taskIds[i];
+					if (otherTaskId == null)
+						continue;
+					if (otherTaskId.equals(taskId))
+						continue;
+
+					try {
+						worklist.cancelWorkItem(otherTaskId, new KeyedParameter[] {}, instance.getProcessTransactionContext());
+					} catch (Exception ignore) {
+					}
+				}
+
+				// Keep only the winning task id for history.
+				setTaskIds(instance, new String[] { taskId });
+				return true;
+			}
+
 			Map map = getTaskStatusMap(instance);
 			map.put(taskId, Activity.STATUS_COMPLETED);
 			setTaskStatusMap(instance, map);
@@ -1008,7 +1048,17 @@ public class HumanActivity extends ReceiveActivity {
 	public void compensate(ProcessInstance instance) throws Exception {
 
 		try {
-			cancelWorkItem(instance);
+			// cancelWorkItem(instance);
+
+			WorkList worklist = instance.getWorkList();
+			String[] taskIds = getTaskIds(instance);
+			
+			if (taskIds != null) {
+				KeyedParameter[] params = new KeyedParameter[] {};
+				for (String taskId : taskIds) {
+					worklist.compensateWorkItem(taskId, params, instance.getProcessTransactionContext());
+				}
+			}
 		} catch (Exception e) {
 			instance.addDebugInfo("failed to cancel workitem in the middle of compensation since: " + e.getMessage());
 		}
@@ -1019,7 +1069,8 @@ public class HumanActivity extends ReceiveActivity {
 	}
 
 	public void skip(ProcessInstance instance) throws Exception {
-		cancelWorkItem(instance);
+		// cancelWorkItem(instance);
+		cancelWorkItem(instance, Activity.STATUS_SKIPPED);
 
 		super.skip(instance);
 	}
@@ -1064,6 +1115,37 @@ public class HumanActivity extends ReceiveActivity {
 		setTaskIds(instance, null);
 	}
 
+	public void reset(ProcessInstance instance, String status) throws Exception {
+		super.reset(instance, status);
+
+		if (Activity.STATUS_COMPENSATED.equals(status)) {
+			compensateWorkItem(instance);
+		} else {
+			cancelWorkItem(instance);
+		}
+
+		setDueDate(instance, (Calendar) null);
+		setTaskIds(instance, null);
+	}
+
+	protected void compensateWorkItem(ProcessInstance instance) throws Exception {
+		compensateWorkItem(instance, null);
+	}
+
+	protected void compensateWorkItem(ProcessInstance instance, String status) throws Exception {
+		WorkList worklist = instance.getWorkList();
+
+		KeyedParameter[] parameters = new KeyedParameter[] { new KeyedParameter("status", status) };
+
+		String[] taskIds = getTaskIds(instance);
+		
+		if (taskIds != null) {
+			for (String taskId : taskIds) {
+				worklist.compensateWorkItem(taskId, parameters, instance.getProcessTransactionContext());
+			}
+		}
+	}	
+	
 	protected void cancelWorkItem(ProcessInstance instance) throws Exception {
 		cancelWorkItem(instance, null);
 	}
@@ -1117,43 +1199,60 @@ public class HumanActivity extends ReceiveActivity {
 			throw e;
 		}
 
-		String[] taskIds = new String[roleMapping.size()];
+		// RoleMapping의 커서를 처음으로 이동하여 첫 번째 매핑부터 시작
+		roleMapping.beforeFirst();
+
+		int mappingSize = roleMapping.size();
+		String[] taskIds = new String[mappingSize];
 		int i = 0;
+		
+		// 디버깅: RoleMapping 크기 확인
+		instance.addDebugInfo("[HumanActivity.reserveWorkItem] RoleMapping size: " + mappingSize + " for role: " + getRole().getName());
+		
 		do {
-			taskIds[i++] = worklist.reserveWorkItem(roleMapping.getEndpoint(), parameters,
+			String endpoint = roleMapping.getEndpoint();
+			instance.addDebugInfo("[HumanActivity.reserveWorkItem] Current endpoint: " + endpoint + ", cursor: " + roleMapping.getCursor() + ", i: " + i);
+			
+			if (endpoint == null || endpoint.trim().isEmpty()) {
+				throw new UEngineException("RoleMapping endpoint is null or empty for role: " + getRole().getName() + 
+					", cursor: " + roleMapping.getCursor() + ", size: " + mappingSize);
+			}
+			taskIds[i++] = worklist.reserveWorkItem(roleMapping.getCurrentRoleMapping(), parameters,
 					instance.getProcessTransactionContext());
 		} while (roleMapping.next());
+		
+		instance.addDebugInfo("[HumanActivity.reserveWorkItem] Created " + i + " workitems");
 
 		setTaskIds(instance, taskIds);
 
 		return taskIds;
 	}
 
-	public String[] getTaskIds(ProcessInstance instance) throws Exception {
-		if (instance == null)
-			return null;
-		String taskId = (String) instance.getProperty(getTracingTag(), PVKEY_TASKID);
-		String[] taskIds = null;
-		if (taskId != null && taskId.trim().length() > 0)
-			taskIds = taskId.split(",");
-		else
-			taskIds = null;
+	// public String[] getTaskIds(ProcessInstance instance) throws Exception {
+	// 	if (instance == null)
+	// 		return null;
+	// 	String taskId = (String) instance.getProperty(getTracingTag(), PVKEY_TASKID);
+	// 	String[] taskIds = null;
+	// 	if (taskId != null && taskId.trim().length() > 0)
+	// 		taskIds = taskId.split(",");
+	// 	else
+	// 		taskIds = null;
 
-		return taskIds;
-	}
+	// 	return taskIds;
+	// }
 
-	protected void setTaskIds(ProcessInstance instance, String[] taskIds) throws Exception {
-		StringBuffer taskId = new StringBuffer();
-		if (taskIds != null) {
-			for (int i = 0; i < taskIds.length; i++) {
-				if (taskId.length() > 0)
-					taskId.append(",");
-				taskId.append(taskIds[i]);
-			}
-		}
+	// protected void setTaskIds(ProcessInstance instance, String[] taskIds) throws Exception {
+	// 	StringBuffer taskId = new StringBuffer();
+	// 	if (taskIds != null) {
+	// 		for (int i = 0; i < taskIds.length; i++) {
+	// 			if (taskId.length() > 0)
+	// 				taskId.append(",");
+	// 			taskId.append(taskIds[i]);
+	// 		}
+	// 	}
 
-		instance.setProperty(getTracingTag(), PVKEY_TASKID, (taskId.length() > 0 ? taskId.toString() : null));
-	}
+	// 	instance.setProperty(getTracingTag(), PVKEY_TASKID, (taskId.length() > 0 ? taskId.toString() : null));
+	// }
 
 	protected Map getTaskStatusMap(ProcessInstance instance) throws Exception {
 		Map statusMap = (Map) instance.getProperty(getTracingTag(), "TASK_STATUS_MAP");
@@ -1217,22 +1316,84 @@ public class HumanActivity extends ReceiveActivity {
 		delegate(instance, roleMapping, false);
 	}
 
+	// public void delegate(ProcessInstance instance, RoleMapping roleMapping, boolean delegateOnlyForWorkitem)
+	// 		throws Exception {
+
+	// 	if (!delegateOnlyForWorkitem) {
+	// 		Role role = getRole();
+
+	// 		roleMapping.setName(role.getName());
+	// 		instance.putRoleMapping(roleMapping);
+	// 	}
+
+	// 	saveSnapshotHTML(instance);
+
+	// 	String[] taskIds = getTaskIds(instance);
+
+	// 	WorkList wl = instance.getWorkList();
+
+	// 	ResultPayload rp = new ResultPayload();
+	// 	rp.setExtendedValue(
+	// 			new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DELEGATED));
+	// 	rp.setExtendedValue(new KeyedParameter("endDate", new Date()));
+	// 	rp.setExtendedValue(new KeyedParameter(KeyedParameter.DISPATCHINGOPTION, "" + Role.DISPATCHINGOPTION_ALL));
+	// 	rp.setExtendedValue(new KeyedParameter("dispatchParam1", ""));
+
+	// 	wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
+
+	// 	setTaskIds(instance, null);
+	// 	executeActivity(instance);
+
+	// 	firePropertyChangeEventToActivityFilters(instance, "roleMapping", roleMapping);
+	// }
+
+	/**
+	 * 태스크 위임 메서드
+	 * 
+	 * @param instance 프로세스 인스턴스
+	 * @param roleMapping 위임할 RoleMapping (위임받을 사용자 정보 포함)
+	 * @param delegateOnlyForWorkitem 위임 방식
+	 *                                 - true: 원소유 유지 (workitem만 위임, 인스턴스 레벨 RoleMapping 유지)
+	 *                                 - false: 완전 이관 (workitem과 인스턴스 레벨 RoleMapping 모두 위임)
+	 * 
+	 * 위임 방식별 동작:
+	 * 
+	 * ┌─────────────────────┬──────────────────────────────┬──────────────────┬──────────────────────┐
+	 * │ delegateOnlyForWork │ 인스턴스 레벨 RoleMapping        │ workitem         │ 원소유자 접근 권한        │
+	 * ├─────────────────────┼──────────────────────────────┼──────────────────┼──────────────────────┤
+	 * │ true (원소유 유지)     │ 변경 안 함 (user1 유지)         │ 위임됨 (user2)    	| 유지됨 (user1도 볼 수 있음) 	   │
+	 * ├─────────────────────┼──────────────────────────────┼──────────────────┼──────────────────────┤
+	 * │ false (완전 이관)     │ 변경됨 (user2로 변경)            │ 위임됨 (user2)     │ 제거됨 (user1은 볼 수 없음) 	  │
+	 * └─────────────────────┴──────────────────────────────┴──────────────────┴──────────────────────┘
+	 * 
+	 * @throws Exception
+	 */  
 	public void delegate(ProcessInstance instance, RoleMapping roleMapping, boolean delegateOnlyForWorkitem)
 			throws Exception {
 
-		if (!delegateOnlyForWorkitem) {
-			Role role = getRole();
+		Role role = getRole();
+		roleMapping.setName(role.getName());
 
-			roleMapping.setName(role.getName());
+
+		// 	if (!delegateOnlyForWorkitem) {
+		// 		Role role = getRole();
+		// 		roleMapping.setName(role.getName());
+		// 		instance.putRoleMapping(roleMapping);
+		// 	}
+
+		// 완전 이관 모드: 인스턴스 레벨 RoleMapping 변경
+		if (!delegateOnlyForWorkitem) {
 			instance.putRoleMapping(roleMapping);
 		}
 
 		saveSnapshotHTML(instance);
 
 		String[] taskIds = getTaskIds(instance);
+		if (taskIds == null || taskIds.length == 0 || taskIds[0] == null) {
+			return;
+		}
 
 		WorkList wl = instance.getWorkList();
-
 		ResultPayload rp = new ResultPayload();
 		rp.setExtendedValue(
 				new KeyedParameter(KeyedParameter.DEFAULT_STATUS, DefaultWorkList.WORKITEM_STATUS_DELEGATED));
@@ -1240,10 +1401,19 @@ public class HumanActivity extends ReceiveActivity {
 		rp.setExtendedValue(new KeyedParameter(KeyedParameter.DISPATCHINGOPTION, "" + Role.DISPATCHINGOPTION_ALL));
 		rp.setExtendedValue(new KeyedParameter("dispatchParam1", ""));
 
-		wl.updateWorkItem(taskIds[0], null, rp.getExtendedValues(), instance.getProcessTransactionContext());
+		// workitem의 endpoint를 위임된 사용자로 변경
+		wl.updateWorkItem(taskIds[0], roleMapping, rp.getExtendedValues(), instance.getProcessTransactionContext());
+		
+		// 원소유 유지 모드: workitem의 endpoint를 저장 (테스트에서 확인용)
+		if (delegateOnlyForWorkitem) {
+			instance.setProperty(getTracingTag(), "_delegated_workitem_endpoint", roleMapping.getEndpoint());
+		}
 
-		setTaskIds(instance, null);
-		executeActivity(instance);
+		// 완전 이관 모드: 새로운 workitem 생성
+		if (!delegateOnlyForWorkitem) {
+			setTaskIds(instance, null);
+			executeActivity(instance);
+		}
 
 		firePropertyChangeEventToActivityFilters(instance, "roleMapping", roleMapping);
 	}

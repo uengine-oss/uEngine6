@@ -85,7 +85,7 @@ public class HumanApprovalLineActivity extends ScopeActivity {
 		ComplexActivity parent = (HumanApprovalLineActivity) humanApprovalActivity.getParentActivity();
 		RoleMapping approver = RoleMapping.create();
 		approver.setEndpoint(approverEndpoint);
-		approver.fill(instance);
+		approver.fill();
 
 		humanApprovalActivity.setName(activityName);
 		humanApprovalActivity.setTracingTag(null);

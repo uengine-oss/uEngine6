@@ -1,9 +1,13 @@
 package org.uengine.kernel;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.uengine.util.UEngineUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -11,10 +15,25 @@ import java.util.Properties;
  * @author Sungsoo Park
  */
 
-public class RoleMapping implements java.io.Serializable, Cloneable, CommandVariableValue{
+public abstract class RoleMapping implements java.io.Serializable, Cloneable, CommandVariableValue{
 	private static final long serialVersionUID = org.uengine.kernel.GlobalContext.SERIALIZATION_UID;
 	public static final String ROLES_PREFIX = "[roles].";
 	public static Class USE_CLASS = null;
+
+	/**
+	 * endpoint -> resourceName(resName) Flyweight 캐시 (LRU).
+	 * WorkList 저장 시점에 fill()이 여러번 호출돼도 IAM 호출이 중복되지 않도록 합니다.
+	 */
+	private static final int RES_NAME_CACHE_MAX_SIZE =
+			Integer.parseInt(GlobalContext.getPropertyString("rolemapping.flyweight.maxSize", "10000"));
+
+	private static final Map<String, String> RES_NAME_CACHE =
+			Collections.synchronizedMap(new LinkedHashMap<String, String>(128, 0.75f, true) {
+				@Override
+				protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+					return size() > RES_NAME_CACHE_MAX_SIZE;
+				}
+			});
 	
 	protected String name;//this is roleName. don't be confused with resource name
 	protected String resourceName;
@@ -25,6 +44,7 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 	protected String nickName;
 	protected String groupId;
 	protected String groupName;
+	protected String scope;
 	protected String userPortrait;
 	protected String userLastName;
 	protected String userMiddleName;
@@ -43,6 +63,12 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
     private java.util.Properties extendedProperties;
     int cursor;
     boolean isSingle = true;
+
+	/**
+	 * 연속/지속 fill 호출 시 중복 처리 방지 플래그.
+	 * (런타임에서만 의미 있으므로 transient)
+	 */
+	private transient boolean isFilled;
     
     //for multiple role binding
 	@JsonIgnore
@@ -81,15 +107,17 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 	}
 
 	public String getResourceName() {
-		String resourceName = getCurrentRoleMapping().resourceName;
-		if(resourceName==null)
-			resourceName = getEndpoint();
+		return getCurrentRoleMapping().resourceName;
+
+		// String resourceName = getCurrentRoleMapping().resourceName;
+		// if(resourceName==null)
+		// 	resourceName = getEndpoint();
 		
-		if ( getAssignType()==Role.ASSIGNTYPE_DEPT  && getGroupName()!=null) {
-			resourceName = getGroupName();
-		}
-		
-		return resourceName;
+		// if ( getAssignType()==Role.ASSIGNTYPE_DEPT  && getGroupName()!=null) {
+		// 	resourceName = getGroupName();
+		// }
+
+		// return resourceName;
 	}
 
 	public void setResourceName(String resourceName) {
@@ -143,7 +171,15 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 	public void setGroupName(String deptName) {
 		getCurrentRoleMapping().groupName = deptName;
 	}
+
+	public String getScope() {
+		return getCurrentRoleMapping().scope;
+	}
 	
+	public void setScope(String scope) {
+		getCurrentRoleMapping().scope = scope;
+	}
+
 	public String getGroupId() {
 		return getCurrentRoleMapping().groupId;
 	}
@@ -366,7 +402,7 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 	public static RoleMapping create(){
 		if(USE_CLASS==null){
 			try{
-				USE_CLASS = GlobalContext.loadClass(GlobalContext.getPropertyString("rolemapping.class","com.defaultcompany.organization.DefaultCompanyRoleMapping"));
+				USE_CLASS = GlobalContext.loadClass(GlobalContext.getPropertyString("rolemapping.class", "com.defaultcompany.organization.DefaultCompanyRoleMapping"));
 			}catch(Exception e){
 				throw new RuntimeException("Couldn't find 'rolemapping.class' in uengine.properties has been set or couldn't initializes it.", e);
 				//USE_CLASS = Liferay44RoleMapping.class;
@@ -374,51 +410,64 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 		}
 		
 		try {
+			// Spring 기반 실행환경에서는 prototype scope 빈을 받을 수 있도록 ComponentFactory 경유
+			try {
+				IComponentFactory factory = GlobalContext.componentFactory;
+				if (factory != null) {
+					RoleMapping fromFactory = (RoleMapping) factory.getComponent((Class) USE_CLASS, new Object[] {});
+					if (fromFactory != null) {
+						return fromFactory;
+					}
+				}
+			} catch (Throwable ignore) {
+				// factory 경유 실패 시 reflection newInstance로 fallback
+			}
+
 			return (RoleMapping) USE_CLASS.newInstance();
 		} catch (Exception e) {
-			return null;
+			// 최후 fallback: core 내 기본 구현체
+			return new com.defaultcompany.organization.DefaultCompanyRoleMapping();
 		}
 	}
 
-    public static void main(String[] args) throws Exception{
+    // public static void main(String[] args) throws Exception{
     	
-    	RoleMapping rm = new RoleMapping();
+    // 	RoleMapping rm = new RoleMapping();
     	
-    	rm.setEmailAddress("pongsor2@hotmail.com");
-    	rm.setEndpoint("pongsor");
+    // 	rm.setEmailAddress("pongsor2@hotmail.com");
+    // 	rm.setEndpoint("pongsor");
     	
-    	rm.moveToAdd();    	
-    	rm.setEmailAddress("abc@abc.com");
-    	rm.setEndpoint("abc");
+    // 	rm.moveToAdd();    	
+    // 	rm.setEmailAddress("abc@abc.com");
+    // 	rm.setEndpoint("abc");
     	
-    	rm.moveToAdd();
+    // 	rm.moveToAdd();
 
-    	rm.setEmailAddress("abc@abc.com");
-    	rm.setEndpoint("abc");
+    // 	rm.setEmailAddress("abc@abc.com");
+    // 	rm.setEndpoint("abc");
 
 
-    	System.out.println(rm.size());
+    // 	System.out.println(rm.size());
     	
-    	rm.beforeFirst();
+    // 	rm.beforeFirst();
     	
-    	RoleMapping newRM = RoleMapping.create();
-    	java.util.HashMap endpoints = new java.util.HashMap();
-    	do{
-    		if(!endpoints.containsKey(rm.getEndpoint())){
-    			newRM.replaceCurrentRoleMapping(rm.getCurrentRoleMapping().makeSingle());
-    			newRM.moveToAdd();
+    // 	RoleMapping newRM = RoleMapping.create();
+    // 	java.util.HashMap endpoints = new java.util.HashMap();
+    // 	do{
+    // 		if(!endpoints.containsKey(rm.getEndpoint())){
+    // 			newRM.replaceCurrentRoleMapping(rm.getCurrentRoleMapping().makeSingle());
+    // 			newRM.moveToAdd();
 
-        		endpoints.put(rm.getEndpoint(), rm.getEndpoint());
-    		}
-    	}while(rm.next());
+    //     		endpoints.put(rm.getEndpoint(), rm.getEndpoint());
+    // 		}
+    // 	}while(rm.next());
     	
-    	GlobalContext.serialize(newRM, System.out, String.class);
-    	System.out.flush();
-    	GlobalContext.serialize(rm, System.out, String.class);
-    }
-    	
+    // 	GlobalContext.serialize(newRM, System.out, String.class);
+    // 	System.out.flush();
+    // 	GlobalContext.serialize(rm, System.out, String.class);
+    // }
 
-// for serialization by XMLEncoder/Decoder. don't use it directly.
+
 	public ArrayList getMultipleMappings() {
 		if(isSingle) return null;
 		return multipleMappings;
@@ -467,9 +516,70 @@ public class RoleMapping implements java.io.Serializable, Cloneable, CommandVari
 //		}		
 //	}
 	
-	
-	public void fill(ProcessInstance instance) throws Exception {
-		if(GlobalContext.isDesignTime()) return;
+	/**
+	 * Template Method (공통 구현):
+	 * - isFilled / Flyweight cache 체크
+	 * - 없으면 doFill(protected) 호출로 실제 IAM/API Call 수행
+	 */
+	public final void fill() throws Exception {
+		if (GlobalContext.isDesignTime()) return;
+
+		int originalCursor = getCursor();
+		try {
+			beforeFirst();
+			do {
+				RoleMapping current = getCurrentRoleMapping();
+				if (current != null) {
+					current.fillSingle();
+				}
+			} while (next());
+		} finally {
+			setCursor(originalCursor);
+		}
+	}
+
+	private void fillSingle() throws Exception {
+		if (isFilled) return;
+
+		String endpoint = getEndpoint();
+		if (!UEngineUtil.isNotEmpty(endpoint)) {
+			isFilled = true;
+			return;
+		}
+
+		// 이미 resourceName이 세팅되어 있으면(=resName) doFill 불필요
+		String current = getResourceName();
+		if (UEngineUtil.isNotEmpty(current) && !current.equals(endpoint)) {
+			isFilled = true;
+			return;
+		}
+
+		String cached = RES_NAME_CACHE.get(endpoint);
+		if (UEngineUtil.isNotEmpty(cached)) {
+			setResourceName(cached);
+			isFilled = true;
+			return;
+		}
+
+		String resName = doFill();
+		if (!UEngineUtil.isNotEmpty(resName)) {
+			resName = endpoint;
+		}
+
+		RES_NAME_CACHE.put(endpoint, resName);
+		setResourceName(resName);
+		isFilled = true;
+	}
+
+	/**
+	 * 구현체가 실제 사용자 정보(이름) 조회를 수행하는 지점.
+	 * - 외부에서 호출되지 않도록 protected
+	 * - 반환값은 WorklistEntity.resName에 저장될 resourceName
+	 */
+	protected abstract String doFill() throws Exception;
+
+	protected static String asString(Object v) {
+		return v != null ? String.valueOf(v) : null;
 	}
 	
 	public void beforeFirst(){

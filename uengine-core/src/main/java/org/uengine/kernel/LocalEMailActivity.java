@@ -141,7 +141,7 @@ public class LocalEMailActivity extends DefaultActivity {
 			if (fromUser != null) {
 				actualFrom = fromUser.getEmailAddress();
 				if (!UEngineUtil.isNotEmpty(actualFrom)) {
-					fromUser.fill(instance);
+					fromUser.fill();
 					actualFrom = fromUser.getEmailAddress();
 					if (UEngineUtil.isNotEmpty(actualFrom)) {
 						actualFromName = fromUser.getResourceName();
@@ -189,7 +189,7 @@ public class LocalEMailActivity extends DefaultActivity {
 				}
 
 				if (!UEngineUtil.isNotEmpty(roleMapping.getEmailAddress()))
-					roleMapping.fill(instance);
+					roleMapping.fill();
 
 				if (roleMapping.getEmailAddress() == null) { // if there's no email address though filling up, use
 																// endpoint instead.

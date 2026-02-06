@@ -27,7 +27,8 @@ public class DirectRoleResolutionContext extends RoleResolutionContext {
 		RoleMapping rm = RoleMapping.create();
 		rm.setEndpoint(getEndpoint());
 		rm.setResourceName(getResourceName());
-		rm.fill(instance);
+		rm.setAssignType(Role.ASSIGNTYPE_USER);
+		// Direct mapping은 이미 resourceName이 주어지므로 fill()로 사용자 조회를 할 필요가 없음.
 		
 		return rm;
 	}

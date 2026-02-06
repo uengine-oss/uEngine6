@@ -10,8 +10,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Scope;
 import org.uengine.five.overriding.ActivityQueue;
 import org.uengine.five.overriding.EventMappingDeployFilter;
+import org.uengine.five.service.IAMCompanyRoleMapping;
 import org.uengine.five.overriding.InstanceNameFilter;
 import org.uengine.five.overriding.PayloadFilter;
 import org.uengine.five.overriding.ServiceRegisterDeployFilter;
@@ -45,6 +47,20 @@ public class ProcessServiceApplication {
     public static void main(String[] args) {
         applicationContext = SpringApplication.run(ProcessServiceApplication.class, args);
         GlobalContext.setComponentFactory(new SpringComponentFactory());
+
+        // Application 쪽에서 RoleMapping 구현/캐시 설정을 주입
+        // (GlobalContext는 uengine.properties 기반이므로 Spring 부팅 시점에 override)
+        GlobalContext.getProperties().setProperty("rolemapping.class", IAMCompanyRoleMapping.class.getName());
+    }
+
+    /**
+     * RoleMapping 구현체를 Application에서 prototype으로 등록.
+     * RoleMapping.create() -> GlobalContext.componentFactory 경유 시 매번 새 인스턴스를 받습니다.
+     */
+    @Bean
+    @Scope("prototype")
+    public IAMCompanyRoleMapping roleMapping() {
+        return new IAMCompanyRoleMapping();
     }
 
     // @EventListener(ApplicationReadyEvent.class)

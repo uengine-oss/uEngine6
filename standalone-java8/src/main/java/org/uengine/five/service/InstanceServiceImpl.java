@@ -16,10 +16,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.Date;
+import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +52,15 @@ import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.StartAndCompleteCommand;
+import org.uengine.five.dto.TaskReturnAvailability;
+import org.uengine.five.dto.TaskReturnCandidate;
+import org.uengine.five.dto.TaskReturnCommand;
+import org.uengine.five.dto.TaskReturnResult;
+import org.uengine.five.dto.TaskSkipAvailability;
+import org.uengine.five.dto.TaskSkipCommand;
+import org.uengine.five.dto.TaskSkipResult;
 import org.uengine.five.dto.WorkItemResource;
+import org.uengine.five.dto.RoleMappingCommand;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.entity.WorklistEntity;
@@ -64,20 +75,30 @@ import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityInstanceContext;
+import org.uengine.kernel.And;
+import org.uengine.kernel.Condition;
 import org.uengine.kernel.DefaultProcessInstance;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.ExecutionScopeContext;
+import org.uengine.kernel.Evaluate;
+import org.uengine.kernel.ExpressionEvaluateCondition;
 import org.uengine.kernel.GlobalContext;
 import org.uengine.kernel.HumanActivity;
+import org.uengine.kernel.Not;
+import org.uengine.kernel.Or;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
+import org.uengine.kernel.TaskSkipAnalyzer;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
+import org.uengine.contexts.UserContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
+import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SendTask;
+import org.uengine.webservices.worklist.DefaultWorkList;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
 import org.uengine.kernel.bpmn.SignalIntermediateCatchEvent;
@@ -495,7 +516,7 @@ public class InstanceServiceImpl implements InstanceService {
     // produces 의 의미는. 리스폰스 헤더에 콘텐트타입을 설정해줌. 그래야 브라우저가 json 객체로 받아들인다.
     @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     public Object setRoleMapping(@PathVariable("instanceId") String instanceId,
-            @PathVariable("roleName") String roleName, @RequestBody RoleMapping roleMapping) throws Exception {
+            @PathVariable("roleName") String roleName, @RequestBody RoleMappingCommand roleMapping) throws Exception {
 
         ProcessInstance instance = applicationContext.getBean(
                 ProcessInstance.class,
@@ -504,13 +525,16 @@ public class InstanceServiceImpl implements InstanceService {
                         instanceId,
                         null
                 });
-        // 예상에는, 롤매핑도 인스턴스처럼 DB 에 넣고, 튀어나오는 아이디를 roleMapping 객체에 넣은다음
-        // instance.putRoleMapping 을 해야할듯.?
-        instance.putRoleMapping(roleName, roleMapping);
-
-        roleMapping.setName(roleName);
-
-        return roleMapping;
+        RoleMapping rm = RoleMapping.create();
+        if (rm != null && roleMapping != null) {
+            if (roleMapping.getEndpoint() != null) rm.setEndpoint(roleMapping.getEndpoint());
+            if (roleMapping.getResourceName() != null) rm.setResourceName(roleMapping.getResourceName());
+            if (roleMapping.getScope() != null) rm.setScope(roleMapping.getScope());
+            if (roleMapping.getAssignType() != null) rm.setAssignType(roleMapping.getAssignType());
+        }
+        instance.putRoleMapping(roleName, rm);
+        rm.setName(roleName);
+        return rm;
     }
 
     /**
@@ -947,6 +971,517 @@ public class InstanceServiceImpl implements InstanceService {
         workItem.getWorklist().setProcessInstance(null); // disconnect recursive json path
 
         return workItem;
+    }
+
+    @RequestMapping(value = "/work-item/{taskId}/return/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public TaskReturnAvailability getTaskReturnAvailability(@PathVariable("taskId") String taskId) throws Exception {
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String userId = SecurityAwareServletFilter.getUserId();
+        if (userId != null) {
+            GlobalContext.setUserId(userId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            return TaskReturnAvailability.disabled("Human task only.");
+        }
+
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            return TaskReturnAvailability.disabled("Already closed or illegal status.");
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+
+        // 실행 직전(previous) 액티비티 목록(구조적 프로세스 기준)을 후보로 사용
+        Vector previousActivities = currentActivity.getPreviousActivities();
+        if (previousActivities == null || previousActivities.size() == 0) {
+            return TaskReturnAvailability.disabled("No previous activities.");
+        }
+
+        // UI 표시를 위해, 이전 activity(tracingTag)에 대응되는 최근 COMPLETED workitem 정보를 보강
+        List<WorklistEntity> completed = worklistRepository.findWorkListByInstId(rootInstId);
+
+        List<TaskReturnCandidate> candidates = new ArrayList<>();
+        for (Object obj : previousActivities) {
+            if (!(obj instanceof Activity)) continue;
+            Activity prev = (Activity) obj;
+
+            if (!(prev instanceof HumanActivity)) {
+                continue;
+            }
+
+            if (prev.getTracingTag() != null && prev.getTracingTag().equals(current.getTrcTag())) {
+                continue;
+            }
+
+            WorklistEntity best = null;
+            if (completed != null) {
+                boolean hasExecScope = current.getExecScope() != null && current.getExecScope().trim().length() > 0;
+                for (WorklistEntity wl : completed) {
+                    if (wl == null) continue;
+                    if (wl.getTrcTag() == null) continue;
+                    if (!wl.getTrcTag().equals(prev.getTracingTag())) continue;
+
+                    if (hasExecScope) {
+                        if (wl.getExecScope() == null) continue;
+                        if (!current.getExecScope().equals(wl.getExecScope())) continue;
+                    }
+
+                    if (best == null) {
+                        best = wl;
+                        continue;
+                    }
+
+                    Date bestEnd = best.getEndDate();
+                    Date wlEnd = wl.getEndDate();
+                    if (bestEnd == null && wlEnd != null) {
+                        best = wl;
+                    } else if (bestEnd != null && wlEnd != null && wlEnd.after(bestEnd)) {
+                        best = wl;
+                    } else if (bestEnd == null && wlEnd == null && wl.getTaskId() != null && best.getTaskId() != null
+                            && wl.getTaskId() > best.getTaskId()) {
+                        best = wl;
+                    }
+                }
+
+                if (best == null && hasExecScope) {
+                    for (WorklistEntity wl : completed) {
+                        if (wl == null) continue;
+                        if (wl.getTrcTag() == null) continue;
+                        if (!wl.getTrcTag().equals(prev.getTracingTag())) continue;
+
+                        if (best == null) {
+                            best = wl;
+                            continue;
+                        }
+
+                        Date bestEnd = best.getEndDate();
+                        Date wlEnd = wl.getEndDate();
+                        if (bestEnd == null && wlEnd != null) {
+                            best = wl;
+                        } else if (bestEnd != null && wlEnd != null && wlEnd.after(bestEnd)) {
+                            best = wl;
+                        } else if (bestEnd == null && wlEnd == null && wl.getTaskId() != null && best.getTaskId() != null
+                                && wl.getTaskId() > best.getTaskId()) {
+                            best = wl;
+                        }
+                    }
+                }
+            }
+
+            TaskReturnCandidate c = new TaskReturnCandidate();
+            c.setTracingTag(prev.getTracingTag());
+            c.setActivityName(prev.getName());
+
+            if (best != null) {
+                c.setTaskId(best.getTaskId());
+                c.setEndpoint(best.getEndpoint());
+                c.setCompletedAt(best.getEndDate());
+                c.setExecScope(best.getExecScope());
+            } else {
+                c.setTaskId(null);
+                c.setEndpoint(null);
+                c.setCompletedAt(null);
+                c.setExecScope(current.getExecScope());
+            }
+
+            candidates.add(c);
+        }
+
+        if (candidates.isEmpty()) {
+            return TaskReturnAvailability.disabled("No previous human tasks.");
+        }
+
+        return TaskReturnAvailability.enabled(candidates);
+    }
+
+    @RequestMapping(value = "/work-item/{taskId}/return", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public TaskReturnResult returnWorkItem(
+            @PathVariable("taskId") String taskId,
+            @RequestBody TaskReturnCommand command) throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+        if (command == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "command is required");
+        }
+
+        String requestUserId = UserContext.getThreadLocalInstance().getUserId();
+        if (requestUserId == null || requestUserId.trim().isEmpty()) {
+            requestUserId = SecurityAwareServletFilter.getUserId();
+        }
+        if (requestUserId != null && requestUserId.trim().length() > 0) {
+            GlobalContext.setUserId(requestUserId);
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Human task only.");
+        }
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+
+        String currentOwner = current.getEndpoint();
+        try {
+            if ((currentOwner == null || currentOwner.trim().isEmpty()) && humanActivity != null) {
+                RoleMapping actual = humanActivity.getActualMapping(instance);
+                if (actual != null) {
+                    currentOwner = actual.getEndpoint();
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (requestUserId != null && currentOwner != null && !requestUserId.equals(currentOwner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No permission to return this task. currentOwner=" + currentOwner + ", userId=" + requestUserId);
+        }
+
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Illegal return for workitem [" + humanActivity + ":" + humanActivity.getStatus(instance)
+                            + "]: Already closed or illegal status.");
+        }
+
+        TaskReturnAvailability availability = getTaskReturnAvailability(taskId);
+        if (!availability.isEnabled() || availability.getCandidates() == null || availability.getCandidates().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    availability.getReason() != null ? availability.getReason() : "Not allowed.");
+        }
+
+        String targetTracingTag = null;
+        String targetExecScope = null;
+
+        TaskReturnCandidate hit = null;
+        if (command.getTaskId() != null) {
+            Long targetTaskId = command.getTaskId();
+            for (TaskReturnCandidate c : availability.getCandidates()) {
+                if (c != null && c.getTaskId() != null && c.getTaskId().equals(targetTaskId)) {
+                    hit = c;
+                    break;
+                }
+            }
+            if (hit == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetTaskId is not a valid candidate.");
+            }
+            targetTracingTag = hit.getTracingTag();
+            targetExecScope = hit.getExecScope();
+        } else if (command.getTracingTag() != null && command.getTracingTag().trim().length() > 0) {
+            String requested = command.getTracingTag().trim();
+            for (TaskReturnCandidate c : availability.getCandidates()) {
+                if (c != null && requested.equals(c.getTracingTag())) {
+                    hit = c;
+                    break;
+                }
+            }
+            if (hit == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "tracingTag is not a valid candidate.");
+            }
+            targetTracingTag = hit.getTracingTag();
+            targetExecScope = (command.getExecScope() != null && command.getExecScope().trim().length() > 0)
+                    ? command.getExecScope().trim()
+                    : hit.getExecScope();
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetTaskId or tracingTag is required.");
+        }
+
+        String engineUserId = null;
+        if (hit != null && hit.getEndpoint() != null && hit.getEndpoint().trim().length() > 0) {
+            engineUserId = hit.getEndpoint().trim();
+        }
+        if (engineUserId == null) {
+            engineUserId = requestUserId;
+        }
+        String originalUserId = UserContext.getThreadLocalInstance().getUserId();
+        String originalGlobalUserId = GlobalContext.getUserId();
+
+        current.setStatus(DefaultWorkList.WORKITEM_STATUS_SUSPENDED);
+        if (command.getReason() != null && command.getReason().trim().length() > 0) {
+            String existing = current.getDescription();
+            String reason = command.getReason().trim();
+            String msg = "[RETURN] to=" + targetTracingTag + " reason=" + reason;
+            current.setDescription(existing == null || existing.trim().isEmpty() ? msg : (existing + "\n" + msg));
+        }
+        worklistRepository.save(current);
+
+        if (hit != null && hit.getTaskId() != null) {
+            try {
+                WorklistEntity targetWorkItem = worklistRepository.findById(hit.getTaskId()).orElse(null);
+                if (targetWorkItem != null) {
+                    if (targetWorkItem.getDecision() == null || targetWorkItem.getDecision().trim().isEmpty()) {
+                        targetWorkItem.setDecision("RETURN");
+                    }
+                    if ((targetWorkItem.getReason() == null || targetWorkItem.getReason().trim().isEmpty())
+                            && command.getReason() != null && !command.getReason().trim().isEmpty()) {
+                        targetWorkItem.setReason(command.getReason());
+                    }
+                    worklistRepository.save(targetWorkItem);
+                }
+            } catch (Exception ignore) {
+            }
+        }
+
+        if (targetExecScope != null && targetExecScope.trim().length() > 0) {
+            instance.setExecutionScope(targetExecScope.trim());
+        }
+
+        Activity targetActivity = instance.getProcessDefinition().getActivity(targetTracingTag);
+        if (targetActivity == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target activity not found: " + targetTracingTag);
+        }
+        try {
+            if (engineUserId != null && engineUserId.trim().length() > 0) {
+                UserContext.getThreadLocalInstance().setUserId(engineUserId);
+                GlobalContext.setUserId(engineUserId);
+            }
+            targetActivity.backToHere(instance);
+        } finally {
+            UserContext.getThreadLocalInstance().setUserId(originalUserId);
+            if (originalGlobalUserId != null) {
+                GlobalContext.setUserId(originalGlobalUserId);
+            }
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+        List<WorklistEntity> currents = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+        List<Long> currentTaskIds = new ArrayList<>();
+        if (currents != null) {
+            for (WorklistEntity wl : currents) {
+                if (wl != null && wl.getTaskId() != null) {
+                    currentTaskIds.add(wl.getTaskId());
+                }
+            }
+        }
+
+        TaskReturnResult result = new TaskReturnResult();
+        result.setInstanceId(instanceId);
+        result.setRootInstId(rootInstId);
+        result.setTargetTracingTag(targetTracingTag);
+        result.setCurrentTaskIds(currentTaskIds);
+        return result;
+    }
+
+    /**
+     * 태스크 SKIP(건너뛰기) 가능 여부 조회
+     */
+    @RequestMapping(value = "/work-item/{taskId}/skip/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public TaskSkipAvailability getTaskSkipAvailability(@PathVariable("taskId") String taskId) throws Exception {
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String userId = SecurityAwareServletFilter.getUserId();
+        if (userId != null) {
+            GlobalContext.setUserId(userId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            return TaskSkipAvailability.disabled("Human task only.");
+        }
+
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+        String status = humanActivity.getStatus(instance);
+        if (!Activity.isSkippable(status) || (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem())) {
+            return TaskSkipAvailability.disabled("Already closed or illegal status.");
+        }
+        if (humanActivity.isNotificationWorkitem()) {
+            return TaskSkipAvailability.disabled("Notification workitem is not skippable.");
+        }
+
+        try {
+            List<Activity> all = instance.getProcessDefinition().getChildActivities();
+            if (all != null) {
+                for (Activity a : all) {
+                    if (a instanceof org.uengine.kernel.bpmn.Event) {
+                        org.uengine.kernel.bpmn.Event ev = (org.uengine.kernel.bpmn.Event) a;
+                        if (ev.getAttachedToRef() != null && ev.getAttachedToRef().equals(humanActivity.getTracingTag())) {
+                            return TaskSkipAvailability.disabled("Boundary event attached: " + ev.getTracingTag());
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+        }
+
+        try {
+            String scope = current.getExecScope();
+            List<Activity> nexts = humanActivity.getPossibleNextActivities(instance, scope);
+            if (nexts == null || nexts.isEmpty()) {
+                return TaskSkipAvailability.disabled("No possible next activity from current state.");
+            }
+        } catch (Exception e) {
+            return TaskSkipAvailability.disabled("Cannot evaluate next activities: " + e.getMessage());
+        }
+
+        // 변수 매핑 기반 SKIP 가능 여부(정적 분석, 보수적)
+        try {
+            TaskSkipAnalyzer.SkipVarReference hit = TaskSkipAnalyzer.findFirstBlockingReference(
+                    instance,
+                    humanActivity,
+                    new TaskSkipAnalyzer.DefinitionResolver() {
+                        @Override
+                        public ProcessDefinition resolve(String definitionId, String version) throws Exception {
+                            Object defObj = definitionService.getDefinition(definitionId, version);
+                            if (defObj instanceof ProcessDefinition) {
+                                return (ProcessDefinition) defObj;
+                            }
+                            return null;
+                        }
+                    });
+            if (hit != null) {
+                return TaskSkipAvailability.disabled("Uses mapped variable later: " + hit.varName
+                        + " at " + hit.whereTracingTag + (hit.whereType != null ? (" (" + hit.whereType + ")") : ""));
+            }
+        } catch (Exception e) {
+            return TaskSkipAvailability.disabled("Cannot analyze variable mapping usage: " + e.getMessage());
+        }
+
+        return TaskSkipAvailability.enabled();
+    }
+
+    /**
+     * 태스크 SKIP 실행
+     */
+    @RequestMapping(value = "/work-item/{taskId}/skip", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public TaskSkipResult skipWorkItem(
+            @PathVariable("taskId") String taskId,
+            @RequestBody(required = false) TaskSkipCommand command) throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        String requestUserId = UserContext.getThreadLocalInstance().getUserId();
+        if (requestUserId == null || requestUserId.trim().isEmpty()) {
+            requestUserId = SecurityAwareServletFilter.getUserId();
+        }
+        if (requestUserId != null && requestUserId.trim().length() > 0) {
+            GlobalContext.setUserId(requestUserId);
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Human task only.");
+        }
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+
+        String currentOwner = current.getEndpoint();
+        try {
+            if ((currentOwner == null || currentOwner.trim().isEmpty()) && humanActivity != null) {
+                RoleMapping actual = humanActivity.getActualMapping(instance);
+                if (actual != null) {
+                    currentOwner = actual.getEndpoint();
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (requestUserId != null && currentOwner != null && !requestUserId.equals(currentOwner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No permission to skip this task. currentOwner=" + currentOwner + ", userId=" + requestUserId);
+        }
+
+        TaskSkipAvailability availability = getTaskSkipAvailability(taskId);
+        if (!availability.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    availability.getReason() != null ? availability.getReason() : "Not allowed.");
+        }
+
+        if (current.getExecScope() != null && current.getExecScope().trim().length() > 0) {
+            instance.setExecutionScope(current.getExecScope().trim());
+        }
+
+        instance.getProcessDefinition().flowControl("skip", instance, humanActivity.getTracingTag());
+
+        try {
+            WorklistEntity after = worklistRepository.findById(new Long(taskId)).orElse(null);
+            if (after != null) {
+                after.setDecision("SKIP");
+                if (command != null && command.getReason() != null && command.getReason().trim().length() > 0) {
+                    if (after.getReason() == null || after.getReason().trim().isEmpty()) {
+                        after.setReason(command.getReason());
+                    }
+                    String existing = after.getDescription();
+                    String msg = "[SKIP] reason=" + command.getReason().trim();
+                    after.setDescription(existing == null || existing.trim().isEmpty() ? msg : (existing + "\n" + msg));
+                }
+                after.setStatus("SKIPPED");
+                after.setEndDate(new Date());
+                worklistRepository.save(after);
+            }
+        } catch (Exception ignore) {
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+        List<WorklistEntity> currents = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+        List<Long> currentTaskIds = new ArrayList<>();
+        if (currents != null) {
+            for (WorklistEntity wl : currents) {
+                if (wl != null && wl.getTaskId() != null) {
+                    currentTaskIds.add(wl.getTaskId());
+                }
+            }
+        }
+
+        TaskSkipResult result = new TaskSkipResult();
+        result.setInstanceId(instanceId);
+        result.setRootInstId(rootInstId);
+        result.setSkippedTracingTag(humanActivity.getTracingTag());
+        result.setCurrentTaskIds(currentTaskIds);
+        return result;
     }
 
     @RequestMapping(value = "/work-item/{taskId}/save", method = RequestMethod.POST)

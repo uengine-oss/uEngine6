@@ -475,7 +475,7 @@ public class SubProcessActivity extends DefaultActivity implements NeedArrangeme
                 thisRM = thisRM.makeSingle();
 
                 if (thisRM.getEndpoint().equals(thisRM.getResourceName()))
-                    thisRM.fill(instance);
+                    thisRM.fill();
 
                 Serializable thisValue = null;
                 if (forEachValue != null) {

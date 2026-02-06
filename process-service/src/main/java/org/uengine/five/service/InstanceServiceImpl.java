@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -66,7 +68,15 @@ import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.StartAndCompleteCommand;
+import org.uengine.five.dto.TaskReturnAvailability;
+import org.uengine.five.dto.TaskReturnCandidate;
+import org.uengine.five.dto.TaskReturnCommand;
+import org.uengine.five.dto.TaskReturnResult;
+import org.uengine.five.dto.TaskSkipAvailability;
+import org.uengine.five.dto.TaskSkipCommand;
+import org.uengine.five.dto.TaskSkipResult;
 import org.uengine.five.dto.WorkItemResource;
+import org.uengine.five.dto.RoleMappingCommand;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.entity.WorklistEntity;
@@ -91,8 +101,10 @@ import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
+import org.uengine.kernel.TaskSkipAnalyzer;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
+import org.uengine.contexts.UserContext;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.Event;
 import org.uengine.kernel.bpmn.SendTask;
@@ -106,6 +118,7 @@ import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
 import org.uengine.util.UEngineUtil;
+import org.uengine.webservices.worklist.DefaultWorkList;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -235,33 +248,50 @@ public class InstanceServiceImpl implements InstanceService {
             return null;
         }
         Arrays.sort(files, (f1, f2) -> {
-            String name1 = f1.getName().replace(".bpmn", "");
-            String name2 = f2.getName().replace(".bpmn", "");
+            String name1 = f1.getName().replaceFirst("\\.bpmn$", "");
+            String name2 = f2.getName().replaceFirst("\\.bpmn$", "");
 
-            boolean isName1Parsable = isParsableAsFloat(name1);
-            boolean isName2Parsable = isParsableAsFloat(name2);
+            boolean isName1Version = isDotSeparatedNumericVersion(name1);
+            boolean isName2Version = isDotSeparatedNumericVersion(name2);
 
-            if (isName1Parsable && isName2Parsable) {
-                return Float.compare(Float.parseFloat(name2), Float.parseFloat(name1));
-            } else if (isName1Parsable) {
+            // Prefer version-like names, and sort them in descending order:
+            // 0.11 > 0.10 > 0.9 > 0.3 ...
+            if (isName1Version && isName2Version) {
+                return compareDotSeparatedNumericVersions(name2, name1);
+            } else if (isName1Version) {
                 return -1;
-            } else if (isName2Parsable) {
+            } else if (isName2Version) {
                 return 1;
             } else {
                 return name1.compareTo(name2);
             }
         });
 
-        return files[0].getName().replace(".bpmn", "");
+        return files[0].getName().replaceFirst("\\.bpmn$", "");
     }
 
-    private boolean isParsableAsFloat(String str) {
-        try {
-            Float.parseFloat(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
+    private boolean isDotSeparatedNumericVersion(String str) {
+        // e.g. "0.9", "0.10", "1", "1.0.3"
+        return str != null && str.matches("\\d+(?:\\.\\d+)*");
+    }
+
+    private int compareDotSeparatedNumericVersions(String v1, String v2) {
+        String[] p1 = v1.split("\\.");
+        String[] p2 = v2.split("\\.");
+
+        int max = Math.max(p1.length, p2.length);
+        for (int i = 0; i < max; i++) {
+            java.math.BigInteger n1 = i < p1.length ? new java.math.BigInteger(p1[i]) : java.math.BigInteger.ZERO;
+            java.math.BigInteger n2 = i < p2.length ? new java.math.BigInteger(p2[i]) : java.math.BigInteger.ZERO;
+
+            int cmp = n1.compareTo(n2);
+            if (cmp != 0) {
+                return cmp;
+            }
         }
+
+        // Same numeric version
+        return 0;
     }
 
     @RequestMapping(value = "/instance/{instanceId}/stop", method = RequestMethod.POST)
@@ -412,6 +442,7 @@ public class InstanceServiceImpl implements InstanceService {
         // 여기서도 롤매핑이 들어가면 시리얼라이즈 에러가 나옴.
         Map variables = ((DefaultProcessInstance) instance).getVariables();
 
+        // 저장 시점에 DB 상태가 인스턴스 파일에 동기화되므로, 여기서는 별도 동기화 불필요
         return variables;
     }
 
@@ -483,6 +514,19 @@ public class InstanceServiceImpl implements InstanceService {
                 .findWorkListByInstId(Long.parseLong(instanceId));
         return ResponseEntity.ok(worklistEntity);
     }
+
+    /**
+     * 1) 인스턴스ID(루트 인스턴스ID)로 모든 태스크를 조회 (히스토리 표기 용도)
+     * - 서브프로세스 태스크 포함(rootInstId 기준)
+     */
+    @RequestMapping(value = "/instance/{instanceId}/worklists", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public ResponseEntity<List<WorklistEntity>> getAllTasksByInstanceId(@PathVariable("instanceId") String instanceId) {
+        Long rootInstId = Long.parseLong(instanceId);
+        List<WorklistEntity> tasks = processInstanceRepository.findAllWorklistsByRootInstId(rootInstId);
+        return ResponseEntity.ok(tasks);
+    }
+
 
     @RequestMapping(value = "/instance/{instId}/variable/{varName}", method = RequestMethod.GET)
     @ProcessTransactional(readOnly = true)
@@ -572,7 +616,7 @@ public class InstanceServiceImpl implements InstanceService {
     // produces 의 의미는. 리스폰스 헤더에 콘텐트타입을 설정해줌. 그래야 브라우저가 json 객체로 받아들인다.
     @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
     public Object setRoleMapping(@PathVariable("instanceId") String instanceId,
-            @PathVariable("roleName") String roleName, @RequestBody RoleMapping roleMapping) throws Exception {
+            @PathVariable("roleName") String roleName, @RequestBody RoleMappingCommand roleMapping) throws Exception {
 
         ProcessInstance instance = applicationContext.getBean(
                 ProcessInstance.class,
@@ -581,13 +625,40 @@ public class InstanceServiceImpl implements InstanceService {
                         instanceId,
                         null
                 });
-        // 예상에는, 롤매핑도 인스턴스처럼 DB 에 넣고, 튀어나오는 아이디를 roleMapping 객체에 넣은다음
-        // instance.putRoleMapping 을 해야할듯.?
-        instance.putRoleMapping(roleName, roleMapping);
+        RoleMapping rm = RoleMapping.create();
+        if (rm != null && roleMapping != null) {
+            if (roleMapping.getEndpoint() != null) rm.setEndpoint(roleMapping.getEndpoint());
+            if (roleMapping.getResourceName() != null) rm.setResourceName(roleMapping.getResourceName());
+            if (roleMapping.getScope() != null) rm.setScope(roleMapping.getScope());
+            if (roleMapping.getAssignType() != null) rm.setAssignType(roleMapping.getAssignType());
+        }
 
-        roleMapping.setName(roleName);
+        instance.putRoleMapping(roleName, rm);
+        rm.setName(roleName);
+        return rm;
+    }
 
-        return roleMapping;
+    @RequestMapping(value = "/instance/{instanceId}/role-mapping/{roleName}", method = RequestMethod.PUT, produces = "application/json; charset=UTF-8")
+    public Object putRoleMapping(@PathVariable("instanceId") String instanceId,
+            @PathVariable("roleName") String roleName, @RequestBody RoleMappingCommand roleMapping) throws Exception {
+
+        ProcessInstance instance = applicationContext.getBean(
+                ProcessInstance.class,
+                new Object[] {
+                        null,
+                        instanceId,
+                        null
+                });
+       
+        RoleMapping currentMapping = instance.getRoleMapping(roleName);
+        if (currentMapping != null && roleMapping != null) {
+            if (roleMapping.getEndpoint() != null) currentMapping.setEndpoint(roleMapping.getEndpoint());
+            if (roleMapping.getResourceName() != null) currentMapping.setResourceName(roleMapping.getResourceName());
+            if (roleMapping.getScope() != null) currentMapping.setScope(roleMapping.getScope());
+            if (roleMapping.getAssignType() != null) currentMapping.setAssignType(roleMapping.getAssignType());
+        }
+
+        return currentMapping;
     }
 
     /**
@@ -1034,8 +1105,9 @@ public class InstanceServiceImpl implements InstanceService {
         Date date = instance.getProcessInstanceEntity().getStartedDate();
         String currentYear = String.valueOf(date.getYear() + 1900);
         String currentMonth = String.format("%02d", date.getMonth() + 1);
+        String currentDay = String.format("%02d", date.getDate());
         IResource resource = new DefaultResource(
-                "payloads/" + currentYear + "/" + currentMonth + "/" + instance.getInstanceId());
+                "payloads/" + currentYear + "/" + currentMonth + "/" + currentDay + "/" + instance.getInstanceId());
 
         boolean resourceExists = resourceManager.exists(resource);
         if (resourceExists) {
@@ -1303,6 +1375,20 @@ public class InstanceServiceImpl implements InstanceService {
         // instance.setExecutionScope(esc.getExecutionScope());
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
+        // 완료/스킵 시점에도 사용자 정보(endpoint/resName)가 비어있는 케이스가 있어 보정
+        try {
+            String actorEndpoint = UserContext.getThreadLocalInstance().getUserId();
+            if (actorEndpoint == null || actorEndpoint.trim().isEmpty()) {
+                actorEndpoint = SecurityAwareServletFilter.getUserId();
+            }
+            if (actorEndpoint != null && actorEndpoint.trim().length() > 0) {
+                GlobalContext.setUserId(actorEndpoint);
+                applyActorToWorklistIfEmpty(worklistEntity, actorEndpoint);
+                worklistRepository.save(worklistEntity);
+            }
+        } catch (Exception ignore) {
+        }
+
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
 
@@ -1423,8 +1509,13 @@ public class InstanceServiceImpl implements InstanceService {
                 invokeDeployFilters(definition, defPath);
             }
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Post CreatedRawDefinition : " + e.getMessage(), e);
+            // invokeDeployFilters(DeployFilter.beforeDeploy)에서 발생한 예외(UEngineException 포함)를
+            // 응답 메시지에 최대한 "그대로"(원인 + stacktrace) 담아서 디버깅 가능하게 한다.
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Post CreatedRawDefinition : " + buildThrowableDetail(e),
+                    e);
+
         }
 
     }
@@ -1442,6 +1533,37 @@ public class InstanceServiceImpl implements InstanceService {
                 }
             }
         }
+    }
+
+    private String buildThrowableDetail(Throwable t) {
+        if (t == null)
+            return "(null)";
+
+        Throwable root = t;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+
+        String msg = t.getMessage();
+        if (msg == null || msg.isBlank())
+            msg = t.toString();
+
+        String rootMsg = root.getMessage();
+        if (rootMsg == null || rootMsg.isBlank())
+            rootMsg = root.toString();
+
+        StringWriter sw = new StringWriter();
+        t.printStackTrace(new PrintWriter(sw));
+
+        String stack = sw.toString();
+        // 너무 길면(Feign/프론트에서 보기 어려움) 잘라서 내려준다.
+        // 전체 스택은 서버 로그에서 확인 가능하고, 필요하면 server.error.include-stacktrace=on_param + ?trace=true로도 확인 가능.
+        int limit = 8000;
+        if (stack.length() > limit) {
+            stack = stack.substring(0, limit) + "\n...(truncated " + (stack.length() - limit) + " chars)";
+        }
+
+        return msg + "\nRootCause: " + rootMsg + "\nStacktrace:\n" + stack;
     }
 
     // @ProcessTransactional(readOnly = true)
@@ -1666,6 +1788,910 @@ public class InstanceServiceImpl implements InstanceService {
             }
         }
         return null;
+    }
+
+    @RequestMapping(value = "/work-item/{taskId}/claim", method = RequestMethod.POST)
+    @org.springframework.transaction.annotation.Transactional
+    @ProcessTransactional // important!
+    public void claimWorkItem(@PathVariable("taskId") String taskId, @RequestBody RoleMappingCommand roleMapping)
+            throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (worklistEntity == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        // endpoint가 비어있으면 "선점 해제(unclaim)"로 처리한다.
+        boolean unclaim = (roleMapping == null || roleMapping.getEndpoint() == null
+                || roleMapping.getEndpoint().trim().isEmpty());
+
+        // unclaim은 반드시 로그인 사용자 컨텍스트가 필요
+        String actorEndpoint = null;
+        if (unclaim) {
+            actorEndpoint = SecurityAwareServletFilter.getUserId();
+            if (actorEndpoint != null) actorEndpoint = actorEndpoint.trim();
+            if (actorEndpoint == null || actorEndpoint.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "login user is required for unclaim");
+            }
+        } else {
+            actorEndpoint = roleMapping.getEndpoint().trim();
+        }
+
+        GlobalContext.setUserId(actorEndpoint);
+
+        Long rootInstId = worklistEntity.getRootInstId() == null ? worklistEntity.getInstId() : worklistEntity.getRootInstId().longValue();
+        String roleName = worklistEntity.getRoleName();
+        String scope = worklistEntity.getScope();
+        Integer assignType = worklistEntity.getAssignType();
+
+        if (unclaim) {
+            // 본인 소유의 건만 해제 허용
+            if (UEngineUtil.isNotEmpty(worklistEntity.getEndpoint()) && !actorEndpoint.equals(worklistEntity.getEndpoint())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "No permission to unclaim this task. endpoint=" + worklistEntity.getEndpoint() + ", userId=" + actorEndpoint);
+            }
+
+            worklistEntity.setEndpoint(null);
+            worklistEntity.setResName(null);
+            worklistRepository.save(worklistEntity);
+
+            if (rootInstId != null && roleName != null && scope != null && assignType != null) {
+                List<WorklistEntity> siblings = worklistRepository.findSiblingsForClaimState(rootInstId, roleName, scope, assignType, actorEndpoint);
+                if (siblings != null) {
+                    for (WorklistEntity wl : siblings) {
+                        if (wl == null) continue;
+                        wl.setEndpoint(null);
+                        wl.setResName(null);
+                        worklistRepository.save(wl);
+                    }
+                }
+            }
+        } else {
+            // 1) 현재 taskId의 endpoint/resName 보강
+            applyActorToWorklistIfEmpty(worklistEntity, actorEndpoint);
+            worklistRepository.save(worklistEntity);
+
+            // 2) 동일 역할 + 동일 scope/assignType 그룹의 다른 workitem들도 함께 소유자 세팅
+            if (rootInstId != null && roleName != null && scope != null && assignType != null) {
+                List<WorklistEntity> siblings = worklistRepository.findSiblingsForClaimState(rootInstId, roleName, scope, assignType, null);
+                if (siblings != null) {
+                    for (WorklistEntity wl : siblings) {
+                        if (wl == null) continue;
+                        applyActorToWorklistIfEmpty(wl, actorEndpoint);
+                        worklistRepository.save(wl);
+                    }
+                }
+            }
+        }
+    }
+
+    private void applyActorToWorklistIfEmpty(WorklistEntity wl, String actorEndpoint) {
+        if (wl == null || actorEndpoint == null || actorEndpoint.trim().isEmpty()) return;
+
+        if (!UEngineUtil.isNotEmpty(wl.getEndpoint())) {
+            wl.setEndpoint(actorEndpoint);
+        }
+
+        if (!UEngineUtil.isNotEmpty(wl.getResName()) || (UEngineUtil.isNotEmpty(wl.getEndpoint()) && wl.getResName().equals(wl.getEndpoint()))) {
+            try {
+                RoleMapping rm = RoleMapping.create();
+                if (rm != null) {
+                    rm.setEndpoint(wl.getEndpoint());
+                    if (UEngineUtil.isNotEmpty(wl.getScope())) rm.setScope(wl.getScope());
+                    rm.setAssignType(wl.getAssignType());
+                    rm.fill();
+                    String filled = rm.getResourceName();
+                    if (UEngineUtil.isNotEmpty(filled)) wl.setResName(filled);
+                }
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
+    /**
+     * WorkItem 위임(Delegation)
+     *
+     * - delegateOnlyForWorkitem=false(기본): 완전 이관(인스턴스 레벨 RoleMapping 변경 + 새 workitem 생성)
+     * - delegateOnlyForWorkitem=true: 원소유 유지(workitem만 위임, 인스턴스 레벨 RoleMapping 유지)
+     *
+     * 권한 체크(기본): 현재 task의 endpoint(담당자)와 로그인 사용자ID가 일치해야 위임 가능.
+     */
+    @RequestMapping(value = "/work-item/{taskId}/delegate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @org.springframework.transaction.annotation.Transactional
+    @ProcessTransactional // important!
+    public WorkItemResource delegateWorkItem(
+            @PathVariable("taskId") String taskId,
+            @RequestBody RoleMappingCommand delegatedRoleMapping,
+            @RequestParam(value = "delegateOnlyForWorkitem", required = false, defaultValue = "false") boolean delegateOnlyForWorkitem)
+            throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        if (delegatedRoleMapping == null || delegatedRoleMapping.getEndpoint() == null
+                || delegatedRoleMapping.getEndpoint().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping.endpoint is required");
+        }
+
+        // 로그인 사용자 컨텍스트(권한/로깅/RoleResolution 등) 설정
+        String userId = SecurityAwareServletFilter.getUserId();
+        if (userId != null) {
+            GlobalContext.setUserId(userId);
+        }
+
+        WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (worklistEntity == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String instanceId = worklistEntity.getInstId().toString();
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+
+        HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
+                .getActivity(worklistEntity.getTrcTag()));
+
+        // 현재 담당자(Worklist 기준 우선, 없으면 ActualMapping fallback)
+        String currentOwner = worklistEntity.getEndpoint();
+        try {
+            if ((currentOwner == null || currentOwner.trim().isEmpty()) && humanActivity != null) {
+                RoleMapping actual = humanActivity.getActualMapping(instance);
+                if (actual != null) {
+                    currentOwner = actual.getEndpoint();
+                }
+            }
+        } catch (Exception ignore) {
+        }
+
+        // 권한 체크: 로그인 사용자ID가 있고, 현재 담당자가 확인되면 일치해야 함
+        if (userId != null && currentOwner != null && !userId.equals(currentOwner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No permission to delegate this task. currentOwner=" + currentOwner + ", userId=" + userId);
+        }
+
+        // 실행 중이 아니면 위임 불가(알림 workitem은 정책에 따라 허용할 수 있으나, 기본은 차단)
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            throw new UEngineException("Illegal delegation for workitem [" + humanActivity + ":"
+                    + humanActivity.getStatus(instance) + "]: Already closed or illegal status.");
+        }
+
+        // DelegateTest의 동작과 동일하게 kernel 메서드 호출
+        String laneScope = worklistEntity.getScope();
+        int laneAssignType = worklistEntity.getAssignType();
+
+        RoleMapping delegated = RoleMapping.create();
+        if (delegated != null) {
+            String targetEndpoint = delegatedRoleMapping.getEndpoint() != null ? delegatedRoleMapping.getEndpoint().trim() : null;
+            delegated.setEndpoint(targetEndpoint);
+
+            // delegate 요청에 scope/assignType이 없더라도, Lane(=roleName) 기반 태스크는 기존 worklist의 값을 유지해야 함
+            // 그래야 위임 후 새로 생성되는 workitem(재실행)이 기존 Lane 정책(scope/assignType)을 그대로 가진다.
+            if (delegatedRoleMapping.getScope() != null) {
+                delegated.setScope(delegatedRoleMapping.getScope());
+            } else if (UEngineUtil.isNotEmpty(laneScope) && !"null".equalsIgnoreCase(laneScope)) {
+                delegated.setScope(laneScope);
+            }
+
+            if (delegatedRoleMapping.getAssignType() != null) {
+                delegated.setAssignType(delegatedRoleMapping.getAssignType());
+            } else {
+                delegated.setAssignType(laneAssignType);
+            }
+
+            if (delegatedRoleMapping.getResourceName() != null) {
+                delegated.setResourceName(delegatedRoleMapping.getResourceName());
+            }
+
+            // resName이 없으면 IAM 기반으로 채움 (Flyweight + isFilled로 중복 최소화)
+            try {
+                delegated.fill();
+            } catch (Exception ignore) {
+            }
+        }
+        humanActivity.delegate(instance, delegated, delegateOnlyForWorkitem);
+
+        // 같은 Lane(roleName)의 병렬 태스크들도 동일 사용자로 재할당(NEW/RUNNING만)
+        try {
+            Long rootInstId = worklistEntity.getRootInstId() == null ? worklistEntity.getInstId() : worklistEntity.getRootInstId().longValue();
+            if (rootInstId != null) {
+                List<WorklistEntity> currents = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+                if (currents != null) {
+                    String laneRoleName = worklistEntity.getRoleName();
+                    String targetEndpoint = delegated != null ? delegated.getEndpoint() : null;
+                    String targetResName = delegated != null ? delegated.getResourceName() : null;
+
+                    for (WorklistEntity wl : currents) {
+                        if (wl == null) continue;
+                        if (laneRoleName == null || !laneRoleName.equals(wl.getRoleName())) continue;
+                        if (!UEngineUtil.isNotEmpty(targetEndpoint)) continue;
+
+                        // 기존 Lane 속성 유지(위임 후 생성된 신규 workitem이 scope/assignType을 잃는 문제 보정 포함)
+                        if (!UEngineUtil.isNotEmpty(wl.getScope()) || "null".equalsIgnoreCase(wl.getScope())) {
+                            if (UEngineUtil.isNotEmpty(laneScope) && !"null".equalsIgnoreCase(laneScope)) wl.setScope(laneScope);
+                        }
+                        if (wl.getAssignType() == 0 && laneAssignType != 0) {
+                            wl.setAssignType(laneAssignType);
+                        }
+
+                        wl.setEndpoint(targetEndpoint);
+                        if (UEngineUtil.isNotEmpty(targetResName)) wl.setResName(targetResName);
+
+                        // 혹시 resName이 비어있으면 endpoint 기반 fill로 보강
+                        applyActorToWorklistIfEmpty(wl, targetEndpoint);
+                        worklistRepository.save(wl);
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+        }
+
+        // 완전 이관이면 새 taskId가 생길 수 있으므로, 현재 taskIds 기준으로 리턴
+        String resultTaskId = taskId;
+        try {
+            String[] taskIds = humanActivity.getTaskIds(instance);
+            if (taskIds != null && taskIds.length > 0 && taskIds[0] != null && taskIds[0].trim().length() > 0) {
+                resultTaskId = taskIds[0];
+            }
+        } catch (Exception ignore) {
+        }
+
+        return getWorkItem(resultTaskId);
+    }
+
+    /**
+     * 태스크 반송 가능여부 + 후보 목록
+     *
+     * - 정책: "실행 전(previous) 태스크"만 후보로 노출 (Activity.getPreviousActivities() 기반)
+     * - 이전 태스크가 복수(병렬/분기 등)인 경우, previousActivities의 모든 HumanActivity를 후보로 제공
+     * - 반송 시 기존 태스크 삭제 금지: return 실행에서는 현재 workitem을 SUSPENDED로 업데이트하고,
+     */
+    @RequestMapping(value = "/work-item/{taskId}/return/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public TaskReturnAvailability getTaskReturnAvailability(@PathVariable("taskId") String taskId) throws Exception {
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        // 권한/컨텍스트 설정(가능여부 판단에 사용될 수 있음)
+        String userId = SecurityAwareServletFilter.getUserId();
+        if (userId != null) {
+            GlobalContext.setUserId(userId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            return TaskReturnAvailability.disabled("Human task only.");
+        }
+
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            return TaskReturnAvailability.disabled("Already closed or illegal status.");
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+
+        // 실행 직전(previous) HumanActivity를 후보로 사용
+        // - 병렬 Join에서는 구조적 previous 가 split 지점으로 튀는 경우가 있어,
+        //   "정의 그래프(incoming sequence flow)" 기준으로 역방향 탐색하여 join 직전 HumanTask를 찾는다.
+        List<Activity> previousHumanActivities = collectPreviousHumanActivities(currentActivity, current.getTrcTag());
+        if (previousHumanActivities == null || previousHumanActivities.isEmpty()) {
+            return TaskReturnAvailability.disabled("No previous human tasks.");
+        }
+
+        // UI 표시를 위해, 이전 activity(tracingTag)에 대응되는 최근 종료(Completed/Skipped) workitem 정보를 보강
+        List<WorklistEntity> history = processInstanceRepository.findAllWorklistsByRootInstId(rootInstId);
+
+        List<TaskReturnCandidate> candidates = new ArrayList<>();
+        for (Activity prev : previousHumanActivities) {
+            if (prev == null) continue;
+
+            // 기본: 자기 자신은 후보에서 제외
+            if (prev.getTracingTag() != null && prev.getTracingTag().equals(current.getTrcTag())) {
+                continue;
+            }
+
+            WorklistEntity best = null;
+            if (history != null) {
+                // 1차: execScope가 있으면 동일 execScope만 우선 매칭
+                boolean hasExecScope = current.getExecScope() != null && current.getExecScope().trim().length() > 0;
+                for (WorklistEntity wl : history) {
+                    if (wl == null) continue;
+                    if (wl.getTrcTag() == null) continue;
+                    if (!wl.getTrcTag().equals(prev.getTracingTag())) continue;
+                    if (wl.getStatus() == null) continue;
+                    if (!(wl.getStatus().equalsIgnoreCase("COMPLETED") || wl.getStatus().equalsIgnoreCase("SKIPPED"))) {
+                        continue;
+                    }
+
+                    if (hasExecScope) {
+                        if (wl.getExecScope() == null) continue;
+                        if (!current.getExecScope().equals(wl.getExecScope())) continue;
+                    }
+
+                    if (best == null) {
+                        best = wl;
+                        continue;
+                    }
+
+                    Date bestEnd = best.getEndDate();
+                    Date wlEnd = wl.getEndDate();
+                    if (bestEnd == null && wlEnd != null) {
+                        best = wl;
+                    } else if (bestEnd != null && wlEnd != null && wlEnd.after(bestEnd)) {
+                        best = wl;
+                    } else if (bestEnd == null && wlEnd == null && wl.getTaskId() != null && best.getTaskId() != null
+                            && wl.getTaskId() > best.getTaskId()) {
+                        best = wl;
+                    }
+                }
+
+                // 2차: execScope 매칭이 실패했으면 scope 무시하고 매칭
+                if (best == null && hasExecScope) {
+                    for (WorklistEntity wl : history) {
+                        if (wl == null) continue;
+                        if (wl.getTrcTag() == null) continue;
+                        if (!wl.getTrcTag().equals(prev.getTracingTag())) continue;
+                        if (wl.getStatus() == null) continue;
+                        if (!(wl.getStatus().equalsIgnoreCase("COMPLETED") || wl.getStatus().equalsIgnoreCase("SKIPPED"))) {
+                            continue;
+                        }
+
+                        if (best == null) {
+                            best = wl;
+                            continue;
+                        }
+
+                        Date bestEnd = best.getEndDate();
+                        Date wlEnd = wl.getEndDate();
+                        if (bestEnd == null && wlEnd != null) {
+                            best = wl;
+                        } else if (bestEnd != null && wlEnd != null && wlEnd.after(bestEnd)) {
+                            best = wl;
+                        } else if (bestEnd == null && wlEnd == null && wl.getTaskId() != null && best.getTaskId() != null
+                                && wl.getTaskId() > best.getTaskId()) {
+                            best = wl;
+                        }
+                    }
+                }
+            }
+
+            TaskReturnCandidate c = new TaskReturnCandidate();
+            c.setTracingTag(prev.getTracingTag());
+            c.setActivityName(prev.getName());
+
+            // 실제 수행(종료) 이력이 있는 태스크만 후보로 노출
+            // - 모델 상으로는 이전이지만 이번 인스턴스에서 실행되지 않은 분기/태스크는 제외
+            if (best == null) {
+                continue;
+            }
+
+            c.setTaskId(best.getTaskId());
+            c.setEndpoint(best.getEndpoint());
+            c.setCompletedAt(best.getEndDate());
+            c.setExecScope(best.getExecScope());
+
+            candidates.add(c);
+        }
+
+        if (candidates.isEmpty()) {
+            return TaskReturnAvailability.disabled("No previous human tasks.");
+        }
+
+        return TaskReturnAvailability.enabled(candidates);
+    }
+
+    /**
+     * 현재 액티비티의 "직전" HumanActivity 후보를 수집합니다.
+     * - previous 가 Gateway/Flow 노드로만 떨어지는 경우를 위해, HumanActivity가 나올 때까지 역방향으로 탐색합니다.
+     * - HumanActivity를 발견하면 해당 노드는 후보로 추가하고 더 이상 그 뒤로는 확장하지 않습니다(직전 후보만).
+     */
+    private List<Activity> collectPreviousHumanActivities(Activity currentActivity, String excludeTracingTag) {
+        if (currentActivity == null) return java.util.Collections.emptyList();
+
+        // tracingTag 기준으로 방문 체크(동일 노드 중복/루프 방지)
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        java.util.Deque<Activity> queue = new java.util.ArrayDeque<>();
+        java.util.List<Activity> result = new java.util.ArrayList<>();
+        java.util.Set<String> addedTracingTags = new java.util.LinkedHashSet<>();
+
+        // 1) 우선: 그래프 기반 incoming sequence flow 사용 (BPMN join의 "직전"을 가장 정확히 표현)
+        java.util.List<org.uengine.kernel.bpmn.SequenceFlow> incomings = currentActivity.getIncomingSequenceFlows();
+        if (incomings != null && !incomings.isEmpty()) {
+            for (org.uengine.kernel.bpmn.SequenceFlow f : incomings) {
+                if (f == null) continue;
+                Activity src = f.getSourceActivity();
+                if (src != null) {
+                    queue.add(src);
+                }
+            }
+        } else {
+            // 2) fallback: 기존 previousActivities (그래프가 구성되지 않은 모델 대비)
+            Vector prevs = currentActivity.getPreviousActivities();
+            if (prevs != null) {
+                for (Object obj : prevs) {
+                    if (obj instanceof Activity) {
+                        queue.add((Activity) obj);
+                    }
+                }
+            }
+        }
+
+        int guard = 0;
+        while (!queue.isEmpty() && guard++ < 5000) {
+            Activity a = queue.poll();
+            if (a == null) continue;
+
+            String tag = a.getTracingTag();
+            if (tag != null) {
+                if (!visited.add(tag)) continue;
+            }
+            if (tag != null && excludeTracingTag != null && tag.equals(excludeTracingTag)) {
+                continue;
+            }
+
+            if (a instanceof HumanActivity) {
+                // tracingTag 가 null 인 경우도 방어적으로 허용하되, 중복 방지를 위해 tag 기준 우선 사용
+                if (tag == null || addedTracingTags.add(tag)) {
+                    result.add(a);
+                }
+                continue;
+            }
+
+            // non-human 노드는 계속 upstream 탐색
+            java.util.List<org.uengine.kernel.bpmn.SequenceFlow> moreIncomings = a.getIncomingSequenceFlows();
+            if (moreIncomings != null && !moreIncomings.isEmpty()) {
+                for (org.uengine.kernel.bpmn.SequenceFlow f : moreIncomings) {
+                    if (f == null) continue;
+                    Activity src = f.getSourceActivity();
+                    if (src != null) queue.add(src);
+                }
+            } else {
+                Vector more = a.getPreviousActivities();
+                if (more != null) {
+                    for (Object obj : more) {
+                        if (obj instanceof Activity) {
+                            queue.add((Activity) obj);
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+
+    @RequestMapping(value = "/work-item/{taskId}/return", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public TaskReturnResult returnWorkItem(
+            @PathVariable("taskId") String taskId,
+            @RequestBody TaskReturnCommand command) throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+        if (command == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "command is required");
+        }
+
+        // 요청 사용자(현재 로그인 사용자) 컨텍스트
+        String requestUserId = UserContext.getThreadLocalInstance().getUserId();
+        if (requestUserId == null || requestUserId.trim().isEmpty()) {
+            requestUserId = SecurityAwareServletFilter.getUserId();
+        }
+        if (requestUserId != null && requestUserId.trim().length() > 0) {
+            GlobalContext.setUserId(requestUserId);
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Human task only.");
+        }
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+
+        // 권한 체크: 현재 담당자(Worklist 우선, 없으면 ActualMapping fallback)
+        String currentOwner = current.getEndpoint();
+        try {
+            if ((currentOwner == null || currentOwner.trim().isEmpty()) && humanActivity != null) {
+                RoleMapping actual = humanActivity.getActualMapping(instance);
+                if (actual != null) {
+                    currentOwner = actual.getEndpoint();
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (requestUserId != null && currentOwner != null && !requestUserId.equals(currentOwner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No permission to return this task. currentOwner=" + currentOwner + ", userId=" + requestUserId);
+        }
+
+        // 실행 중이 아니면 반송 불가(알림 workitem은 정책에 따라 허용)
+        if (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Illegal return for workitem [" + humanActivity + ":" + humanActivity.getStatus(instance)
+                            + "]: Already closed or illegal status.");
+        }
+
+        // 후보/가능여부 재검증(TOCTOU 방지)
+        TaskReturnAvailability availability = getTaskReturnAvailability(taskId);
+        if (!availability.isEnabled() || availability.getCandidates() == null || availability.getCandidates().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    availability.getReason() != null ? availability.getReason() : "Not allowed.");
+        }
+
+        String targetTracingTag = null;
+        String targetExecScope = null;
+
+        TaskReturnCandidate hit = null;
+        if (command.getTaskId() != null) {
+            Long targetTaskId = command.getTaskId();
+            for (TaskReturnCandidate c : availability.getCandidates()) {
+                if (c != null && c.getTaskId() != null && c.getTaskId().equals(targetTaskId)) {
+                    hit = c;
+                    break;
+                }
+            }
+            if (hit == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetTaskId is not a valid candidate.");
+            }
+            targetTracingTag = hit.getTracingTag();
+            targetExecScope = hit.getExecScope();
+        } else if (command.getTracingTag() != null && command.getTracingTag().trim().length() > 0) {
+            String requested = command.getTracingTag().trim();
+            for (TaskReturnCandidate c : availability.getCandidates()) {
+                if (c != null && requested.equals(c.getTracingTag())) {
+                    hit = c;
+                    break;
+                }
+            }
+            if (hit == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "tracingTag is not a valid candidate.");
+            }
+            targetTracingTag = hit.getTracingTag();
+            targetExecScope = (command.getExecScope() != null && command.getExecScope().trim().length() > 0)
+                    ? command.getExecScope().trim()
+                    : hit.getExecScope();
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "targetTaskId or tracingTag is required.");
+        }
+
+        // 엔진 재실행(backToHere) 시 workitem이 "이전 담당자(B)"에게 생성되도록 컨텍스트 전환
+        // - HumanActivity.getActualMapping()의 일부 권한/initiator 체크는 UserContext 기반으로 수행됨
+        // - 따라서 backToHere 수행 동안만 UserContext/GlobalContext를 후보 endpoint로 잠깐 바꾼 뒤 원복한다.
+        String engineUserId = null;
+        if (hit != null && hit.getEndpoint() != null && hit.getEndpoint().trim().length() > 0) {
+            engineUserId = hit.getEndpoint().trim();
+        }
+        if (engineUserId == null) {
+            engineUserId = requestUserId;
+        }
+        String originalUserId = UserContext.getThreadLocalInstance().getUserId();
+        String originalGlobalUserId = GlobalContext.getUserId();
+
+        // 반송은 "삭제"가 아닌 "상태 업데이트 + 새 workitem 생성"이어야 함
+        // - decision/reason은 "이전 담당자(B)에게 생성되는 새 태스크"에만 기록한다.
+        current.setStatus(DefaultWorkList.WORKITEM_STATUS_SUSPENDED);
+        if (command.getReason() != null && command.getReason().trim().length() > 0) {
+            String existing = current.getDescription();
+            String reason = command.getReason().trim();
+            String msg = "[RETURN] to=" + targetTracingTag + " reason=" + reason;
+            current.setDescription(existing == null || existing.trim().isEmpty() ? msg : (existing + "\n" + msg));
+        }
+        worklistRepository.save(current);
+
+        // 목표 taskId(이전 담당자의 태스크 레코드)가 존재하면, 그 레코드에만 decision/reason을 기록한다.
+        // - 과거 반송 기록을 덮어쓰지 않도록, decision이 이미 존재하면 수정하지 않는다.
+        if (hit != null && hit.getTaskId() != null) {
+            try {
+                WorklistEntity targetWorkItem = worklistRepository.findById(hit.getTaskId()).orElse(null);
+                if (targetWorkItem != null) {
+                    if (targetWorkItem.getDecision() == null || targetWorkItem.getDecision().trim().isEmpty()) {
+                        targetWorkItem.setDecision("RETURN");
+                    }
+                    if ((targetWorkItem.getReason() == null || targetWorkItem.getReason().trim().isEmpty())
+                            && command.getReason() != null && !command.getReason().trim().isEmpty()) {
+                        targetWorkItem.setReason(command.getReason()); // 그대로 저장
+                    }
+                    worklistRepository.save(targetWorkItem);
+                }
+            } catch (Exception ignore) {
+            }
+        }
+
+        // execScope(있으면) 반영 후 backToHere 실행 → 엔진이 상태(Activity.STATUS_*)를 갱신하고 새 workitem을 추가로 생성
+        if (targetExecScope != null && targetExecScope.trim().length() > 0) {
+            instance.setExecutionScope(targetExecScope.trim());
+        }
+
+        Activity targetActivity = instance.getProcessDefinition().getActivity(targetTracingTag);
+        if (targetActivity == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Target activity not found: " + targetTracingTag);
+        }
+        try {
+            if (engineUserId != null && engineUserId.trim().length() > 0) {
+                UserContext.getThreadLocalInstance().setUserId(engineUserId);
+                GlobalContext.setUserId(engineUserId);
+            }
+            targetActivity.backToHere(instance);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Return failed: " + e.getMessage(), e);
+        } finally {
+            // 요청자 컨텍스트 원복
+            UserContext.getThreadLocalInstance().setUserId(originalUserId);
+            if (originalGlobalUserId != null) {
+                GlobalContext.setUserId(originalGlobalUserId);
+            }
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+        List<WorklistEntity> currents = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+        List<Long> currentTaskIds = new ArrayList<>();
+        if (currents != null) {
+            for (WorklistEntity wl : currents) {
+                if (wl != null && wl.getTaskId() != null) {
+                    currentTaskIds.add(wl.getTaskId());
+                }
+            }
+        }
+
+        TaskReturnResult result = new TaskReturnResult();
+        result.setInstanceId(instanceId);
+        result.setRootInstId(rootInstId);
+        result.setTargetTracingTag(targetTracingTag);
+        result.setCurrentTaskIds(currentTaskIds);
+        return result;
+    }
+
+    /**
+     * 태스크 SKIP(건너뛰기) 가능 여부 조회
+     *
+     * 기본 정책(보수적):
+     * - HumanActivity + 실행 중이어야 함
+     * - BoundaryEvent(attachedToRef)가 붙어있으면 SKIP 불가(부작용/미처리 이벤트 방지)
+     * - 현재 execScope 기준으로 다음으로 진행 가능한 액티비티가 1개 이상 있어야 함
+     */
+    @RequestMapping(value = "/work-item/{taskId}/skip/availability", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public TaskSkipAvailability getTaskSkipAvailability(@PathVariable("taskId") String taskId) throws Exception {
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        // 컨텍스트 설정(조건 평가 등에 필요할 수 있음)
+        String userId = SecurityAwareServletFilter.getUserId();
+        if (userId != null) {
+            GlobalContext.setUserId(userId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            return TaskSkipAvailability.disabled("Human task only.");
+        }
+
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+
+        // 일반적인 SKIP 가능 조건(Activity.isSkippable + 실행중)
+        String status = humanActivity.getStatus(instance);
+        if (!Activity.isSkippable(status) || (!instance.isRunning(humanActivity.getTracingTag()) && !humanActivity.isNotificationWorkitem())) {
+            return TaskSkipAvailability.disabled("Already closed or illegal status.");
+        }
+
+        // Notification workitem은 기본적으로 SKIP 대상에서 제외(정책)
+        if (humanActivity.isNotificationWorkitem()) {
+            return TaskSkipAvailability.disabled("Notification workitem is not skippable.");
+        }
+
+        // BoundaryEvent(attachedToRef)가 붙어있으면 SKIP 불가(후속 이벤트/보상 처리 누락 방지)
+        try {
+            List<Activity> all = instance.getProcessDefinition().getChildActivities();
+            if (all != null) {
+                for (Activity a : all) {
+                    if (a instanceof org.uengine.kernel.bpmn.Event) {
+                        org.uengine.kernel.bpmn.Event ev = (org.uengine.kernel.bpmn.Event) a;
+                        if (ev.getAttachedToRef() != null && ev.getAttachedToRef().equals(humanActivity.getTracingTag())) {
+                            return TaskSkipAvailability.disabled("Boundary event attached: " + ev.getTracingTag());
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+        }
+
+        // 정의(xml) + 현재 인스턴스 상태 기준으로 다음 진행 가능 여부를 확인(조건 분기 포함)
+        try {
+            String scope = current.getExecScope();
+            List<Activity> nexts = humanActivity.getPossibleNextActivities(instance, scope);
+            if (nexts == null || nexts.isEmpty()) {
+                return TaskSkipAvailability.disabled("No possible next activity from current state.");
+            }
+        } catch (Exception e) {
+            return TaskSkipAvailability.disabled("Cannot evaluate next activities: " + e.getMessage());
+        }
+
+        // ---------------- 변수 매핑 기반 SKIP 가능 여부(정적 분석, 보수적) ----------------
+        try {
+            TaskSkipAnalyzer.SkipVarReference hit = TaskSkipAnalyzer.findFirstBlockingReference(
+                    instance,
+                    humanActivity,
+                    new TaskSkipAnalyzer.DefinitionResolver() {
+                        @Override
+                        public ProcessDefinition resolve(String definitionId, String version) throws Exception {
+                            Object defObj = definitionService.getDefinition(definitionId, version);
+                            if (defObj instanceof ProcessDefinition) {
+                                return (ProcessDefinition) defObj;
+                            }
+                            return null;
+                        }
+                    });
+            if (hit != null) {
+                return TaskSkipAvailability.disabled("Uses mapped variable later: " + hit.varName
+                        + " at " + hit.whereTracingTag + (hit.whereType != null ? (" (" + hit.whereType + ")") : ""));
+            }
+        } catch (Exception e) {
+            // 분석 실패 시 보수적으로 불가 처리(원치 않으면 enabled로 바꿀 수 있음)
+            return TaskSkipAvailability.disabled("Cannot analyze variable mapping usage: " + e.getMessage());
+        }
+
+        return TaskSkipAvailability.enabled();
+    }
+
+    /**
+     * 태스크 SKIP 실행
+     * - worklist 상태는 SKIPPED로 기록
+     * - 엔진(Activity.STATUS_SKIPPED)로 상태 변경 후 다음 태스크로 진행
+     */
+    @RequestMapping(value = "/work-item/{taskId}/skip", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public TaskSkipResult skipWorkItem(
+            @PathVariable("taskId") String taskId,
+            @RequestBody(required = false) TaskSkipCommand command) throws Exception {
+
+        if (taskId == null || taskId.equals("null")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
+        }
+
+        // 요청 사용자 컨텍스트
+        String requestUserId = UserContext.getThreadLocalInstance().getUserId();
+        if (requestUserId == null || requestUserId.trim().isEmpty()) {
+            requestUserId = SecurityAwareServletFilter.getUserId();
+        }
+        if (requestUserId != null && requestUserId.trim().length() > 0) {
+            GlobalContext.setUserId(requestUserId);
+        }
+
+        WorklistEntity current = worklistRepository.findById(new Long(taskId)).orElse(null);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such work item where taskId = " + taskId);
+        }
+
+        String instanceId = String.valueOf(current.getInstId());
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance not found for taskId=" + taskId);
+        }
+
+        Activity currentActivity = instance.getProcessDefinition().getActivity(current.getTrcTag());
+        if (!(currentActivity instanceof HumanActivity)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Human task only.");
+        }
+        HumanActivity humanActivity = (HumanActivity) currentActivity;
+
+        // 권한 체크: 현재 담당자(Worklist 우선, 없으면 ActualMapping fallback)
+        String currentOwner = current.getEndpoint();
+        try {
+            if ((currentOwner == null || currentOwner.trim().isEmpty()) && humanActivity != null) {
+                RoleMapping actual = humanActivity.getActualMapping(instance);
+                if (actual != null) {
+                    currentOwner = actual.getEndpoint();
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (requestUserId != null && currentOwner != null && !requestUserId.equals(currentOwner)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No permission to skip this task. currentOwner=" + currentOwner + ", userId=" + requestUserId);
+        }
+
+        // 가능여부 재검증(TOCTOU 방지)
+        TaskSkipAvailability availability = getTaskSkipAvailability(taskId);
+        if (!availability.isEnabled()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    availability.getReason() != null ? availability.getReason() : "Not allowed.");
+        }
+
+        // execScope 반영 후 SKIP
+        if (current.getExecScope() != null && current.getExecScope().trim().length() > 0) {
+            instance.setExecutionScope(current.getExecScope().trim());
+        }
+
+        // 엔진 상태 변경 + 다음 액티비티 진행
+        instance.getProcessDefinition().flowControl("skip", instance, humanActivity.getTracingTag());
+
+        // worklist 레코드 보강(결정/사유)
+        try {
+            WorklistEntity after = worklistRepository.findById(new Long(taskId)).orElse(null);
+            if (after != null) {
+                // SKIP 수행자 정보 보강 (endpoint/resName이 비어있으면 요청 사용자로 기록)
+                try {
+                    if (requestUserId != null && requestUserId.trim().length() > 0) {
+                        applyActorToWorklistIfEmpty(after, requestUserId);
+                    }
+                } catch (Exception ignore) {
+                }
+
+                // after.setDecision("SKIP");
+                if (command != null && command.getReason() != null && command.getReason().trim().length() > 0) {
+                    if (after.getReason() == null || after.getReason().trim().isEmpty()) {
+                        after.setReason(command.getReason()); // 그대로 저장
+                    }
+                    String existing = after.getDescription();
+                    String msg = "[SKIP] reason=" + command.getReason().trim();
+                    after.setDescription(existing == null || existing.trim().isEmpty() ? msg : (existing + "\n" + msg));
+                }
+                // 엔진(JPAWorkList.cancelWorkItem)에서 status를 SKIPPED로 세팅하지만, 혹시 모르니 한 번 더 보장
+                after.setStatus("SKIPPED");
+                after.setEndDate(new Date());
+                worklistRepository.save(after);
+            }
+        } catch (Exception ignore) {
+        }
+
+        Long rootInstId = current.getRootInstId() == null ? current.getInstId() : current.getRootInstId().longValue();
+        List<WorklistEntity> currents = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+        List<Long> currentTaskIds = new ArrayList<>();
+        if (currents != null) {
+            for (WorklistEntity wl : currents) {
+                if (wl != null && wl.getTaskId() != null) {
+                    currentTaskIds.add(wl.getTaskId());
+                }
+            }
+        }
+
+        TaskSkipResult result = new TaskSkipResult();
+        result.setInstanceId(instanceId);
+        result.setRootInstId(rootInstId);
+        result.setSkippedTracingTag(humanActivity.getTracingTag());
+        result.setCurrentTaskIds(currentTaskIds);
+        return result;
     }
 
 }
