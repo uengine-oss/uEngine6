@@ -4,9 +4,6 @@ package org.uengine.five.entity;
 
 import javax.persistence.*;
 
-import org.uengine.kernel.ParameterContext;
-
-import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -56,6 +53,8 @@ public class WorklistEntity {// implements WorkListDAO {
     String resName;
     String defId;
     String defVerId;
+    String scope; // groupName or RoleScope
+    int assignType; // see org.uengine.kernel.Role#ASSIGNTYPE_*
 
     String defName;
     String trcTag;
@@ -76,6 +75,17 @@ public class WorklistEntity {// implements WorkListDAO {
     Date dueDate;
 
     String status;
+    /**
+     * decision: 사용자가 이 workitem을 어떤 의사결정으로 종료/처리했는지 기록
+     * - 예: RETURN (반송), ADMIN_BACKTOHERE(관리자 강제이동) 등
+     */
+    String decision;
+    /**
+     * reason: decision 수행 사유(사용자 입력값 그대로 저장)
+     */
+    @Lob
+    @Column(name = "reason", columnDefinition = "CLOB")
+    String reason;
     int dispatchOption;
     String dispatchParam1;
     String prevUserName;
@@ -157,6 +167,22 @@ public class WorklistEntity {// implements WorkListDAO {
 
     public void setDefVerId(String defVerId) {
         this.defVerId = defVerId;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public int getAssignType() {
+        return assignType;
+    }
+
+    public void setAssignType(int assignType) {
+        this.assignType = assignType;
     }
 
     public String getDefId() {
@@ -245,6 +271,22 @@ public class WorklistEntity {// implements WorkListDAO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getDecision() {
+        return decision;
+    }
+
+    public void setDecision(String decision) {
+        this.decision = decision;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public int getDispatchOption() {
