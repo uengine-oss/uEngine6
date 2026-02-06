@@ -15,8 +15,8 @@ import org.uengine.five.entity.ProcessDefinitionEntity;
 @RepositoryRestResource(collectionResourceRel = "definitions", path = "definitions")
 public interface DefinitionEntityRepository extends JpaRepository<ProcessDefinitionEntity, Long> {
     @Query("select pd from ProcessDefinitionEntity pd " +
-            "where (:name is null or pd.name like CONCAT('%', :name, '%')) " +
-            "and (:path is null or pd.path like CONCAT('%', :path, '%'))")
+            "where (:name is null or pd.name like CONCAT(CONCAT('%', :name), '%')) " +
+            "and (:path is null or pd.path like CONCAT(CONCAT('%', :path), '%'))")
     List<ProcessDefinitionEntity> findByNameOrPath(
             @Param("name") String name,
             @Param("path") String path);

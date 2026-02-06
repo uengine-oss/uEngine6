@@ -83,6 +83,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Camunda DMN Engine (standalone) -->
+        <dependency>
+            <groupId>org.camunda.bpm.dmn</groupId>
+            <artifactId>camunda-engine-dmn</artifactId>
+            <version>7.14.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -90,6 +97,15 @@
           <plugin>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-maven-plugin</artifactId>
+          </plugin>
+
+          <!-- Java 11 모듈 접근 제한으로 인한 테스트 리플렉션 실패 방지 (e.g., TreeMap.comparator) -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED</argLine>
+            </configuration>
           </plugin>
         </plugins>
     </build>

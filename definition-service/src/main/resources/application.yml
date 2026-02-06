@@ -14,7 +14,12 @@ uengine:
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
   jpa:
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
@@ -73,6 +78,24 @@ spring:
         bpm-in:
           destination: bpm.topic
           contentType: application/json
-          
+
+---
+# DB: Oracle (oracle 폴더 Docker 실행 후 SPRING_PROFILES_ACTIVE=oracle)
+# Oracle 컨테이너가 완전히 뜬 뒤(2~3분) 앱 실행. system/oracle = docker-compose ORACLE_PASSWORD.
+# (APP_USER uengine는 첫 기동 시에만 생성되므로, 크래시 후 재기동한 DB는 system 사용)
+spring:
+  profiles: oracle
+  datasource:
+    url: jdbc:oracle:thin:@${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}:XE
+    username: ${ORACLE_USER:system}
+    password: ${ORACLE_PASSWORD:oracle}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      connection-timeout: 30000
+      initialization-fail-timeout: 30000
+  jpa:
+    database-platform: org.hibernate.dialect.Oracle12cDialect
+    hibernate:
+      ddl-auto: update
 
 

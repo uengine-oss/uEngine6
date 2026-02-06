@@ -60,6 +60,13 @@
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <!-- Oracle (oracle 프로필 사용 시) -->
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc11</artifactId>
+      <version>21.9.0.0</version>
+      <scope>runtime</scope>
+    </dependency>
       <!-- lombok -->
 
     <dependency>

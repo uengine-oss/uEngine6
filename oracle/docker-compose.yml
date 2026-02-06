@@ -1,0 +1,32 @@
+# Oracle XE 21c - Java 11 호환
+# 사용: docker compose up -d
+version: '3.8'
+
+services:
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: uengine-oracle-xe
+    shm_size: '2gb'
+    environment:
+      ORACLE_PASSWORD: oracle
+      APP_USER: uengine
+      APP_USER_PASSWORD: uengine
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - oracle-network
+
+volumes:
+  oracle-data:
+
+networks:
+  oracle-network:
+    driver: bridge

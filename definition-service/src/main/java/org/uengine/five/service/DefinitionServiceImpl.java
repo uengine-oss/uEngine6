@@ -447,13 +447,14 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
         String definitionPath = path.substring(DEFINITION_RAW.length());
-        if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
-            IContainer container = new ContainerResource();
-            container.setPath(RESOURCE_ROOT + "/" + definitionPath);
-            resourceManager.createFolder(container);
-            return new DefinitionResource(container);
+
+        String fileName = definitionPath.contains("/")
+                ? definitionPath.substring(definitionPath.lastIndexOf("/") + 1)
+                : definitionPath;
+        if (!fileName.contains(".")) {
+            definitionPath = definitionPath + ".bpmn";
         }
-        // definitionPath = definitionPath + ".bpmn";
+
         String fileExt = UEngineUtil.getFileExt(definitionPath);
 
         // 버전 아카이브는 BPMN에 대해서만 저장
@@ -471,6 +472,13 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         // /definition-changes.
         if ("bpmn".equalsIgnoreCase(fileExt)) {
             instanceService.postCreatedRawDefinition(definitionPath);
+        }
+
+        if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
+            IContainer container = new ContainerResource();
+            container.setPath(RESOURCE_ROOT + "/" + definitionPath);
+            resourceManager.createFolder(container);
+            return new DefinitionResource(container);
         }
 
         return new DefinitionResource(resource);

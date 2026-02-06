@@ -51,6 +51,24 @@ public class BusinessRuleEvaluator {
         throw new IllegalArgumentException("ruleJson must have either rules(array) or dmnXml(string)");
     }
 
+    /**
+     * DMN 규칙 목록 추출 (4단계 시나리오 분기 생성용).
+     * ruleJson.dmnXml이 있으면 DMN XML에서 규칙(조건·outputValue) 목록 반환; rules 배열만 있으면 빈 목록.
+     *
+     * @param ruleJson BusinessRuleStore에서 로드한 rule JSON
+     * @return 규칙별 DmnRuleCondition 목록 (순서 유지)
+     */
+    public List<DmnRuleCondition> getRuleConditions(JsonNode ruleJson) {
+        if (ruleJson == null) {
+            return new ArrayList<>();
+        }
+        JsonNode dmnXmlNode = ruleJson.get("dmnXml");
+        if (dmnXmlNode == null || !dmnXmlNode.isTextual() || dmnXmlNode.asText().isBlank()) {
+            return new ArrayList<>();
+        }
+        return extractRuleConditions(dmnXmlNode.asText());
+    }
+
     private Map<String, Object> evaluateJsonRules(JsonNode rules, Map<String, Object> inputs) {
 
         for (JsonNode rule : rules) {
@@ -225,6 +243,10 @@ public class BusinessRuleEvaluator {
         return map;
     }
 
+    /**
+     * DMN이 요구하는 타입으로 값을 자동 변환.
+     * string → number, number → string, string → boolean 등 기본적으로 요구 타입으로 변환 시도.
+     */
     private Object coerceValue(String decisionId, String inputKey, String typeRef, Object raw) {
         if (raw == null) {
             return null;
@@ -232,48 +254,75 @@ public class BusinessRuleEvaluator {
 
         switch (typeRef) {
             case "number":
-                if (raw instanceof Number) {
-                    return raw;
-                }
-                if (raw instanceof BigDecimal) {
-                    return raw;
-                }
-                if (raw instanceof String) {
-                    String s = ((String) raw).trim();
-                    if (s.isEmpty()) {
-                        throw dmnTypeMismatch(decisionId, inputKey, typeRef, raw);
-                    }
-                    try {
-                        return new BigDecimal(s);
-                    } catch (Exception ex) {
-                        throw dmnTypeMismatch(decisionId, inputKey, typeRef, raw);
-                    }
-                }
-                throw dmnTypeMismatch(decisionId, inputKey, typeRef, raw);
+                return coerceToNumber(decisionId, inputKey, raw);
             case "string":
-                if (raw instanceof String) {
-                    return raw;
-                }
-                return String.valueOf(raw);
+                return coerceToString(raw);
             case "boolean":
-                if (raw instanceof Boolean) {
-                    return raw;
-                }
-                if (raw instanceof String) {
-                    String s = ((String) raw).trim().toLowerCase();
-                    if ("true".equals(s)) {
-                        return Boolean.TRUE;
-                    }
-                    if ("false".equals(s)) {
-                        return Boolean.FALSE;
-                    }
-                    throw dmnTypeMismatch(decisionId, inputKey, typeRef, raw);
-                }
-                throw dmnTypeMismatch(decisionId, inputKey, typeRef, raw);
+                return coerceToBoolean(decisionId, inputKey, raw);
             default:
-                // unknown typeRef -> keep raw (compat)
                 return raw;
         }
+    }
+
+    private Object coerceToNumber(String decisionId, String inputKey, Object raw) {
+        if (raw instanceof Number) {
+            return raw instanceof BigDecimal ? raw : BigDecimal.valueOf(((Number) raw).doubleValue());
+        }
+        if (raw instanceof Boolean) {
+            return ((Boolean) raw).booleanValue() ? BigDecimal.ONE : BigDecimal.ZERO;
+        }
+        if (raw instanceof String) {
+            String s = ((String) raw).trim();
+            if (s.isEmpty())
+                return null;
+            try {
+                return new BigDecimal(s);
+            } catch (Exception ex) {
+                throw dmnTypeMismatch(decisionId, inputKey, "number", raw);
+            }
+        }
+        if (raw instanceof Map) {
+            Object v = ((Map<?, ?>) raw).get("value");
+            if (v != null) return coerceToNumber(decisionId, inputKey, v);
+            v = ((Map<?, ?>) raw).get(inputKey);
+            if (v != null) return coerceToNumber(decisionId, inputKey, v);
+            return null;
+        }
+        if (raw instanceof List && !((List<?>) raw).isEmpty()) {
+            return coerceToNumber(decisionId, inputKey, ((List<?>) raw).get(0));
+        }
+        // 그 외 타입: 문자열로 만든 뒤 number 파싱 시도 (요구 타입으로 변환)
+        String s = String.valueOf(raw).trim();
+        if (s.isEmpty()) return null;
+        try {
+            return new BigDecimal(s);
+        } catch (Exception ex) {
+            throw dmnTypeMismatch(decisionId, inputKey, "number", raw);
+        }
+    }
+
+    private static String coerceToString(Object raw) {
+        if (raw == null) return null;
+        if (raw instanceof String) return (String) raw;
+        return String.valueOf(raw);
+    }
+
+    private Object coerceToBoolean(String decisionId, String inputKey, Object raw) {
+        if (raw instanceof Boolean) return raw;
+        if (raw instanceof Number) {
+            return ((Number) raw).intValue() != 0 ? Boolean.TRUE : Boolean.FALSE;
+        }
+        String s = (raw instanceof String)
+                ? ((String) raw).trim().toLowerCase()
+                : String.valueOf(raw).trim().toLowerCase();
+        if (s.isEmpty()) return null;
+        if ("true".equals(s) || "1".equals(s) || "yes".equals(s)) return Boolean.TRUE;
+        if ("false".equals(s) || "0".equals(s) || "no".equals(s)) return Boolean.FALSE;
+        // 숫자 문자열이면 0=false, 그 외 true
+        try {
+            return new BigDecimal(s).compareTo(BigDecimal.ZERO) != 0 ? Boolean.TRUE : Boolean.FALSE;
+        } catch (Exception ignored) { }
+        throw dmnTypeMismatch(decisionId, inputKey, "boolean", raw);
     }
 
     private ResponseStatusException dmnTypeMismatch(String decisionId, String inputKey, String expectedTypeRef,
@@ -743,9 +792,9 @@ public class BusinessRuleEvaluator {
     }
 
     /**
-     * Inner class to represent a DMN rule condition.
+     * DMN 규칙 조건 (4단계 시나리오 분기 생성에서 사용).
      */
-    private static class DmnRuleCondition {
+    public static class DmnRuleCondition {
         private final String ruleId;
         private final int index;
         private final Map<Integer, String> inputKeys;

@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -15,6 +16,8 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
+
+import org.uengine.five.entity.converter.OracleBooleanConverter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -100,12 +103,16 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     String name;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean deleted;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean adhoc;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean subProcess;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean eventHandler;
 
     Long rootInstId;
@@ -118,10 +125,12 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     Long mainDefVerId;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean archive;
 
     String absTrcPath;
 
+    @Convert(converter = OracleBooleanConverter.class)
     boolean dontReturn;
 
     String ext1;

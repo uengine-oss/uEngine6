@@ -67,6 +67,9 @@ import org.uengine.five.repository.ServiceEndpointRepository;
 import org.uengine.five.repository.WorklistRepository;
 import org.uengine.five.businessrule.BusinessRuleStore;
 import org.uengine.five.businessrule.BusinessRuleEvaluator;
+import org.uengine.five.scenario.RunResult;
+import org.uengine.five.scenario.Scenario;
+import org.uengine.five.scenario.ScenarioController;
 import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.five.spring.SecurityAwareServletFilter;
 import org.uengine.kernel.AbstractProcessInstance;
@@ -80,12 +83,16 @@ import org.uengine.kernel.HumanActivity;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ReceiveActivity;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.UEngineException;
 import org.uengine.kernel.ValidationContext;
+import org.uengine.kernel.Condition;
+import org.uengine.kernel.Evaluate;
 import org.uengine.kernel.bpmn.CatchingRestMessageEvent;
 import org.uengine.kernel.bpmn.Event;
+import org.uengine.kernel.bpmn.Gateway;
 import org.uengine.kernel.bpmn.SendTask;
 import org.uengine.kernel.bpmn.SequenceFlow;
 import org.uengine.kernel.bpmn.SignalEventInstance;
@@ -141,6 +148,9 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     BusinessRuleEvaluator businessRuleEvaluator;
+
+    @Autowired
+    ScenarioController scenarioController;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
@@ -206,10 +216,30 @@ public class InstanceServiceImpl implements InstanceService {
                     instance.setGroups(groups);
                 }
 
+                org.uengine.five.dto.ProcessVariableValue[] processVariableValues = command.getProcessVariableValues();
+                if (processVariableValues != null) {
+                    for (org.uengine.five.dto.ProcessVariableValue pv : processVariableValues) {
+                        if (pv.getName() == null)
+                            continue;
+                        java.io.Serializable val = (pv.getValues() != null && pv.getValues().length > 0)
+                                ? (java.io.Serializable) pv.getValues()[0]
+                                : null;
+                        instance.set("", pv.getName(), val);
+                    }
+                }
+
                 ((JPAProcessInstance) instance).getProcessInstanceEntity().setDefVerId(processDefinition.getVersion());
                 // instance.setDefinitionVersionId(processDefinition.getVersion());
                 instance.execute();
-                return new InstanceResource(instance); // TODO: returns HATEOAS _self link instead.
+                try {
+                    return new InstanceResource(instance);
+                } catch (Exception linkEx) {
+                    InstanceResource minimal = new InstanceResource();
+                    minimal.setInstanceId(instance.getInstanceId());
+                    minimal.setName(instance.getName());
+                    minimal.setStatus(instance.getStatus());
+                    return minimal;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -348,6 +378,220 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         return eventList;
+    }
+
+    /**
+     * 프로세스를 특정 액티비티(태스크)까지 진행시켜, 해당 태스크가 Running 상태가 되도록 한다.
+     * 목표 태스크가 Running이 되면 InstanceResource를 반환한다. 도달하지 못하면(프로세스 완료/타임아웃) 예외를 던진다.
+     * ScenarioRunner.runUntilTarget과 동일한 방식으로 현재 액티비티를 완료/실행하며 목표에 도달할 때까지 진행한다.
+     *
+     * @param instanceId  프로세스 인스턴스 ID
+     * @param tracingTag  목표 액티비티의 tracingTag (예: Activity_xxx)
+     * @param body        (선택) payloadMapping(액티비티별 완료 시 넣을 값), maxAttempts(기본 30)
+     * @return 목표 태스크가 Running 상태일 때만 InstanceResource 반환
+     */
+    @RequestMapping(value = "/instance/{instanceId}/advance-to-activity/{tracingTag}", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public InstanceResource advanceToActivity(@PathVariable("instanceId") String instanceId,
+            @PathVariable("tracingTag") String tracingTag,
+            @RequestBody(required = false) Map<String, Object> body) throws Exception {
+
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null)
+            throw new ResourceNotFoundException();
+        if (instance.getStatus("").equals(Activity.STATUS_COMPLETED))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Process already completed; cannot advance to activity " + tracingTag);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> payloadMapping = (body != null && body.get("payloadMapping") instanceof Map)
+                ? (Map<String, Object>) body.get("payloadMapping")
+                : new HashMap<>();
+        int maxAttempts = (body != null && body.get("maxAttempts") != null)
+                ? ((Number) body.get("maxAttempts")).intValue()
+                : 30;
+
+        ProcessDefinition def = instance.getProcessDefinition();
+        if (def.getActivity(tracingTag) == null)
+            throw new IllegalArgumentException("Activity not found: " + tracingTag);
+
+        int attempts = 0;
+        while (attempts < maxAttempts) {
+            if (instance.getStatus("").equals(Activity.STATUS_COMPLETED))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Process completed before reaching target activity " + tracingTag + "; target is not Running.");
+
+            List<Activity> activities = instance.getCurrentRunningActivities();
+            if (activities != null && !activities.isEmpty()) {
+                Activity current = activities.get(0);
+                String currentId = current.getTracingTag();
+                if (currentId != null && currentId.equals(tracingTag)) {
+                    if (Activity.STATUS_RUNNING.equals(instance.getStatus(tracingTag)))
+                        return new InstanceResource(instance);
+                }
+
+                if (current instanceof ReceiveActivity) {
+                    if (current instanceof HumanActivity) {
+                        Map<String, Object> payload = getPayloadForActivity(payloadMapping, currentId);
+                        try {
+                            ((HumanActivity) current).fireReceived(instance, payload);
+                        } catch (Exception ex) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                    "HumanActivity complete failed: " + currentId + " - " + ex.getMessage(), ex);
+                        }
+                    } else {
+                        try {
+                            instance.execute(currentId);
+                        } catch (Exception ex) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                    "Execute failed: " + currentId + " - " + ex.getMessage(), ex);
+                        }
+                    }
+                } else if (current instanceof Gateway) {
+                    // 분기(Gateway)는 조건 평가 없이 목표 액티비티로 가는 플로우의 조건 변수만 설정 후 execute
+                    setGatewayConditionForTarget(instance, current, tracingTag, def);
+                    try {
+                        instance.execute(currentId);
+                    } catch (Exception ex) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Gateway execute failed: " + currentId + " - " + ex.getMessage(), ex);
+                    }
+                } else {
+                    try {
+                        instance.execute(currentId);
+                    } catch (Exception ex) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Execute failed: " + currentId + " - " + ex.getMessage(), ex);
+                    }
+                }
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Interrupted");
+                }
+            } else {
+                // 현재 실행 중인 액티비티 없음 + 프로세스 Running → Gateway 완료 후 조건 미충족으로 다음이 안 떠 있는 경우.
+                // 목표로 가는 모든 Gateway의 조건 변수 설정 후 목표 액티비티를 직접 execute.
+                setAnyGatewayConditionForTarget(instance, def, tracingTag);
+                try {
+                    instance.execute(tracingTag);
+                } catch (Exception ex) {
+                    // execute 실패 시(이미 완료 등) 다음 루프에서 재시도
+                }
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Interrupted");
+                }
+            }
+            attempts++;
+        }
+
+        throw new ResponseStatusException(HttpStatus.REQUEST_TIMEOUT,
+                "Timeout: could not advance to activity " + tracingTag + "; target is not in Running state.");
+    }
+
+    /**
+     * 정의 내 모든 Gateway 중 목표 액티비티로 가는 경로에 있는 것에 대해 조건 변수 설정.
+     * getCurrentRunningActivities()가 비어 있을 때(Gateway 완료 후 다음 미시작) 사용.
+     */
+    @SuppressWarnings("unchecked")
+    private void setAnyGatewayConditionForTarget(ProcessInstance instance, ProcessDefinition def, String targetTracingTag)
+            throws Exception {
+        java.util.Hashtable<String, Activity> whole = def.getWholeChildActivities();
+        if (whole == null) return;
+        for (Activity act : whole.values()) {
+            if (act instanceof Gateway)
+                setGatewayConditionForTarget(instance, act, targetTracingTag, def);
+        }
+    }
+
+    /**
+     * Gateway에서 목표 액티비티(tracingTag)로 가는 아웃고잉 플로우를 찾아,
+     * 해당 플로우의 조건(Evaluate)이 있으면 조건 변수를 설정해 둔다. 조건을 무시하지 않고 목표 쪽으로 가도록 변수만 맞춘다.
+     */
+    private void setGatewayConditionForTarget(ProcessInstance instance, Activity gateway, String targetTracingTag,
+            ProcessDefinition def) throws Exception {
+        if (gateway.getOutgoingSequenceFlows() == null)
+            return;
+        for (SequenceFlow flow : gateway.getOutgoingSequenceFlows()) {
+            if (flow.getTargetRef() == null)
+                continue;
+            if (!flowLeadsToTarget(def, flow.getTargetRef(), targetTracingTag, new HashSet<>()))
+                continue;
+            Condition cond = flow.getCondition();
+            if (cond instanceof Evaluate) {
+                Evaluate e = (Evaluate) cond;
+                if (e.getKey() != null && !e.getKey().isEmpty())
+                    instance.set("", e.getKey(), (Serializable) e.getValue());
+            }
+            return;
+        }
+    }
+
+    private boolean flowLeadsToTarget(ProcessDefinition def, String activityId, String targetTracingTag, Set<String> visited) {
+        if (activityId == null || activityId.equals(targetTracingTag))
+            return true;
+        if (visited.contains(activityId))
+            return false;
+        visited.add(activityId);
+        Activity act = def.getActivity(activityId);
+        if (act == null || act.getOutgoingSequenceFlows() == null)
+            return false;
+        for (SequenceFlow flow : act.getOutgoingSequenceFlows()) {
+            if (flow.getTargetRef() != null && flowLeadsToTarget(def, flow.getTargetRef(), targetTracingTag, visited))
+                return true;
+        }
+        return false;
+    }
+
+    private Map<String, Object> getPayloadForActivity(Map<String, Object> payloadMapping, String activityId) {
+        if (payloadMapping == null || payloadMapping.isEmpty())
+            return new HashMap<>();
+        Object val = payloadMapping.get(activityId);
+        if (val instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> m = (Map<String, Object>) val;
+            return new HashMap<>(m);
+        }
+        return new HashMap<>(payloadMapping);
+    }
+
+    /**
+     * 프로세스를 특정 액티비티(태스크)에서부터 실행한다.
+     * ScenarioRunner의 startFromActivityId + execute(startFromId)와 동일. 변수 설정 후 해당 액티비티를 실행한다.
+     *
+     * @param instanceId 프로세스 인스턴스 ID
+     * @param tracingTag 시작할 액티비티의 tracingTag
+     * @param body       (선택) variables: 프로세스 변수 맵 (Given과 동일)
+     */
+    @RequestMapping(value = "/instance/{instanceId}/state/start-from-activity/{tracingTag}", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public InstanceResource startFromActivity(@PathVariable("instanceId") String instanceId,
+            @PathVariable("tracingTag") String tracingTag,
+            @RequestBody(required = false) Map<String, Object> body) throws Exception {
+
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null)
+            throw new ResourceNotFoundException();
+        ProcessDefinition def = instance.getProcessDefinition();
+        Activity activity = def.getActivity(tracingTag);
+        if (activity == null)
+            throw new IllegalArgumentException("Activity not found: " + tracingTag);
+
+        if (body != null && body.get("variables") instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> variables = (Map<String, Object>) body.get("variables");
+            for (Map.Entry<String, Object> e : variables.entrySet())
+                instance.set("", e.getKey(), (Serializable) e.getValue());
+        }
+
+        instance.execute(tracingTag);
+        return new InstanceResource(instance);
     }
 
     @RequestMapping(value = "/instance/{instanceId}/activity/{tracingTag}/backToHere", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -1290,19 +1534,25 @@ public class InstanceServiceImpl implements InstanceService {
         return result;
     }
 
-    @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST)
-    @ProcessTransactional // important!
+    /**
+     * 워크아이템 완료 핵심 로직 (내부 메서드).
+     * REST API와 시나리오 테스트에서 공통으로 사용.
+     * 
+     * @param taskId     워크아이템 taskId
+     * @param workItem   WorkItemResource (parameterValues, execScope 포함)
+     * @param isSimulate "true"면 시뮬레이션 모드 (파일 기록)
+     * @throws Exception
+     */
+    @ProcessTransactional
     @Transactional(rollbackFor = { Exception.class })
-    public void putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
-            @RequestHeader("isSimulate") String isSimulate)
-
-            throws Exception {
-
-        // instance.setExecutionScope(esc.getExecutionScope());
+    void completeWorkItemInternal(String taskId, WorkItemResource workItem, String isSimulate) throws Exception {
+        System.out.println("[InstanceServiceImpl] completeWorkItemInternal: starting for taskId=" + taskId);
         WorklistEntity worklistEntity = worklistRepository.findById(new Long(taskId)).get();
 
         String instanceId = worklistEntity.getInstId().toString();
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        System.out.println("[InstanceServiceImpl] completeWorkItemInternal: loaded instance " + instanceId + ", trcTag="
+                + worklistEntity.getTrcTag());
 
         instance.setExecutionScope(workItem.getExecScope());
         HumanActivity humanActivity = ((HumanActivity) instance.getProcessDefinition()
@@ -1322,18 +1572,6 @@ public class InstanceServiceImpl implements InstanceService {
                     humanActivity.getTracingTag(), humanActivity.getName(), workItem);
         }
 
-        // if (isSimulate.equals("record")) {
-
-        // } else {
-        // boolean simulate = Boolean.parseBoolean(isSimulate);
-        // if (simulate) {
-        // Map<String, Object> readValues = readFromFile(
-        // instance.getProcessDefinition().getId() + "/" + humanActivity.getTracingTag()
-        // + ".json");
-        // workItem.setParameterValues(readValues);
-        // }
-        // }
-
         // map the argument list to variables change list
         Map<String, Object> parameterValues = workItem.getParameterValues();
 
@@ -1343,10 +1581,10 @@ public class InstanceServiceImpl implements InstanceService {
             ProcessTransactionContext tc = ProcessTransactionContext.getThreadLocalInstance();
             tc.setSharedContext(humanActivity.getTracingTag() + "_payload@" + instance.getInstanceId() + ":", payload);
 
+            System.out.println("[InstanceServiceImpl] completeWorkItemInternal: calling fireReceived for activity="
+                    + humanActivity.getName() + ", trcTag=" + humanActivity.getTracingTag());
             humanActivity.fireReceived(instance, parameterValues);
-            // writeToFile(instance.getProcessDefinition().getId()+"/"+humanActivity.getTracingTag()+".json",
-            // "result: " + instance.getAll().toString() + "}");
-            //
+            System.out.println("[InstanceServiceImpl] completeWorkItemInternal: fireReceived completed successfully");
         } catch (Exception e) {
             humanActivity.fireFault(instance, e);
 
@@ -1361,6 +1599,208 @@ public class InstanceServiceImpl implements InstanceService {
             throw new UEngineException(e.getMessage(), null, new UEngineException(e.getMessage(), e), instance,
                     humanActivity);
         }
+    }
+
+    /**
+     * 워크아이템 완료.
+     * isSimulate가 "true"이면 완료 후 실행 결과(instanceId, processStatus, currentActivityNames, currentActivityIds, changedProcessVariables)를 반환한다.
+     * changedProcessVariables는 정의에 선언된 프로세스 변수 중 완료로 인해 값이 변경된 것만 포함한다.
+     */
+    @RequestMapping(value = "/work-item/{taskId}/complete", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional // important!
+    @Transactional(rollbackFor = { Exception.class })
+    public Object putWorkItemComplete(@PathVariable("taskId") String taskId, @RequestBody WorkItemResource workItem,
+            @RequestHeader(value = "isSimulate", required = false) String isSimulate)
+
+            throws Exception {
+        if (!"true".equals(isSimulate)) {
+            completeWorkItemInternal(taskId, workItem, isSimulate != null ? isSimulate : "false");
+            return null;
+        }
+        WorklistEntity we = worklistRepository.findById(Long.valueOf(taskId)).orElse(null);
+        if (we == null)
+            return null;
+        String instanceId = we.getInstId().toString();
+        ProcessInstance instanceBefore = getProcessInstanceLocal(instanceId);
+        if (instanceBefore == null)
+            return null;
+        ProcessDefinition def = instanceBefore.getProcessDefinition();
+        Map<String, Object> beforeVars = getProcessVariableSnapshot(instanceBefore, def);
+
+        completeWorkItemInternal(taskId, workItem, "true");
+
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        if (instance == null)
+            return null;
+        String processStatus = instance.getStatus("");
+        List<Activity> running = instance.getCurrentRunningActivities();
+        String currentActivityNames = "COMPLETED";
+        String currentActivityIds = "";
+        if (running != null && !running.isEmpty()) {
+            StringBuilder names = new StringBuilder();
+            StringBuilder ids = new StringBuilder();
+            for (int i = 0; i < running.size(); i++) {
+                Activity a = running.get(i);
+                if (i > 0) {
+                    names.append(", ");
+                    ids.append(",");
+                }
+                if (a.getName() != null)
+                    names.append(a.getName());
+                if (a.getTracingTag() != null)
+                    ids.append(a.getTracingTag());
+            }
+            currentActivityNames = names.toString();
+            currentActivityIds = ids.toString();
+        }
+        Map<String, Object> changedProcessVariables = getChangedProcessVariables(def, beforeVars, instance);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("instanceId", instanceId);
+        result.put("processStatus", processStatus);
+        result.put("currentActivityNames", currentActivityNames);
+        result.put("currentActivityIds", currentActivityIds);
+        result.put("changedProcessVariables", changedProcessVariables);
+        return result;
+    }
+
+    /** 정의에 선언된 프로세스 변수만 현재 값으로 스냅샷. */
+    private Map<String, Object> getProcessVariableSnapshot(ProcessInstance instance, ProcessDefinition def) {
+        Map<String, Object> snap = new LinkedHashMap<>();
+        ProcessVariable[] pvs = def.getProcessVariables();
+        if (pvs == null) return snap;
+        for (ProcessVariable pv : pvs) {
+            String name = pv.getName();
+            if (name == null) continue;
+            try {
+                Object val = instance.get("", name);
+                snap.put(name, val);
+            } catch (Exception ignored) { }
+        }
+        return snap;
+    }
+
+    /** 정의에 선언된 프로세스 변수 중 완료 전후로 값이 변경된 것만 반환. 각 항목은 before/after 모두 포함. */
+    private Map<String, Object> getChangedProcessVariables(ProcessDefinition def, Map<String, Object> beforeVars,
+            ProcessInstance instance) {
+        Map<String, Object> changed = new LinkedHashMap<>();
+        ProcessVariable[] pvs = def.getProcessVariables();
+        if (pvs == null) return changed;
+        for (ProcessVariable pv : pvs) {
+            String name = pv.getName();
+            if (name == null) continue;
+            try {
+                Object afterVal = instance.get("", name);
+                Object beforeVal = beforeVars.get(name);
+                if (!objectsEqual(beforeVal, afterVal)) {
+                    Map<String, Object> beforeAfter = new LinkedHashMap<>();
+                    beforeAfter.put("before", beforeVal);
+                    beforeAfter.put("after", afterVal);
+                    changed.put(name, beforeAfter);
+                }
+            } catch (Exception ignored) { }
+        }
+        return changed;
+    }
+
+    private static boolean objectsEqual(Object a, Object b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    /**
+     * 액티비티 이름으로 현재 워크아이템을 찾아 완료한다.
+     * 시나리오 테스트에서 사용.
+     * 
+     * @param instanceId      프로세스 인스턴스 ID
+     * @param activityName    완료할 액티비티 이름 (BPMN 표시명)
+     * @param parameterValues 워크아이템 완료 시 전달할 파라미터 (null이면 빈 Map 사용)
+     * @throws IllegalArgumentException 지정한 이름의 현재 워크아이템이 없을 때
+     * @throws Exception
+     */
+    @ProcessTransactional
+    @Transactional(rollbackFor = { Exception.class })
+    public void completeWorkItemByActivityName(String instanceId, String activityName,
+            Map<String, Object> parameterValues) throws Exception {
+        if (instanceId == null || instanceId.trim().isEmpty()) {
+            throw new IllegalArgumentException("instanceId cannot be null or empty");
+        }
+        if (activityName == null || activityName.trim().isEmpty()) {
+            throw new IllegalArgumentException("activityName cannot be null or empty");
+        }
+
+        long rootInstId;
+        try {
+            rootInstId = Long.parseLong(instanceId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid instanceId format: " + instanceId, e);
+        }
+
+        List<WorklistEntity> worklistEntities = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+        if (worklistEntities == null || worklistEntities.isEmpty()) {
+            throw new IllegalArgumentException("No current work items found for instanceId: " + instanceId);
+        }
+        System.out.println("[InstanceServiceImpl] completeWorkItemByActivityName: found " + worklistEntities.size()
+                + " work items for instanceId=" + instanceId + ", looking for activityName=" + activityName);
+
+        ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        ProcessDefinition definition = instance.getProcessDefinition();
+
+        WorklistEntity targetEntity = null;
+        for (WorklistEntity we : worklistEntities) {
+            if (we.getTrcTag() == null) {
+                System.out.println(
+                        "[InstanceServiceImpl] completeWorkItemByActivityName: skipping work item with null trcTag, taskId="
+                                + we.getTaskId());
+                continue;
+            }
+            Activity activity = definition.getActivity(we.getTrcTag());
+            if (activity != null) {
+                String actName = activity.getName();
+                System.out.println("[InstanceServiceImpl] completeWorkItemByActivityName: checking work item taskId="
+                        + we.getTaskId() + ", trcTag=" + we.getTrcTag() + ", activityName=" + actName + " (expected="
+                        + activityName + ")");
+                if (activityName.equals(actName)) {
+                    targetEntity = we;
+                    System.out.println(
+                            "[InstanceServiceImpl] completeWorkItemByActivityName: matched! taskId=" + we.getTaskId());
+                    break;
+                }
+            } else {
+                System.out.println("[InstanceServiceImpl] completeWorkItemByActivityName: activity is null for trcTag="
+                        + we.getTrcTag());
+            }
+        }
+
+        if (targetEntity == null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("No work item found for activity name '").append(activityName).append("' in instance ")
+                    .append(instanceId);
+            sb.append(". Current work items: [");
+            for (WorklistEntity we : worklistEntities) {
+                if (we.getTrcTag() != null) {
+                    Activity act = definition.getActivity(we.getTrcTag());
+                    if (act != null) {
+                        sb.append(act.getName()).append(",");
+                    }
+                }
+            }
+            sb.append("]");
+            throw new IllegalArgumentException(sb.toString());
+        }
+
+        String taskId = targetEntity.getTaskId().toString();
+        WorkItemResource workItem = new WorkItemResource();
+        workItem.setParameterValues(parameterValues != null ? parameterValues : new HashMap<String, Object>());
+        workItem.setExecScope(null); // 기본값
+
+        System.out.println(
+                "[InstanceServiceImpl] completeWorkItemByActivityName: calling completeWorkItemInternal for taskId="
+                        + taskId);
+        completeWorkItemInternal(taskId, workItem, "true");
+        System.out.println(
+                "[InstanceServiceImpl] completeWorkItemByActivityName: successfully completed taskId=" + taskId);
     }
 
     @RequestMapping(value = "/test/{recordPath}/record", method = RequestMethod.GET)
@@ -1692,9 +2132,72 @@ public class InstanceServiceImpl implements InstanceService {
         return null;
     }
 
+    // ----------------- scenario API (delegates to ScenarioController) -------------------- //
+
+    @GetMapping(value = "/scenarios/{processDefinitionId}", produces = "application/json;charset=UTF-8")
+    public List<Scenario> getScenarios(@PathVariable("processDefinitionId") String processDefinitionId) {
+        try {
+            return scenarioController.getScenarios(processDefinitionId);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
+    @RequestMapping(value = "/scenarios/{processDefinitionId}", method = RequestMethod.PUT, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    public List<Scenario> putScenarios(@PathVariable("processDefinitionId") String processDefinitionId,
+            @RequestBody List<Scenario> scenarios) {
+        try {
+            return scenarioController.putScenarios(processDefinitionId, scenarios);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
+    @PostMapping(value = "/scenarios/{processDefinitionId}/generate", produces = "application/json;charset=UTF-8")
+    public List<Scenario> generateScenarios(
+            @PathVariable("processDefinitionId") String processDefinitionId,
+            @RequestParam(value = "merge", defaultValue = "false") boolean merge,
+            @RequestParam(value = "includeGatewayBranches", defaultValue = "false") boolean includeGatewayBranches,
+            @RequestParam(value = "includeDmnBranches", defaultValue = "false") boolean includeDmnBranches) {
+        try {
+            return scenarioController.generateScenarios(processDefinitionId, merge, includeGatewayBranches, includeDmnBranches);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
+    @PostMapping(value = "/scenarios/{processDefinitionId}/generate-branches", produces = "application/json;charset=UTF-8")
+    public List<Scenario> generateBranches(@PathVariable("processDefinitionId") String processDefinitionId) {
+        try {
+            return scenarioController.generateBranches(processDefinitionId);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
+    @PostMapping(value = "/scenarios/{processDefinitionId}/run", consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    public RunResult runScenario(@PathVariable("processDefinitionId") String processDefinitionId,
+            @RequestBody Map<String, Object> body) {
+        try {
+            return scenarioController.runScenario(processDefinitionId, body);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
+    }
+
     /**
      * Execute business rule by ruleId.
-     * 
+     *
      * @param ruleId  Business rule ID
      * @param request Request body containing inputs map
      * @return Execution result with outcome, note, matchedRuleIndex, and
