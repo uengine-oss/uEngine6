@@ -22,6 +22,14 @@ public class CatchingErrorEvent extends Event{
     @Override
     public boolean onMessage(ProcessInstance instance, Object payload) throws Exception {
         if(instance.getProcessDefinition().getActivity(getTracingTag()).getStatus(instance).equals(STATUS_RUNNING)) {
+            // Interrupting: 연결된 액티비티의 토큰을 소진해 getCurrentRunningActivities()에서 제외되고,
+            // 게이트웨이/조인 등 후속 플로우가 정상 진행되도록 한다.
+            if (getAttachedToRef() != null) {
+                Activity attached = instance.getProcessDefinition().getActivity(getAttachedToRef());
+                if (attached != null) {
+                    attached.setTokenCount(instance, 0);
+                }
+            }
             fireComplete(instance); // run the connected activity
             //let error is not fired.
             instance.getProcessTransactionContext().setSharedContext("faultTolerant", new Boolean(true));

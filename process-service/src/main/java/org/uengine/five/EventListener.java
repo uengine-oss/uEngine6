@@ -189,6 +189,9 @@ public class EventListener {
                     .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
                     .build());
 
+            // 예외를 다시 던져야 @ProcessTransactional 롤백이 수행되고, 인스턴스 파일(saveVariables)이 저장되지 않음.
+            throw e;
+
             //// retry
             // Activity activity = instance.getProcessDefinition()
             // .getActivity(activityFailed.getActivityInfo().getTracingTag());
