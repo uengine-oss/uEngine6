@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.uengine.five.overriding.CLOBProcessInstance;
 import org.uengine.five.overriding.EmailServiceLocalImpl;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.InstanceServiceLocalImpl;
@@ -110,8 +111,8 @@ public class ProcessServiceWebConfig {
     @Scope("prototype")
     public ProcessInstance processInstance(ProcessDefinition procDefinition, String instanceId, Map options)
             throws Exception {
-        return new JPAProcessInstance(procDefinition, instanceId, options);
-        // return new CLOBProcessInstance(procDefinition, instanceId, options);
+        // return new JPAProcessInstance(procDefinition, instanceId, options);
+        return new CLOBProcessInstance(procDefinition, instanceId, options);
     }
 
     @Bean
