@@ -138,6 +138,9 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     String corrKey;
 
+    /** 현재 유효한 인스턴스 변수 파일 경로 (instances/...). null이면 startedDate 기준 계산 경로 사용. */
+    String variablesPath;
+
     @Lob
     @JsonIgnore
     byte[] varLob;
@@ -554,6 +557,14 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     public void setCorrKey(String corrKey) {
         this.corrKey = corrKey;
+    }
+
+    public String getVariablesPath() {
+        return variablesPath;
+    }
+
+    public void setVariablesPath(String variablesPath) {
+        this.variablesPath = variablesPath;
     }
 
 }

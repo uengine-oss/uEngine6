@@ -3,6 +3,7 @@ package org.uengine.five.overriding;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,8 +12,10 @@ import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.ProcessInstanceEntity;
+import org.uengine.five.entity.WorklistEntity;
 import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.five.repository.ProcessInstanceRepository;
+import org.uengine.five.repository.WorklistRepository;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.InstanceServiceImpl;
 import org.uengine.kernel.AbstractProcessInstance;
@@ -54,6 +57,9 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Autowired
     ProcessInstanceRepository processInstanceRepository;
+
+    @Autowired
+    WorklistRepository worklistRepository;
 
     ProcessInstanceEntity processInstanceEntity;
 
@@ -305,6 +311,17 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
 
     @Override
     public void beforeCommit(TransactionContext tx) throws Exception {
+        // 인스턴스 파일과 DB 상태 동기화: 인스턴스 파일의 상태를 DB에 반영
+        // 인스턴스 파일의 상태가 더 정확한 경우가 있으므로, 인스턴스 파일의 상태를 우선시
+        try {
+            String instanceFileStatus = getStatus("");
+            if (instanceFileStatus != null && !instanceFileStatus.equals(getProcessInstanceEntity().getStatus())) {
+                getProcessInstanceEntity().setStatus(instanceFileStatus);
+            }
+        } catch (Exception e) {
+            // 상태 동기화 실패 시 무시하고 계속 진행
+        }
+        
         processInstanceRepository.save(getProcessInstanceEntity());
         saveVariables();
     }
@@ -334,11 +351,97 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
     }
 
     protected void saveVariables() throws Exception {
+        // DB 상태를 인스턴스 파일에 동기화: 저장 전에 DB 상태를 반영
+        ProcessInstanceEntity entity = getProcessInstanceEntity();
+        if (entity != null && getVariables() != null) {
+            // 1. 인스턴스 전체 상태 동기화
+            if (entity.getStatus() != null) {
+                String dbStatus = entity.getStatus();
+                getVariables().put(":_status:prop", dbStatus);
+            }
+            
+            // 2. 각 Activity/태스크 상태 동기화 (WorklistEntity 기반)
+            try {
+                Long rootInstId = entity.getRootInstId() != null ? entity.getRootInstId() : entity.getInstId();
+                if (rootInstId != null) {
+                    // rootInstId로 모든 WorklistEntity 조회
+                    List<WorklistEntity> worklists = worklistRepository.findWorkListByInstId(rootInstId);
+                    if (worklists != null) {
+                        for (WorklistEntity wl : worklists) {
+                            if (wl != null && wl.getTrcTag() != null && wl.getStatus() != null) {
+                                String trcTag = wl.getTrcTag();
+                                String worklistStatus = wl.getStatus();
+                                
+                                // WorklistEntity 상태를 Activity 상태로 변환
+                                String activityStatus = convertWorklistStatusToActivityStatus(worklistStatus);
+                                if (activityStatus != null) {
+                                    // 인스턴스 파일의 Activity 상태 업데이트
+                                    String statusKey = trcTag + ":_status:prop";
+                                    getVariables().put(statusKey, activityStatus);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 현재 실행 중인 태스크도 포함
+                    List<WorklistEntity> currentWorklists = worklistRepository.findCurrentWorkItemByInstId(rootInstId);
+                    if (currentWorklists != null) {
+                        for (WorklistEntity wl : currentWorklists) {
+                            if (wl != null && wl.getTrcTag() != null && wl.getStatus() != null) {
+                                String trcTag = wl.getTrcTag();
+                                String worklistStatus = wl.getStatus();
+                                
+                                // WorklistEntity 상태를 Activity 상태로 변환
+                                String activityStatus = convertWorklistStatusToActivityStatus(worklistStatus);
+                                if (activityStatus != null) {
+                                    // 인스턴스 파일의 Activity 상태 업데이트
+                                    String statusKey = trcTag + ":_status:prop";
+                                    getVariables().put(statusKey, activityStatus);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Worklist 동기화 실패 시 무시하고 계속 진행
+                e.printStackTrace();
+            }
+        }
+        
         java.util.Calendar calendar = java.util.Calendar.getInstance();
         String currentYear = String.valueOf(calendar.get(java.util.Calendar.YEAR));
         String currentMonth = String.format("%02d", calendar.get(java.util.Calendar.MONTH) + 1);
         IResource resource = new DefaultResource("instances/" + currentYear + "/" + currentMonth + "/" + getInstanceId());
         resourceManager.save(resource, getVariables());
+    }
+    
+    /**
+     * WorklistEntity의 상태를 Activity 상태로 변환
+     * WorklistEntity.status → Activity.status 매핑
+     */
+    private String convertWorklistStatusToActivityStatus(String worklistStatus) {
+        if (worklistStatus == null) {
+            return null;
+        }
+        
+        // WorklistEntity 상태 → Activity 상태 매핑
+        switch (worklistStatus.toUpperCase()) {
+            case "COMPLETED":
+                return Activity.STATUS_COMPLETED; // "Completed"
+            case "SKIPPED":
+                return Activity.STATUS_SKIPPED; // "Skipped"
+            case "RUNNING":
+                return Activity.STATUS_RUNNING; // "Running"
+            case "NEW":
+                return Activity.STATUS_RUNNING; // "Running" (NEW는 실행 중으로 간주)
+            case "SUSPENDED":
+                return Activity.STATUS_SUSPENDED; // "Suspended"
+            case "CANCELLED":
+                return Activity.STATUS_CANCELLED; // "Cancelled"
+            default:
+                // 알 수 없는 상태는 그대로 반환 (또는 null)
+                return null;
+        }
     }
 
     public void setStatus(String scope, String status) throws Exception {
@@ -361,6 +464,11 @@ public class JPAProcessInstance extends DefaultProcessInstance implements Transa
                     pi = getProcessInstanceEntity();
                 }
                 pi.setFinishedDate(new Date());
+                // beforeCommit에서 JPAProcessInstance 리스너가 FlowActivity 리스너보다 먼저 호출되므로
+                // 루트 완료/중지 시 여기서 즉시 변수 저장하여 variablesPath 파일의 ":_status:prop"가 일치하도록 함
+                if (pi != null) {
+                    saveVariables();
+                }
             }
         }
 

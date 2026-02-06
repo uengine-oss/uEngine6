@@ -18,6 +18,11 @@ public class ActivityEventListener implements SensitiveActivityFilter{
     }
 
     @Override
+    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
+
+    }
+
+    @Override
     public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue) throws Exception {
 
     }

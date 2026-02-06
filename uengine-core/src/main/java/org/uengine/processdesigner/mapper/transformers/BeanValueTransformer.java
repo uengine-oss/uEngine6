@@ -77,7 +77,7 @@ public class BeanValueTransformer extends Transformer{
 				RoleMapping rm = (RoleMapping)result;
 				try {
 					rm.beforeFirst();
-					rm.fill(instance);
+					rm.fill();
 					String endpoint = rm.getEndpoint();
 					result = rm;
 				} catch (Exception e) {
@@ -99,7 +99,7 @@ public class BeanValueTransformer extends Transformer{
 				if(result == null && isRoleMappingClass){
 					RoleMapping rm = (RoleMapping)tempRole;
 					rm.beforeFirst();
-					rm.fill(instance);
+					rm.fill();
 					result = getter.invoke(rm, new Object[]{});
 				}
 				
