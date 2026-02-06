@@ -8,6 +8,7 @@ import java.io.Serializable;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.GlobalContext;
+import org.uengine.kernel.FaultContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
@@ -28,6 +29,9 @@ public class CostDeterminationFilter implements ActivityFilter, Serializable{
 		throws Exception {
 		
 	
+	}
+
+	public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
 	}
 
 	public void beforeExecute(Activity activity, ProcessInstance instance)

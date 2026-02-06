@@ -77,6 +77,25 @@ public class DefaultActivityFilter implements ActivityFilter {
 		}
 	}
 
+	public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
+		// DefaultActivityFilter는 스크립트 기반/위임 기반 래퍼 역할을 한다.
+		// 스크립트 사용 시(afterFault 스크립트는 별도 지원하지 않으므로) no-op.
+		// 위임 클래스가 있으면 afterFault를 전달한다.
+		if (!isUseScript() && getFilterClass() != null) {
+			if (activityFilter == null)
+				try {
+					activityFilter = (ActivityFilter) Thread.currentThread().getContextClassLoader()
+							.loadClass(getFilterClass()).newInstance();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			if (activityFilter != null) {
+				activityFilter.afterFault(activity, instance, faultContext);
+			}
+		}
+	}
+
 	public void beforeExecute(Activity activity, ProcessInstance instance) throws Exception {
 		if (isUseScript()) {
 			runScript(getBeforeExecuteScript(), activity, instance);

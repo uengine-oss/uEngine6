@@ -1,9 +1,10 @@
 package org.uengine.five.overriding;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.repository.EventMappingRepository;
-import org.uengine.five.service.InstanceService;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.FieldDescriptor;
@@ -16,12 +17,17 @@ import org.uengine.kernel.bpmn.StartEvent;
 import org.uengine.processmanager.ProcessTransactionContext;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by uengine on 2018. 1. 5..
  */
 public class EventMappingDeployFilter implements DeployFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(EventMappingDeployFilter.class);
 
     @Autowired
     EventMappingRepository eventMappingRepository;
@@ -36,14 +42,15 @@ public class EventMappingDeployFilter implements DeployFilter {
          * 2. ReceiveActivity 상속 Activity
          */
 
-        Activity startActivity = null;
+        Set<Activity> startActivitiesWithEventSync = new HashSet<>();
         List<Activity> startActivities = definition.getStartActivities();
         if (startActivities != null) {
             for (Activity activity : startActivities) {
-                startActivity = findStartActivityWithEventSynchronization(activity, definition);
+                Activity startActivity = findStartActivityWithEventSynchronization(activity, definition, new HashSet<>());
                 if (startActivity == null) {
                     // Not Found Start Event
                 } else {
+                    startActivitiesWithEventSync.add(startActivity);
                     saveEventMappingEntity(startActivity, definition, true);
                 }
             }
@@ -60,7 +67,7 @@ public class EventMappingDeployFilter implements DeployFilter {
         List<Activity> activities = definition.getChildActivities();
         if (activities != null) {
             for (Activity activity : activities) {
-                if (activity instanceof ReceiveActivity && activity != startActivity
+                if (activity instanceof ReceiveActivity && !startActivitiesWithEventSync.contains(activity)
                         && activity.getEventSynchronization() != null) {
                     saveEventMappingEntity(activity, definition, false);
                 }
@@ -69,18 +76,26 @@ public class EventMappingDeployFilter implements DeployFilter {
 
     }
 
-    private Activity findStartActivityWithEventSynchronization(Activity activity, ProcessDefinition definition)
+    private Activity findStartActivityWithEventSynchronization(Activity activity, ProcessDefinition definition, Set<Activity> visited)
             throws Exception {
         try {
+            if (activity == null) return null;
+            if (visited == null) visited = new HashSet<>();
+            if (visited.contains(activity)) return null;
+            visited.add(activity);
+
             if ((activity instanceof StartEvent || activity instanceof ReceiveActivity)
                     && activity.getEventSynchronization() != null) {
                 return activity;
             }
 
-            for (SequenceFlow sequenceFlow : activity.getOutgoingSequenceFlows()) {
+            List<SequenceFlow> outgoing = activity.getOutgoingSequenceFlows();
+            if (outgoing == null) outgoing = Collections.emptyList();
+
+            for (SequenceFlow sequenceFlow : outgoing) {
                 if (sequenceFlow.getTargetActivity() != null) {
                     Activity result = findStartActivityWithEventSynchronization(sequenceFlow.getTargetActivity(),
-                            definition);
+                            definition, visited);
                     if (result != null) {
                         return result;
                     }
@@ -88,8 +103,12 @@ public class EventMappingDeployFilter implements DeployFilter {
             }
             return null;
         } catch (Exception e) {
+            String nameSafe = "(unknown)";
+            try {
+                if (activity != null && activity.getName() != null) nameSafe = activity.getName();
+            } catch (Exception ignore) {}
             throw new UEngineException(
-                    "Error when to find StartActivityWith EventSynchronization: " + activity.getName(), e);
+                    "Error when to find StartActivityWith EventSynchronization: " + nameSafe, e);
         }
 
     }
@@ -106,6 +125,15 @@ public class EventMappingDeployFilter implements DeployFilter {
 
                 if (event.getEventType() == null)
                     return;
+
+                // EventMappingEntity의 @Id(eventType)는 반드시 수동으로 채워야 함
+                if (isNullOrBlank(eventKey)) {
+                    log.warn("Skip EventMappingEntity save: eventKey is null/blank. defId={}, tracingTag={}",
+                            safe(definition != null ? definition.getId() : null),
+                            safe(activity.getTracingTag()));
+                    return;
+                }
+                eventKey = eventKey.trim();
 
                 EventMappingEntity eventMappingEntity = new EventMappingEntity();
                 eventMappingEntity.setEventType(eventKey);
@@ -131,16 +159,29 @@ public class EventMappingDeployFilter implements DeployFilter {
     private void saveEventMappingEntity(Activity activity, ProcessDefinition definition, boolean isStartEvent)
             throws Exception {
         try {
+            if (activity == null) return;
+            if (activity.getEventSynchronization() == null) return;
+            if (eventMappingRepository == null) {
+                throw new IllegalStateException("eventMappingRepository is null. EventMappingDeployFilter might not be Spring-managed.");
+            }
+
             String corrKey = null;
             FieldDescriptor[] attributes = activity.getEventSynchronization().getAttributes();
+            if (attributes == null) attributes = new FieldDescriptor[0];
             FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)
                     .toArray(FieldDescriptor[]::new);
             if (corrKeyFields.length > 0) {
                 corrKey = corrKeyFields[0].getName();
             }
 
+            String eventType = activity.getEventSynchronization().getEventType();
+            if (isNullOrBlank(eventType)) {
+                return;
+            }
+            eventType = eventType.trim();
+            
             EventMappingEntity eventMappingEntity = new EventMappingEntity();
-            eventMappingEntity.setEventType(activity.getEventSynchronization().getEventType());
+            eventMappingEntity.setEventType(eventType);
             eventMappingEntity.setDefinitionId(definition.getId());
             eventMappingEntity.setCorrelationKey(corrKey);
             eventMappingEntity.setTracingTag(activity.getTracingTag());
@@ -150,5 +191,13 @@ public class EventMappingDeployFilter implements DeployFilter {
         } catch (Exception e) {
             throw new UEngineException("Error when to save EventMappingEntity: " + activity.getName(), e);
         }
+    }
+
+    private static boolean isNullOrBlank(String v) {
+        return v == null || v.trim().isEmpty();
+    }
+
+    private static String safe(String v) {
+        return v == null ? "(null)" : v;
     }
 }

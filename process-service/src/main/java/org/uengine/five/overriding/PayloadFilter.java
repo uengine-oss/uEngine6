@@ -10,6 +10,7 @@ import org.uengine.five.framework.ProcessTransactionContext;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
 import org.uengine.kernel.DefaultProcessInstance;
+import org.uengine.kernel.FaultContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ReceiveActivity;
@@ -48,8 +49,9 @@ public class PayloadFilter implements ActivityFilter, Serializable {
                     Date date = ((JPAProcessInstance) instance).getProcessInstanceEntity().getStartedDate();
                     String currentYear = String.valueOf(date.getYear() + 1900);
                     String currentMonth = String.format("%02d", date.getMonth() + 1);
+                    String currentDay = String.format("%02d", date.getDate());
                     IResource resource = new DefaultResource(
-                            "payloads/" + currentYear + "/" + currentMonth + "/" + instance.getInstanceId());
+                            "payloads/" + currentYear + "/" + currentMonth + "/" + currentDay + "/" + instance.getInstanceId());
 
                     boolean resourceExists = resourceManager.exists(resource);
                     Map<String, String> payloadMap = null;
@@ -64,6 +66,10 @@ public class PayloadFilter implements ActivityFilter, Serializable {
                 }
             }
         }
+    }
+
+    @Override
+    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
     }
 
     @Override

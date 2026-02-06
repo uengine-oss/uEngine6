@@ -4,6 +4,7 @@ import org.uengine.five.entity.AuditEntity;
 import org.uengine.five.repository.AuditEntityRepository;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.ActivityFilter;
+import org.uengine.kernel.FaultContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 
@@ -31,6 +32,10 @@ public class InstanceNameFilter implements ActivityFilter {
     @Override
     public void afterComplete(Activity activity, ProcessInstance instance) throws Exception {
 
+    }
+
+    @Override
+    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
     }
 
     @Override
