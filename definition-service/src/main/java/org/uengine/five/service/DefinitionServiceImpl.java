@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.QueryParam;
 
 import org.apache.commons.io.IOUtils;
+import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.server.ResponseStatusException;
 // import org.uengine.five.serializers.BpmnXMLParser;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
@@ -426,7 +428,19 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         Object definitionDeployed = null;
 
         resourceManager.save(resource, definitionRequest.getDefinition());
-        instanceService.postCreatedRawDefinition(definitionPath);
+        try {
+            instanceService.postCreatedRawDefinition(definitionPath);
+        } catch (FeignException fe) {
+            // process-service가 내려준 JSON 바디가 커질 수 있어(message 위주로) 요약해서 리턴
+            HttpStatus status = HttpStatus.resolve(fe.status());
+            if (status == null) status = HttpStatus.BAD_GATEWAY;
+
+            String body = fe.contentUTF8();
+            String summarized = summarizeFeignBody(body);
+            throw new ResponseStatusException(status,
+                    "[process-service:/definition-changes 실패] definitionPath=" + definitionPath + "\n" + summarized,
+                    fe);
+        }
 
         // TODO: deploy filter 로 등록된 bean 들을 호출:
         if (definitionDeployed != null && definitionDeployed instanceof ProcessDefinition) {
@@ -434,6 +448,45 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         }
 
         return new DefinitionResource(resource);
+    }
+
+    private String summarizeFeignBody(String body) {
+        if (body == null || body.isBlank()) return "(empty body)";
+        // Spring Boot 기본 에러 JSON이면 message(또는 trace)만 뽑아낸다.
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<?, ?> map = om.readValue(body, java.util.Map.class);
+            Object msg = map.get("message");
+            Object trace = map.get("trace");
+
+            // 우선순위:
+            // 1) message 안에 "Stacktrace:"가 있으면 그 뒤만 리턴
+            // 2) trace 필드가 있으면 trace만 리턴
+            // 3) message만 리턴
+            if (msg != null) {
+                String m = String.valueOf(msg);
+                int idx = m.indexOf("Stacktrace:");
+                if (idx >= 0) {
+                    String only = m.substring(idx + "Stacktrace:".length());
+                    // leading newline 제거
+                    if (only.startsWith("\n")) only = only.substring(1);
+                    return only;
+                }
+            }
+            if (trace != null) {
+                return String.valueOf(trace);
+            }
+            if (msg != null) {
+                return String.valueOf(msg);
+            }
+        } catch (Exception ignore) {
+        }
+        // JSON이 아니면 길이 제한만 적용
+        int limit = 4000;
+        if (body.length() > limit) {
+            return body.substring(0, limit) + "\n...(truncated " + (body.length() - limit) + " chars)";
+        }
+        return body;
     }
 
     @RequestMapping(value = DEFINITION_RAW
