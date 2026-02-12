@@ -11,6 +11,7 @@ import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.uengine.five.overriding.CLOBProcessInstance;
 import org.uengine.five.overriding.EmailServiceLocalImpl;
+// import org.uengine.five.overriding.AuditActivityFilter;
 import org.uengine.five.overriding.BusinessRuleTaskAutoEvaluatorFilter;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.InstanceServiceLocalImpl;
@@ -131,6 +132,16 @@ public class ProcessServiceWebConfig {
     public WorkList workList() {
         return new JPAWorkList();
     }
+
+    /**
+     * 액티비티 실행 감사용 ActivityFilter.
+     * afterExecute 시점에 ACTIVITY_EXECUTION 이벤트를 AuditService에 기록하며,
+     * GlobalContext.getComponents(ActivityFilter.class)에 포함되려면 여기서 빈으로 등록해야 한다.
+     */
+    // @Bean
+    // public ActivityFilter auditActivityFilter() {
+    //     return new AuditActivityFilter();
+    // }
 
     // @Bean
     // public Filter webFilter() {

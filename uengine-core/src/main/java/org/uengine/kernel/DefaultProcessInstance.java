@@ -286,15 +286,6 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 
 	public void setSourceValue(String scopeByTracingTag, String key, Serializable val) throws Exception {
 
-		// StringBuffer sb = new StringBuffer();
-		// sb
-		// .append("--- ActivityInstance::set --- ")
-		// .append("scope: " + scopeByTracingTag)
-		// .append("key: " + key)
-		// .append("val: " + val)
-		// .append("instance id: " + getInstanceId());
-		// jh
-		// System.out.println(sb);
 		val = formatValue(key, val);
 
 		String fullKeyName = createFullKey(scopeByTracingTag, key, false);
@@ -302,7 +293,6 @@ public class DefaultProcessInstance extends AbstractProcessInstance {
 			variables.remove(fullKeyName);
 		else
 			variables.put(fullKeyName, val);
-		// repository.put(getInstanceId()+":"+scopeByTracingTag+":"+key, val);
 	}
 
 	private Serializable formatValue(String key, Serializable val) throws Exception {

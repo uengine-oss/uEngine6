@@ -12,9 +12,17 @@ spring:
 ---
 uengine:
   definition:
-    basePath: ${UENGINE_BASEPATH:/Users/kimsanghoon/IdeaProjects/uEngine5-uEngine6}
+    basePath: ${UENGINE_BASEPATH:/Users/heon/Documents/workspace/uEngine6-bpm}
+  # 감사 로그: 저장소 유연 구성 (jpa | file | composite | none)
+  audit:
+    # sink: jpa      # Method 1: DB (default)
+    sink: file       # Method 2: File (경로는 file.basePath만 사용, definition과 별도)
+    file:
+      basePath: ${UENGINE_AUDIT_BASEPATH:/Users/heon/Documents/workspace/uEngine6-bpm/bpm-audit-log}
+      format: json
+    # sink: composite # Method 3: Composite
+    # sinkNames: jpa,file
 
-    #default <-> oracle
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}

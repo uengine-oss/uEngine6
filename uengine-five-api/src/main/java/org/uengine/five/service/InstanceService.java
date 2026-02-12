@@ -24,6 +24,7 @@ import org.uengine.five.dto.TaskReturnResult;
 import org.uengine.five.dto.TaskSkipAvailability;
 import org.uengine.five.dto.TaskSkipCommand;
 import org.uengine.five.dto.TaskSkipResult;
+import org.uengine.five.audit.AuditEvent;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.RoleMapping;
@@ -180,4 +181,13 @@ public interface InstanceService {
 
         @GetMapping("/instance/{instanceId}")
         public ProcessInstance getProcessInstanceLocal(@PathVariable("instanceId") String instanceId) throws Exception;
+
+        /**
+         * 인스턴스(루트 인스턴스 ID 기준) 감사 로그 조회.
+         * 저장소가 조회를 지원할 때만 동작 (jpa 사용 시 지원).
+         */
+        @RequestMapping(value = "/instance/{instanceId}/audit", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+        List<AuditEvent> getInstanceAuditLog(
+                @PathVariable("instanceId") String instanceId,
+                @org.springframework.web.bind.annotation.RequestParam(value = "limit", required = false, defaultValue = "500") int limit);
 }

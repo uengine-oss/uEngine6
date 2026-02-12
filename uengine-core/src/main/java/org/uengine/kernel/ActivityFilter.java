@@ -3,7 +3,6 @@
  */
 package org.uengine.kernel;
 
-
 /**
  * @author Jinyoung Jang
  */
@@ -18,7 +17,6 @@ public interface ActivityFilter extends java.io.Serializable{
 	 */
 	void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception;
 	void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue) throws Exception;
-	
 	//deploy time
 	void onDeploy(ProcessDefinition definition) throws Exception;
 }

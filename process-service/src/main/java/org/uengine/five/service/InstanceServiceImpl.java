@@ -66,6 +66,9 @@ import org.uengine.five.dto.TaskSkipCommand;
 import org.uengine.five.dto.TaskSkipResult;
 import org.uengine.five.dto.WorkItemResource;
 import org.uengine.five.dto.RoleMappingCommand;
+import org.uengine.five.audit.AuditEvent;
+import org.uengine.five.audit.AuditEventType;
+import org.uengine.five.audit.AuditService;
 import org.uengine.five.entity.ProcessInstanceEntity;
 import org.uengine.five.entity.ServiceEndpointEntity;
 import org.uengine.five.entity.WorklistEntity;
@@ -164,6 +167,9 @@ public class InstanceServiceImpl implements InstanceService {
 
     @Autowired
     ScenarioController scenarioController;
+
+    @Autowired(required = false)
+    AuditService auditService;
 
     static ObjectMapper objectMapper = BpmnXMLParser.createTypedJsonObjectMapper();
     static ObjectMapper arrayObjectMapper = BpmnXMLParser.createTypedJsonArrayObjectMapper();
@@ -806,8 +812,11 @@ public class InstanceServiceImpl implements InstanceService {
     public void setVariable(@PathVariable("instanceId") String instanceId, @PathVariable("varName") String varName,
             @RequestBody String json) throws Exception {
         ProcessInstance instance = getProcessInstanceLocal(instanceId);
+        Serializable oldValue = null;
+        try { oldValue = instance.get("", varName); } catch (Exception ignore) { }
         Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
+        recordVariableChangeAudit(instance, varName, oldValue, value, null);
     }
 
     @RequestMapping(value = "/instance/{instanceId}/task/{taskId}/variable/{varName}", method = RequestMethod.POST, produces = "application/json; charset=UTF-8")
@@ -832,10 +841,55 @@ public class InstanceServiceImpl implements InstanceService {
                 instance.setExecutionScopeContext(executionScopeContext);
             }
         }
+        Serializable oldValue = null;
+        try { oldValue = instance.get("", varName); } catch (Exception ignore) { }
         Serializable value = arrayObjectMapper.readValue(json, Serializable.class);
         instance.set("", varName, value);
-
         instance.setExecutionScopeContext(oldExecutionScopeContext);
+        recordVariableChangeAudit(instance, varName, oldValue, value, taskId);
+    }
+
+    private void recordVariableChangeAudit(ProcessInstance instance, String varName, Serializable oldValue, Serializable newValue, String taskId) {
+        if (auditService == null) return;
+        Long rootInstId = null, instId = null;
+        try {
+            if (instance instanceof JPAProcessInstance) {
+                ProcessInstance root = instance.getRootProcessInstance();
+                if (root instanceof JPAProcessInstance) rootInstId = ((JPAProcessInstance) root).getProcessInstanceEntity().getInstId();
+                instId = ((JPAProcessInstance) instance).getProcessInstanceEntity().getInstId();
+            }
+        } catch (Exception ignore) { }
+        AuditEvent event = AuditEvent.of(AuditEventType.VARIABLE_CHANGE, rootInstId, instId)
+                .withActor(SecurityAwareServletFilter.getUserId())
+                .withPayload("varName", varName)
+                .withPayload("oldValue", valueToAuditString(oldValue))
+                .withPayload("newValue", valueToAuditString(newValue));
+        if (taskId != null) event.withPayload("taskId", taskId);
+        auditService.record(event);
+    }
+
+    private static String valueToAuditString(Serializable v) {
+        if (v == null) return null;
+        try {
+            return arrayObjectMapper.writeValueAsString(v);
+        } catch (Exception e) {
+            return String.valueOf(v);
+        }
+    }
+
+    @RequestMapping(value = "/instance/{instanceId}/audit", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ProcessTransactional(readOnly = true)
+    public List<AuditEvent> getInstanceAuditLog(
+            @PathVariable("instanceId") String instanceId,
+            @RequestParam(value = "limit", required = false, defaultValue = "500") int limit) {
+        if (auditService == null) return List.of();
+        Long rootInstId = null;
+        try {
+            rootInstId = Long.parseLong(instanceId);
+        } catch (NumberFormatException e) {
+            return List.of();
+        }
+        return auditService.listByRootInstanceId(rootInstId, limit > 0 ? limit : 500);
     }
 
     @RequestMapping(value = "/instance/{instId}/role-mapping/{roleName}", method = RequestMethod.GET)
@@ -2501,6 +2555,20 @@ public class InstanceServiceImpl implements InstanceService {
                 resultTaskId = taskIds[0];
             }
         } catch (Exception ignore) {
+        }
+
+        // 감사 로그: 위임·Lane 재할당 등 모두 완료 후 기록
+        if (auditService != null) {
+            Long rootInstId = worklistEntity.getRootInstId() != null ? worklistEntity.getRootInstId().longValue() : worklistEntity.getInstId();
+            Long instId = worklistEntity.getInstId();
+            AuditEvent event = AuditEvent.of(AuditEventType.TASK_DELEGATION, rootInstId, instId)
+                    .withActor(userId)
+                    .withTracingTag(worklistEntity.getTrcTag())
+                    .withPayload("taskId", taskId)
+                    .withPayload("fromEndpoint", currentOwner)
+                    .withPayload("toEndpoint", delegated != null ? delegated.getEndpoint() : null)
+                    .withPayload("delegateOnlyForWorkitem", delegateOnlyForWorkitem);
+            auditService.record(event);
         }
 
         return getWorkItem(resultTaskId);
