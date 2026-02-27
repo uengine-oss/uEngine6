@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.uengine.five.entity.EventMappingEntity;
 import org.uengine.five.repository.EventMappingRepository;
+import org.uengine.contexts.EventSynchronization;
 import org.uengine.kernel.Activity;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.FieldDescriptor;
@@ -68,7 +69,7 @@ public class EventMappingDeployFilter implements DeployFilter {
         if (activities != null) {
             for (Activity activity : activities) {
                 if (activity instanceof ReceiveActivity && !startActivitiesWithEventSync.contains(activity)
-                        && activity.getEventSynchronization() != null) {
+                        && activity.getEventSynchronizations().length > 0) {
                     saveEventMappingEntity(activity, definition, false);
                 }
             }
@@ -85,7 +86,7 @@ public class EventMappingDeployFilter implements DeployFilter {
             visited.add(activity);
 
             if ((activity instanceof StartEvent || activity instanceof ReceiveActivity)
-                    && activity.getEventSynchronization() != null) {
+                    && activity.getEventSynchronizations().length > 0) {
                 return activity;
             }
 
@@ -160,39 +161,39 @@ public class EventMappingDeployFilter implements DeployFilter {
             throws Exception {
         try {
             if (activity == null) return;
-            if (activity.getEventSynchronization() == null) return;
+            EventSynchronization[] syncs = activity.getEventSynchronizations();
+            if (syncs == null || syncs.length == 0) return;
             if (eventMappingRepository == null) {
                 throw new IllegalStateException("eventMappingRepository is null. EventMappingDeployFilter might not be Spring-managed.");
             }
 
-            String corrKey = null;
+            for (EventSynchronization sync : syncs) {
+                if (sync == null) continue;
 
-            // eventType / attributes가 null인 정의가 존재할 수 있으므로 방어적으로 처리한다.
-            if (activity.getEventSynchronization() == null)
-                return;
+                String corrKey = null;
+                FieldDescriptor[] attributes = sync.getAttributes();
+                if (attributes == null) attributes = new FieldDescriptor[0];
+                FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)
+                        .toArray(FieldDescriptor[]::new);
+                if (corrKeyFields.length > 0) {
+                    corrKey = corrKeyFields[0].getName();
+                }
 
-            FieldDescriptor[] attributes = activity.getEventSynchronization().getAttributes();
-            if (attributes == null) attributes = new FieldDescriptor[0];
-            FieldDescriptor[] corrKeyFields = Arrays.stream(attributes).filter(FieldDescriptor::getIsCorrKey)
-                    .toArray(FieldDescriptor[]::new);
-            if (corrKeyFields.length > 0) {
-                corrKey = corrKeyFields[0].getName();
+                String eventType = sync.getEventType();
+                if (isNullOrBlank(eventType)) {
+                    continue;
+                }
+                eventType = eventType.trim();
+
+                EventMappingEntity eventMappingEntity = new EventMappingEntity();
+                eventMappingEntity.setEventType(eventType);
+                eventMappingEntity.setDefinitionId(definition.getId());
+                eventMappingEntity.setCorrelationKey(corrKey);
+                eventMappingEntity.setTracingTag(activity.getTracingTag());
+                eventMappingEntity.setIsStartEvent(isStartEvent);
+
+                eventMappingRepository.save(eventMappingEntity);
             }
-
-            String eventType = activity.getEventSynchronization().getEventType();
-            if (isNullOrBlank(eventType)) {
-                return;
-            }
-            eventType = eventType.trim();
-            
-            EventMappingEntity eventMappingEntity = new EventMappingEntity();
-            eventMappingEntity.setEventType(eventType);
-            eventMappingEntity.setDefinitionId(definition.getId());
-            eventMappingEntity.setCorrelationKey(corrKey);
-            eventMappingEntity.setTracingTag(activity.getTracingTag());
-            eventMappingEntity.setIsStartEvent(isStartEvent);
-
-            eventMappingRepository.save(eventMappingEntity);
         } catch (Exception e) {
             throw new UEngineException("Error when to save EventMappingEntity: " + activity.getName(), e);
         }

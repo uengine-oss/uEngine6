@@ -43,6 +43,8 @@ import org.uengine.modeling.IElement;
 import org.uengine.util.UEngineUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 /**
@@ -2520,13 +2522,67 @@ public abstract class Activity implements IElement, Validatable, java.io.Seriali
 			}
 	}
 
+	/**
+	 * @deprecated 기존 단일 값; 마이그레이션 호환용. getEventSynchronizations() 사용 권장.
+	 * BpmnXMLParser ObjectMapper가 SetterVisibility.NONE 이므로 "eventSynchronization" 키는 이 필드로 역직렬화됨.
+	 * @JsonProperty로 명시해 다른 패키지/리플렉션에서도 바인딩되도록 함.
+	 */
+	@JsonProperty(value = "eventSynchronization", access = Access.WRITE_ONLY)
 	EventSynchronization eventSynchronization;
 
-	public EventSynchronization getEventSynchronization() {
-		return eventSynchronization;
+	/** 멀티 이벤트 동기화 (배열). 직렬화 시 이 필드 사용. 기존 XML은 eventSynchronization만 있으면 getter에서 병합 반환. */
+	EventSynchronization[] eventSynchronizations;
+
+	/**
+	 * 이벤트 동기화 목록 (멀티). 기존 단일 값만 있는 경우에도 배열 1개로 반환.
+	 * @return null 아님. 없으면 길이 0 배열 (NPE 방지).
+	 */
+	@JsonProperty("eventSynchronizations")
+	public EventSynchronization[] getEventSynchronizations() {
+		if (eventSynchronizations != null && eventSynchronizations.length > 0) {
+			return eventSynchronizations;
+		}
+		if (eventSynchronization != null) {
+			return new EventSynchronization[] { eventSynchronization };
+		}
+		return new EventSynchronization[0];
 	}
 
+	public void setEventSynchronizations(EventSynchronization[] eventSynchronizations) {
+		this.eventSynchronizations = eventSynchronizations;
+		this.eventSynchronization = (eventSynchronizations != null && eventSynchronizations.length > 0)
+				? eventSynchronizations[0]
+				: null;
+	}
+
+	/** 기존 호환: 첫 번째 이벤트 동기화 반환. 직렬화에는 사용하지 않음(eventSynchronizations만 출력). */
+	@JsonIgnore
+	public EventSynchronization getEventSynchronization() {
+		EventSynchronization[] arr = getEventSynchronizations();
+		return (arr != null && arr.length > 0) ? arr[0] : null;
+	}
+
+	/** 기존 호환: 단일 값 설정 시 배열도 1개 요소로 유지. */
 	public void setEventSynchronization(EventSynchronization eventSynchronization) {
 		this.eventSynchronization = eventSynchronization;
+		this.eventSynchronizations = (eventSynchronization == null) ? null
+				: new EventSynchronization[] { eventSynchronization };
 	}
+
+	/**
+	 * 수신된 이벤트 타입에 해당하는 EventSynchronization 반환 (멀티 이벤트용).
+	 * getEventSynchronizations() 중 getEventType()이 eventType과 일치하는 첫 번째 항목을 반환.
+	 * @param eventType 수신된 이벤트 타입 (null이면 null 반환)
+	 * @return 매칭되는 동기화 객체, 없으면 null
+	 */
+	// public EventSynchronization getEventSynchronizationForEventType(String eventType) {
+	// 	if (eventType == null) return null;
+	// 	EventSynchronization[] arr = getEventSynchronizations();
+	// 	if (arr == null) return null;
+	// 	for (EventSynchronization sync : arr) {
+	// 		if (sync != null && eventType.equals(sync.getEventType())) return sync;
+	// 	}
+	// 	return null;
+	// }
+
 }

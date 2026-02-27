@@ -318,7 +318,7 @@ public class FormActivity extends HumanActivity {
 	public Map<String, Object> getMappingInValues(ProcessInstance instance)
 			throws Exception {
 		Map<String, Object> mappingInValues = new HashMap();
-		if (getEventSynchronization().getMappingContext() == null)
+		if (getEventSynchronization() == null || getEventSynchronization().getMappingContext() == null)
 			return mappingInValues;
 
 		ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
