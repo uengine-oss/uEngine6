@@ -193,6 +193,10 @@ public class InclusiveGatewayTest extends UEngineTest{
                     }
 
                     @Override
+                    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
+                    }
+
+                    @Override
                     public void onPropertyChange(Activity activity, ProcessInstance instance, String propertyName, Object changedValue) throws Exception {
 
 

@@ -24,6 +24,7 @@ public interface DefinitionService {
     public static final String DEFINITION_RAW = "/definition/raw";
     public static final String DEFINITION = "/definition";
     public static final String DEFINITION_MAP = "/definition/map";
+    public static final String DEFINITION_METRICS = "/definition/metrics";
     public static final String DEFINITION_SYSTEM = "/definition/system";
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/hal+json;charset=UTF-8")
@@ -66,4 +67,36 @@ public interface DefinitionService {
     @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET)
     public Object getRawDefinitionMap() throws Exception;
 
+    @RequestMapping(value = DEFINITION_METRICS, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getRawDefinitionMetrics() throws Exception;
+
+    @RequestMapping(value = DEFINITION_METRICS, method = RequestMethod.PUT, consumes = "text/plain")
+    public void putRawDefinitionMetrics(@RequestBody String metricsJson) throws Exception;
+
+    // --------------- 요소별 댓글 (Element Comments) ---------------
+
+    @RequestMapping(value = "/definition/element-comments", method = RequestMethod.GET)
+    java.util.List<ElementCommentDto> listElementComments(
+            @RequestParam("procDefId") String procDefId,
+            @RequestParam(value = "elementId", required = false) String elementId);
+
+    @RequestMapping(value = "/definition/element-comment-counts", method = RequestMethod.GET)
+    java.util.Map<String, java.util.Map<String, Integer>> getElementCommentCounts(
+            @RequestParam("procDefId") String procDefId);
+
+    @RequestMapping(value = "/definition/element-comments", method = RequestMethod.POST, consumes = "application/json")
+    ElementCommentDto createElementComment(@RequestBody ElementCommentCreateRequest request);
+
+    @RequestMapping(value = "/definition/element-comments/{commentId}", method = RequestMethod.PATCH, consumes = "application/json")
+    ElementCommentDto updateElementComment(
+            @PathVariable("commentId") String commentId,
+            @RequestBody ElementCommentPatchRequest request);
+
+    @RequestMapping(value = "/definition/element-comments/{commentId}", method = RequestMethod.DELETE)
+    void deleteElementComment(@PathVariable("commentId") String commentId);
+
+    @RequestMapping(value = "/definition/element-comments/{commentId}/resolve", method = RequestMethod.PATCH, consumes = "application/json")
+    ElementCommentDto resolveElementComment(
+            @PathVariable("commentId") String commentId,
+            @RequestBody ElementCommentResolveRequest request);
 }

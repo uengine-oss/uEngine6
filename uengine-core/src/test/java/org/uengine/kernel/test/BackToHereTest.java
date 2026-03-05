@@ -16,6 +16,7 @@ import org.uengine.kernel.MappingElement;
 import org.uengine.kernel.ParameterContext;
 import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
+import org.uengine.kernel.FaultContext;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ProcessVariableValue;
 import org.uengine.kernel.Role;
@@ -245,6 +246,10 @@ public class BackToHereTest extends UEngineTest {
                             }, instance);
 
                         }
+                    }
+
+                    @Override
+                    public void afterFault(Activity activity, ProcessInstance instance, FaultContext faultContext) throws Exception {
                     }
 
                     @Override

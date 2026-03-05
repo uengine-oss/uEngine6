@@ -10,7 +10,9 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -40,6 +42,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.server.ResponseStatusException;
@@ -94,6 +98,9 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @Autowired
     InstanceService instanceService;
+
+    @Autowired
+    ProcDefDataService procDefDataService;
     // static BpmnXMLParser bpmnXMLParser = new BpmnXMLParser();
 
     static ObjectMapper objectMapper = createTypedJsonObjectMapper();
@@ -864,6 +871,38 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     }
 
+    private static final String METRICS_JSON = "metrics.json";
+
+    @RequestMapping(value = DEFINITION_METRICS, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public Object getRawDefinitionMetrics() throws Exception {
+        String definitionPath = RESOURCE_ROOT + "/" + METRICS_JSON;
+        DefaultResource resource = new DefaultResource(definitionPath);
+        try {
+            if (!resourceManager.exists(resource)) {
+                return defaultMetricsJson();
+            }
+            Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
+            return definition != null ? definition : defaultMetricsJson();
+        } catch (Exception e) {
+            return defaultMetricsJson();
+        }
+    }
+
+    private static Object defaultMetricsJson() {
+        Map<String, List<?>> defaultMetrics = new LinkedHashMap<>();
+        defaultMetrics.put("domains", new ArrayList<>());
+        defaultMetrics.put("mega_processes", new ArrayList<>());
+        defaultMetrics.put("processes", new ArrayList<>());
+        return defaultMetrics;
+    }
+
+    @RequestMapping(value = DEFINITION_METRICS, method = RequestMethod.PUT, consumes = "text/plain")
+    public void putRawDefinitionMetrics(@RequestBody String metricsJson) throws Exception {
+        String definitionPath = RESOURCE_ROOT + "/" + METRICS_JSON;
+        DefaultResource resource = new DefaultResource(definitionPath);
+        resourceManager.save(resource, metricsJson);
+    }
+
     @RequestMapping(value = DEFINITION
             + "/xml/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public String getXMLDefinition(@PathVariable("defPath") String definitionPath,
@@ -937,4 +976,59 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     }
 
+    // --------------- 요소별 댓글 (DefinitionService Feign 계약 구현) ---------------
+
+    @Override
+    @RequestMapping(value = "/definition/element-comments", method = RequestMethod.GET)
+    public List<ElementCommentDto> listElementComments(
+            @RequestParam("procDefId") String procDefId,
+            @RequestParam(value = "elementId", required = false) String elementId) {
+        return procDefDataService.listComments(procDefId, elementId);
+    }
+
+    @Override
+    @RequestMapping(value = "/definition/element-comment-counts", method = RequestMethod.GET)
+    public java.util.Map<String, java.util.Map<String, Integer>> getElementCommentCounts(
+            @RequestParam("procDefId") String procDefId) {
+        return procDefDataService.getElementCommentCounts(procDefId);
+    }
+
+    @Override
+    @RequestMapping(value = "/definition/element-comments", method = RequestMethod.POST, consumes = "application/json")
+    public ElementCommentDto createElementComment(@RequestBody ElementCommentCreateRequest request) {
+        HttpServletRequest req = currentRequest();
+        return procDefDataService.createComment(request, req);
+    }
+
+    @Override
+    @RequestMapping(value = "/definition/element-comments/{commentId}", method = RequestMethod.PATCH, consumes = "application/json")
+    public ElementCommentDto updateElementComment(
+            @PathVariable("commentId") String commentId,
+            @RequestBody ElementCommentPatchRequest request) {
+        return procDefDataService.updateCommentContent(commentId, request)
+                .orElseThrow(() -> new ResourceNotFoundException("comment not found: " + commentId));
+    }
+
+    @Override
+    @RequestMapping(value = "/definition/element-comments/{commentId}", method = RequestMethod.DELETE)
+    public void deleteElementComment(@PathVariable("commentId") String commentId) {
+        if (!procDefDataService.deleteComment(commentId)) {
+            throw new ResourceNotFoundException("comment not found: " + commentId);
+        }
+    }
+
+    @Override
+    @RequestMapping(value = "/definition/element-comments/{commentId}/resolve", method = RequestMethod.PATCH, consumes = "application/json")
+    public ElementCommentDto resolveElementComment(
+            @PathVariable("commentId") String commentId,
+            @RequestBody ElementCommentResolveRequest request) {
+        HttpServletRequest req = currentRequest();
+        return procDefDataService.resolveComment(commentId, request, req)
+                .orElseThrow(() -> new ResourceNotFoundException("comment not found: " + commentId));
+    }
+
+    private static HttpServletRequest currentRequest() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest() : null;
+    }
 }
