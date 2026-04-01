@@ -2,14 +2,15 @@ package org.uengine.five.entity;
 
 import java.util.List;
 
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
-import javax.persistence.EntityManager;
 import javax.persistence.Id;
-import javax.persistence.PersistenceContext;
+import javax.persistence.JoinColumn;
 import javax.persistence.PrePersist;
-import javax.persistence.PreRemove;
 import javax.persistence.Table;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Created by uengine on 2018. 1. 5..
  */
 @Entity
-@Table(name = "BPM_SERVICE")
+@Table(name = "TB_BPM_SERVICE")
 @EntityListeners(ServiceEndpointEntityListener.class)
 public class ServiceEndpointEntity {
 
@@ -26,6 +27,12 @@ public class ServiceEndpointEntity {
     String path;
 
     @ElementCollection
+    @CollectionTable(name = "TB_BPM_SVC_EVT", joinColumns = @JoinColumn(name = "service_path"))
+    @AttributeOverrides({
+            @AttributeOverride(name = "messageClass", column = @javax.persistence.Column(name = "message_class")),
+            @AttributeOverride(name = "correlationKey", column = @javax.persistence.Column(name = "correlation_key")),
+            @AttributeOverride(name = "defId", column = @javax.persistence.Column(name = "def_id"))
+    })
     private List<CatchEvent> events;
 
     public String getPath() {

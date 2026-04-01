@@ -1,12 +1,8 @@
 package org.uengine.five.service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,7 +20,10 @@ import javax.ws.rs.QueryParam;
 import org.apache.commons.io.IOUtils;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 // import org.springframework.hateoas.ResourceSupport;
@@ -48,16 +47,14 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.server.ResponseStatusException;
 // import org.uengine.five.serializers.BpmnXMLParser;
+import org.uengine.five.repository.ProcDefRepository;
+import org.uengine.five.repository.ProcDefVersionRepository;
 import org.uengine.kernel.GlobalContext;
-import org.uengine.kernel.NeedArrangementToSerialize;
-import org.uengine.kernel.ProcessDefinition;
-import org.uengine.kernel.UEngineException;
 import org.uengine.modeling.resource.ContainerResource;
 import org.uengine.modeling.resource.DefaultResource;
 import org.uengine.modeling.resource.IContainer;
 import org.uengine.modeling.resource.IResource;
 import org.uengine.modeling.resource.ResourceManager;
-import org.uengine.modeling.resource.Serializer;
 import org.uengine.modeling.resource.Version;
 import org.uengine.modeling.resource.VersionManager;
 //import org.uengine.processpublisher.BPMNUtil;
@@ -97,16 +94,45 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     ApplicationContext applicationContext;
 
     @Autowired
+    Environment environment;
+
+    @Autowired
     InstanceService instanceService;
 
     @Autowired
     ProcDefDataService procDefDataService;
+
+    @Autowired
+    DefinitionLockService definitionLockService;
+
+    @Autowired
+    ProcDefRepository procDefRepository;
+
+    @Autowired
+    ProcDefVersionRepository procDefVersionRepository;
+
+    @Autowired
+    DefinitionActorNameProvider definitionActorNameProvider;
+
+    @Value("${uengine.definition.expose-actor-names:false}")
+    private boolean exposeActorNames;
     // static BpmnXMLParser bpmnXMLParser = new BpmnXMLParser();
 
     static ObjectMapper objectMapper = createTypedJsonObjectMapper();
 
     @PostConstruct
     public void init() {
+    }
+
+    /** Oracle 프로필일 때는 process-service /definition-changes 호출 생략 */
+    private boolean shouldNotifyDefinitionChanges() {
+        if (environment == null)
+            return true;
+        for (String profile : environment.getActiveProfiles()) {
+            if ("oracle".equalsIgnoreCase(profile))
+                return false;
+        }
+        return true;
     }
 
     @RequestMapping(value = DEFINITION, method = RequestMethod.GET, produces = "application/hal+json;charset=UTF-8")
@@ -133,12 +159,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String basePath = "/versions/";
         String defId = fullPath.substring(basePath.length());
 
-        // 디버깅 로그 추가
-        System.out.println("fullPath: " + fullPath);
-        System.out.println("basePath: " + basePath);
-        System.out.println("defId: " + defId);
-        // relativePath를 사용하여 버전을 가져오는 로직
-        // String versions = getVersionsForPath(relativePath);
         return _listDefinitionVersions("archive/", defId);
     }
 
@@ -157,6 +177,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         for (IResource resource1 : resources) {
             DefinitionResource definition = new DefinitionResource(resource1);
             definition.setVersion(definition.name.replace(".bpmn", ""));
+            applyDefinitionResourceId(definition);
+            enrichActorNamesIfEnabled(definition, true);
             definitions.add(definition);
         }
         definitions.sort(Comparator.comparing(def -> {
@@ -183,12 +205,145 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
         List<DefinitionResource> definitions = new ArrayList<DefinitionResource>();
         for (IResource resource1 : resources) {
+            if (shouldHideFromDefinitionTree(resource1)) {
+                continue;
+            }
             DefinitionResource definition = new DefinitionResource(resource1);
             definitions.add(definition);
             definition.path = definition.path.replace("definitions/", "");
+            applyDefinitionResourceId(definition);
+            enrichActorNamesIfEnabled(definition, false);
         }
 
         return CollectionModel.of(definitions);
+    }
+
+    private boolean shouldHideFromDefinitionTree(IResource resource) {
+        return !(resource instanceof IContainer)
+                && resource.getName() != null
+                && resource.getName().toLowerCase().endsWith(".json");
+    }
+
+    private void enrichActorNamesIfEnabled(DefinitionResource def, boolean archiveVersionEntry) {
+        if (!exposeActorNames || environment == null || !environment.acceptsProfiles(Profiles.of("oracle"))) {
+            return;
+        }
+        try {
+            if (archiveVersionEntry) {
+                String p = def.getPath();
+                if (p == null || !p.startsWith(ARCHIVE_ROOT + "/")) {
+                    return;
+                }
+                String rel = p.substring((ARCHIVE_ROOT + "/").length());
+                int idx = rel.lastIndexOf('/');
+                if (idx < 0) {
+                    return;
+                }
+                String last = rel.substring(idx + 1);
+                if (!last.contains(".")) {
+                    return;
+                }
+                int extIdx = last.lastIndexOf('.');
+                String ver = last.substring(0, extIdx);
+                String procDefId = rel.substring(0, idx);
+                procDefVersionRepository.findByProcDefIdAndVersion(procDefId, ver).ifPresent(e -> {
+                    def.setCreatedByName(e.getCreatedByName());
+                    def.setUpdatedByName(e.getUpdatedByName());
+                });
+            } else {
+                String procDefId = toProcDefIdForActorLookup(def.getPath());
+                if (procDefId == null || procDefId.isEmpty()) {
+                    return;
+                }
+                procDefRepository.findById(procDefId).ifPresent(e -> {
+                    def.setCreatedByName(e.getCreatedByName());
+                    def.setUpdatedByName(e.getUpdatedByName());
+                    if (e.getName() != null && !e.getName().isBlank()) {
+                        def.setName(e.getName());
+                    }
+                });
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String toProcDefIdForActorLookup(String path) {
+        if (path == null) {
+            return null;
+        }
+        String prefix = RESOURCE_ROOT + "/";
+        if (path.startsWith(prefix)) {
+            return path.substring(prefix.length());
+        }
+        return path;
+    }
+
+    /**
+     * HAL/JSON에 id를 항상보낸다. 현재본은 definitions/ 접두 제거 경로, 버전 행은 arcv_id(procDefId_version) 형식.
+     */
+    private static void applyDefinitionResourceId(DefinitionResource def) {
+        if (def == null) {
+            return;
+        }
+        String p = def.getPath();
+        if (p == null) {
+            return;
+        }
+        if (p.startsWith(ARCHIVE_ROOT + "/")) {
+            String rel = p.substring((ARCHIVE_ROOT + "/").length());
+            int idx = rel.lastIndexOf('/');
+            if (idx < 0) {
+                return;
+            }
+            String last = rel.substring(idx + 1);
+            if (!last.contains(".")) {
+                return;
+            }
+            int extIdx = last.lastIndexOf('.');
+            String ver = last.substring(0, extIdx);
+            String procDefId = rel.substring(0, idx);
+            def.setId(procDefId + "_" + ver);
+        } else {
+            def.setId(toProcDefIdForActorLookup(p));
+        }
+    }
+
+    /**
+     * PUT body에 name이 있으면(비어 있지 않으면) Oracle TB_BPM_PROCDEF.name 을 갱신한다. 경로 id는 정의 상대 경로 기준.
+     */
+    private void applyOptionalProcDefDisplayName(DefinitionRequest req, String definitionPath) {
+        if (req == null) {
+            return;
+        }
+        String proposed = req.getName();
+        if (proposed == null || proposed.isBlank()) {
+            return;
+        }
+        if (environment == null || !environment.acceptsProfiles(Profiles.of("oracle"))) {
+            return;
+        }
+        String id = procDefIdUnderDefinitions(definitionPath);
+        if (id.isEmpty()) {
+            return;
+        }
+        String trimmed = proposed.trim();
+        if (trimmed.length() > 255) {
+            trimmed = trimmed.substring(0, 255);
+        }
+        final String finalName = trimmed;
+        procDefRepository.findById(id).ifPresent(e -> {
+            e.setName(finalName);
+            procDefRepository.save(e);
+        });
+    }
+
+    private String procDefIdUnderDefinitions(String definitionPath) {
+        String full = toDefinitionResourcePath(definitionPath);
+        String prefix = RESOURCE_ROOT + "/";
+        if (full.startsWith(prefix)) {
+            return full.substring(prefix.length());
+        }
+        return full;
     }
 
     @RequestMapping(value = "/version/{version}" + DEFINITION + "/", method = RequestMethod.GET)
@@ -275,9 +430,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @Override
     @SuppressWarnings("rawtypes")
     public RepresentationModel getDefinition(@PathVariable("defPath") String definitionPath) throws Exception {
-
         // case of directory:
-        IResource resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
+        IResource resource = new DefaultResource(toDefinitionResourcePath(definitionPath));
         if (resourceManager.exists(resource) && resourceManager.isContainer(resource)) { // is a folder
             return listDefinition(definitionPath);
         }
@@ -285,13 +439,15 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         // case of file:
         // definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
 
-        resource = new DefaultResource(RESOURCE_ROOT + "/" + definitionPath);
+        resource = new DefaultResource(toDefinitionResourcePath(definitionPath));
 
         if (!resourceManager.exists(resource)) {
             throw new ResourceNotFoundException(); // make 404 error
         }
 
         DefinitionResource halDefinition = new DefinitionResource(resource);
+        applyDefinitionResourceId(halDefinition);
+        enrichActorNamesIfEnabled(halDefinition, false);
 
         return halDefinition;
 
@@ -348,7 +504,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (newResource == null) {
             if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
                 IContainer container = new ContainerResource();
-                container.setPath(RESOURCE_ROOT + "/" + definitionPath);
+                container.setPath(toDefinitionResourcePath(definitionPath));
                 resourceManager.createFolder(container);
                 return new DefinitionResource(container);
             } else {
@@ -362,7 +518,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             Assert.isTrue(newResource.isDirectory(), "On directory can be created with this method. " + example);
 
             IContainer container = new ContainerResource();
-            container.setPath(RESOURCE_ROOT + definitionPath + "/" + newResource.getName());
+            container.setPath(toDefinitionResourcePath(definitionPath + "/" + newResource.getName()));
             resourceManager.createFolder(container);
 
             return new DefinitionResource(container);
@@ -378,8 +534,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (path.indexOf(".") == -1) {
             definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "bpmn");
         }
-
-        IResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
+        IResource resource = new DefaultResource(toDefinitionResourcePath(definitionPath));
         resourceManager.delete(resource);
 
     }
@@ -419,33 +574,44 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     public DefinitionResource putRawDefinition(@PathVariable("defPath") String definitionPath,
             @RequestBody DefinitionRequest definitionRequest) throws Exception {
 
-        String dp = definitionPath;
-        if (!dp.startsWith("/")) {
-            dp = "/" + dp;
+        try {
+            definitionActorNameProvider.beginRawSave(
+                    definitionRequest != null ? definitionRequest.getUpdatedByName() : null);
+
+            String dp = definitionPath;
+            if (!dp.startsWith("/")) {
+                dp = "/" + dp;
+            }
+
+            // directory
+            if (dp.indexOf(".") == -1) {
+                IContainer container = new ContainerResource();
+                container.setPath(toDefinitionResourcePath(dp));
+                resourceManager.createFolder(container);
+                applyOptionalProcDefDisplayName(definitionRequest, dp);
+                return new DefinitionResource(container);
+            }
+
+            String fileExt = UEngineUtil.getFileExt(dp);
+
+            // archive only for bpmn versions
+            if (definitionRequest != null && definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
+                DefaultResource versionResource = new DefaultResource(
+                        toArchiveResourcePath(dp, definitionRequest.getVersion()));
+                resourceManager.save(versionResource, definitionRequest.getDefinition());
+            }
+
+            DefaultResource resource = new DefaultResource(toDefinitionResourcePath(dp));
+            resourceManager.save(resource, definitionRequest.getDefinition());
+            applyOptionalProcDefDisplayName(definitionRequest, dp);
+            if ("bpmn".equalsIgnoreCase(fileExt) && shouldNotifyDefinitionChanges()) {
+                instanceService.postCreatedRawDefinition(dp);
+            }
+
+            return new DefinitionResource(resource);
+        } finally {
+            definitionActorNameProvider.endRawSave();
         }
-
-        // directory
-        if (dp.indexOf(".") == -1) {
-            IContainer container = new ContainerResource();
-            container.setPath(RESOURCE_ROOT + dp);
-            resourceManager.createFolder(container);
-            return new DefinitionResource(container);
-        }
-
-        String fileExt = UEngineUtil.getFileExt(dp);
-
-        // archive only for bpmn versions
-        if (definitionRequest != null && definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
-            DefaultResource versionResource = new DefaultResource(
-                    "/archive" + dp + "/" + definitionRequest.getVersion() + ".bpmn");
-            resourceManager.save(versionResource, definitionRequest.getDefinition());
-        }
-
-        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + dp);
-        resourceManager.save(resource, definitionRequest.getDefinition());
-        instanceService.postCreatedRawDefinition(dp);
-
-        return new DefinitionResource(resource);
     }
 
     @RequestMapping(value = DEFINITION_RAW + "/**", method = { RequestMethod.POST, RequestMethod.PUT })
@@ -453,62 +619,69 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             HttpServletRequest request)
             throws Exception {
 
-        String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-
-        String definitionPath = path.substring(DEFINITION_RAW.length());
-
-        String fileName = definitionPath.contains("/")
-                ? definitionPath.substring(definitionPath.lastIndexOf("/") + 1)
-                : definitionPath;
-        if (!fileName.contains(".")) {
-            definitionPath = definitionPath + ".bpmn";
-        }
-
-        String fileExt = UEngineUtil.getFileExt(definitionPath);
-
-        // 버전 아카이브는 BPMN에 대해서만 저장
-        if (definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
-            DefaultResource versionResource = new DefaultResource(
-                    "/archive" + definitionPath + "/" + definitionRequest.getVersion() + ".bpmn");
-            resourceManager.save(versionResource, definitionRequest.getDefinition());
-        }
-
-        DefaultResource resource = new DefaultResource(RESOURCE_ROOT + definitionPath);
-        resourceManager.save(resource, definitionRequest.getDefinition());
-        
         try {
-            instanceService.postCreatedRawDefinition(definitionPath);
-        } catch (FeignException fe) {
-            // process-service가 내려준 JSON 바디가 커질 수 있어(message 위주로) 요약해서 리턴
-            HttpStatus status = HttpStatus.resolve(fe.status());
-            if (status == null) status = HttpStatus.BAD_GATEWAY;
+            definitionActorNameProvider.beginRawSave(
+                    definitionRequest != null ? definitionRequest.getUpdatedByName() : null);
 
-            String body = fe.contentUTF8();
-            String summarized = summarizeFeignBody(body);
-            throw new ResponseStatusException(status,
-                    "[process-service:/definition-changes 실패] definitionPath=" + definitionPath + "\n" + summarized,
-                    fe);
+            String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+            String definitionPath = path.substring(DEFINITION_RAW.length());
+
+            String fileName = definitionPath.contains("/")
+                    ? definitionPath.substring(definitionPath.lastIndexOf("/") + 1)
+                    : definitionPath;
+            if (!fileName.contains(".")) {
+                definitionPath = definitionPath + ".bpmn";
+            }
+
+            String fileExt = UEngineUtil.getFileExt(definitionPath);
+
+            // 버전 아카이브는 BPMN에 대해서만 저장
+            if (definitionRequest.getVersion() != null && "bpmn".equalsIgnoreCase(fileExt)) {
+                DefaultResource versionResource = new DefaultResource(
+                        toArchiveResourcePath(definitionPath, definitionRequest.getVersion()));
+                resourceManager.save(versionResource, definitionRequest.getDefinition());
+            }
+
+            DefaultResource resource = new DefaultResource(toDefinitionResourcePath(definitionPath));
+            resourceManager.save(resource, definitionRequest.getDefinition());
+
+            if (shouldNotifyDefinitionChanges() && "bpmn".equalsIgnoreCase(fileExt)) {
+                try {
+                    instanceService.postCreatedRawDefinition(definitionPath);
+                } catch (FeignException fe) {
+                    // process-service가 내려준 JSON 바디가 커질 수 있어(message 위주로) 요약해서 리턴
+                    HttpStatus status = HttpStatus.resolve(fe.status());
+                    if (status == null)
+                        status = HttpStatus.BAD_GATEWAY;
+
+                    String body = fe.contentUTF8();
+                    String summarized = summarizeFeignBody(body);
+                    throw new ResponseStatusException(status,
+                            "[process-service:/definition-changes 실패] definitionPath=" + definitionPath + "\n"
+                                    + summarized,
+                            fe);
+                }
+            }
+
+            if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
+                IContainer container = new ContainerResource();
+                container.setPath(RESOURCE_ROOT + "/" + definitionPath);
+                resourceManager.createFolder(container);
+                applyOptionalProcDefDisplayName(definitionRequest, definitionPath);
+                return new DefinitionResource(container);
+            }
+
+            applyOptionalProcDefDisplayName(definitionRequest, definitionPath);
+            return new DefinitionResource(resource);
+        } finally {
+            definitionActorNameProvider.endRawSave();
         }
-
-        // Only BPMN definitions should trigger deploy pipeline in process-service.
-        // For businessRules/*.rule (and other non-bpmn raw files), do not call
-        // /definition-changes.
-        if ("bpmn".equalsIgnoreCase(fileExt)) {
-            instanceService.postCreatedRawDefinition(definitionPath);
-        }
-
-        if (definitionPath.indexOf(".") == -1) { // it is a package (directory)
-            IContainer container = new ContainerResource();
-            container.setPath(RESOURCE_ROOT + "/" + definitionPath);
-            resourceManager.createFolder(container);
-            return new DefinitionResource(container);
-        }
-
-        return new DefinitionResource(resource);
     }
 
     private String summarizeFeignBody(String body) {
-        if (body == null || body.isBlank()) return "(empty body)";
+        if (body == null || body.isBlank())
+            return "(empty body)";
         // Spring Boot 기본 에러 JSON이면 message(또는 trace)만 뽑아낸다.
         try {
             com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -526,7 +699,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
                 if (idx >= 0) {
                     String only = m.substring(idx + "Stacktrace:".length());
                     // leading newline 제거
-                    if (only.startsWith("\n")) only = only.substring(1);
+                    if (only.startsWith("\n"))
+                        only = only.substring(1);
                     return only;
                 }
             }
@@ -564,9 +738,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         if (!(definitionPath.startsWith(RESOURCE_ROOT))) {
             definitionPath = RESOURCE_ROOT + "/" + definitionPath;
         }
-        // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), version);
+        Object definition = getDefinitionLocal(definitionPath, version);
 
         // if(unwrap) {
         // return objectMapper.writeValueAsString(definition);
@@ -665,7 +837,6 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
     @RequestMapping(value = DEFINITION_SYSTEM, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public RepresentationModel<?> getSystem() throws Exception {
-
         // case of directory:
         IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
         if (resourceManager.exists(resource) && resourceManager.isContainer(resource)) { // is a folder
@@ -688,6 +859,8 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         List<DefinitionResource> definitions = new ArrayList<DefinitionResource>();
         for (IResource resource1 : resources) {
             DefinitionResource definition = new DefinitionResource(resource1);
+            applyDefinitionResourceId(definition);
+            enrichActorNamesIfEnabled(definition, false);
             definitions.add(definition);
         }
 
@@ -697,50 +870,39 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = DEFINITION
             + "/release/{releaseVerison}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public ResponseEntity<?> releaseVersions(@PathVariable("releaseVerison") String releaseVerison) throws Exception {
-
-        // // case of directory:
-        // IResource resource = new DefaultResource(RESOURCE_ROOT + "/");
-        // if (resourceManager.exists(resource) &&
-        // resourceManager.isContainer(resource)) { // is a folder
-        // return _listSystem(RESOURCE_ROOT, "system");
-        // }
-
-        File resourceDir = new File(RESOURCE_ROOT + "/");
-        if (resourceDir.exists() && resourceDir.isDirectory()) {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream);
-
-            zipDirectory(resourceDir, resourceDir.getName(), zipOutputStream);
-
-            zipOutputStream.close();
-            byteArrayOutputStream.close();
-
-            byte[] zipBytes = byteArrayOutputStream.toByteArray();
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + releaseVerison + ".zip")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(zipBytes);
+        IContainer resourceDir = new ContainerResource(RESOURCE_ROOT);
+        if (!resourceManager.exists(resourceDir) || !resourceManager.isContainer(resourceDir)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found or is not a directory");
         }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found or is not a directory");
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+            zipDirectory(resourceDir, zipOutputStream);
+        }
+
+        byte[] zipBytes = byteArrayOutputStream.toByteArray();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + releaseVerison + ".zip")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(zipBytes);
 
     }
 
-    private void zipDirectory(File folder, String parentFolder, ZipOutputStream zipOutputStream) throws IOException {
-        for (File file : folder.listFiles()) {
-            if (file.isDirectory()) {
-                zipDirectory(file, parentFolder + "/" + file.getName(), zipOutputStream);
+    private void zipDirectory(IContainer folder, ZipOutputStream zipOutputStream) throws Exception {
+        for (IResource resource : resourceManager.listFiles(folder)) {
+            if (resource instanceof IContainer) {
+                zipDirectory((IContainer) resource, zipOutputStream);
                 continue;
             }
-            zipOutputStream.putNextEntry(new ZipEntry(parentFolder + "/" + file.getName()));
-            FileInputStream fileInputStream = new FileInputStream(file);
-            IOUtils.copy(fileInputStream, zipOutputStream);
-            fileInputStream.close();
+            zipOutputStream.putNextEntry(new ZipEntry(resource.getPath()));
+            try (InputStream inputStream = resourceManager.getInputStream(resource)) {
+                IOUtils.copy(inputStream, zipOutputStream);
+            }
             zipOutputStream.closeEntry();
         }
     }
 
-    public void unzipDirectory(InputStream inputStream, String releaseName) throws IOException {
+    public void unzipDirectory(InputStream inputStream, String releaseName) throws Exception {
         byte[] buffer = new byte[1024];
 
         try (ZipInputStream zis = new ZipInputStream(inputStream, StandardCharsets.UTF_8)) {
@@ -748,29 +910,21 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
 
             while (zipEntry != null) {
                 String fileName = zipEntry.getName();
-                String filePath = fileName;
-                File newFile = new File(filePath);
-
-                System.out.println("Processing file: " + newFile.getAbsolutePath());
 
                 if (zipEntry.isDirectory()) {
-                    if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                        throw new IOException("Failed to create directory: " + newFile);
-                    }
+                    IContainer container = new ContainerResource(fileName);
+                    resourceManager.createFolder(container);
                 } else {
-                    File parent = newFile.getParentFile();
-                    if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                        throw new IOException("Failed to create directory: " + parent);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        baos.write(buffer, 0, len);
                     }
-
-                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, len);
-                        }
-                    }
+                    DefaultResource resource = new DefaultResource(fileName);
+                    String content = baos.toString(StandardCharsets.UTF_8);
+                    resourceManager.save(resource, content);
+                    addArchive(fileName, releaseName, content);
                 }
-                addArchive(fileName, releaseName, filePath);
 
                 zipEntry = zis.getNextEntry();
             }
@@ -782,46 +936,24 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         }
     }
 
-    private void addArchive(String fileName, String releaseName, String filePath) throws IOException {
+    private void addArchive(String fileName, String releaseName, String definition) throws Exception {
         if (fileName.lastIndexOf('.') == -1)
             return;
         String extension = fileName.substring(fileName.lastIndexOf('.'));
-        String uploadPath = ARCHIVE_ROOT + File.separator;
         if (".bpmn".equals(extension) || ".form".equals(extension)) {
             String folderName = fileName.replace(RESOURCE_ROOT + "/", "");
-            File folder = new File(uploadPath, folderName);
-
-            if (!folder.exists() && !folder.mkdirs()) {
-                throw new IOException("폴더 생성 실패: " + folder.getAbsolutePath());
-            }
-            File sourceFile = new File(filePath);
-            File targetReleaseFile = new File(uploadPath + folderName, releaseName + extension);
-            byte[] buffer = new byte[1024];
-            try (FileInputStream fis = new FileInputStream(sourceFile);
-                    FileOutputStream fos = new FileOutputStream(targetReleaseFile)) {
-                int length;
-                while ((length = fis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, length);
-                }
-            }
+            DefaultResource versionResource = new DefaultResource(
+                    ARCHIVE_ROOT + "/" + folderName + "/" + releaseName + extension);
+            resourceManager.save(versionResource, definition);
         }
     }
 
     @RequestMapping(value = "/definition/upload", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadDefinition(@RequestParam("file") MultipartFile file) {
         try {
-            String uploadPath = RESOURCE_ROOT + File.separator;
-            File targetFile = new File(uploadPath);
-
-            if (!targetFile.exists()) {
-                targetFile.mkdirs();
-            }
-
-            if (targetFile.exists()) {
-                String releaseNameWithoutExtension = file.getOriginalFilename().substring(0,
-                        file.getOriginalFilename().lastIndexOf('.'));
-                unzipDirectory(file.getInputStream(), releaseNameWithoutExtension);
-            }
+            String releaseNameWithoutExtension = file.getOriginalFilename().substring(0,
+                    file.getOriginalFilename().lastIndexOf('.'));
+            unzipDirectory(file.getInputStream(), releaseNameWithoutExtension);
 
             return ResponseEntity.ok("파일이 성공적으로 업로드되었습니다.");
         } catch (Exception e) {
@@ -838,9 +970,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
         String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String name = path.substring(DEFINITION_SYSTEM.length());
         String definitionPath = RESOURCE_ROOT + "/system" + name + ".json";
-        // 무조건 xml 파일로 결국 저장됨.
-        DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
+        Object definition = getDefinitionLocal(definitionPath, null);
 
         // if(unwrap) {
         // return objectMapper.writeValueAsString(definition);
@@ -856,19 +986,22 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     @RequestMapping(value = DEFINITION_MAP, method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public Object getRawDefinitionMap() throws Exception {
         String definitionPath = RESOURCE_ROOT + "/" + "map.json";
-        // 무조건 xml 파일로 결국 저장됨.
         DefaultResource resource = new DefaultResource(definitionPath);
-        Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
+        try {
+            if (!resourceManager.exists(resource)) {
+                return defaultDefinitionMapJson();
+            }
+            Object definition = getDefinitionLocal(definitionPath, null);
+            return definition != null ? definition : defaultDefinitionMapJson();
+        } catch (Exception e) {
+            return defaultDefinitionMapJson();
+        }
+    }
 
-        // if(unwrap) {
-        // return objectMapper.writeValueAsString(definition);
-        // }else{
-        // DefinitionWrapper definitionWrapper = new DefinitionWrapper(definition);
-        // String uEngineProcessJSON =
-        // objectMapper.writeValueAsString(definitionWrapper);
-        return definition;
-        // }
-
+    private static Object defaultDefinitionMapJson() {
+        Map<String, List<?>> defaultDefinitionMap = new LinkedHashMap<>();
+        defaultDefinitionMap.put("mega_proc_list", new ArrayList<>());
+        return defaultDefinitionMap;
     }
 
     private static final String METRICS_JSON = "metrics.json";
@@ -881,7 +1014,7 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             if (!resourceManager.exists(resource)) {
                 return defaultMetricsJson();
             }
-            Serializable definition = (Serializable) getDefinitionLocal(resource.getPath(), null);
+            Object definition = getDefinitionLocal(resource.getPath(), null);
             return definition != null ? definition : defaultMetricsJson();
         } catch (Exception e) {
             return defaultMetricsJson();
@@ -907,22 +1040,11 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
             + "/xml/{defPath:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     public String getXMLDefinition(@PathVariable("defPath") String definitionPath,
             @RequestParam("version") String version) throws Exception {
-
-        definitionPath = definitionPath.startsWith(RESOURCE_ROOT) ? definitionPath.replace(RESOURCE_ROOT, "")
-                : definitionPath;
-        definitionPath = UEngineUtil.getNamedExtFile(definitionPath, "xml");
-
-        // replace to production version if requested:
-        if (version != null) {
-            VersionManager versionManager = GlobalContext.getComponent(VersionManager.class);
-            versionManager.load("codi", null);
-
-            definitionPath = versionManager.getProductionResourcePath(definitionPath);
+        Object xml = getDefinitionLocal(toDefinitionResourcePath(definitionPath), version);
+        if (xml == null) {
+            throw new ResourceNotFoundException();
         }
-
-        Serializable definition = (Serializable) getDefinitionLocal(definitionPath, null);
-        String uEngineProcessXML = Serializer.serialize(definition);
-        return uEngineProcessXML;
+        return String.valueOf(xml);
 
     }
 
@@ -940,40 +1062,47 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     }
 
     public Object getDefinitionLocal(String definitionPath, String version) throws Exception {
-
         try {
-            if (definitionPath.indexOf(".") == -1) {
-                definitionPath = definitionPath + ".xml";
+            String normalizedPath = definitionPath.startsWith(RESOURCE_ROOT)
+                    ? definitionPath
+                    : toDefinitionResourcePath(definitionPath);
+            if (version != null && !version.isBlank()) {
+                normalizedPath = toArchiveResourcePath(normalizedPath, version);
             }
-            if (version != null) {
-                definitionPath = definitionPath.replace("definitions/", "archive/");
-                definitionPath = definitionPath + "/" + version + ".bpmn";
+            IResource resource = new DefaultResource(normalizedPath);
+            if (!resourceManager.exists(resource)) {
+                throw new ResourceNotFoundException();
             }
-            IResource resource = new DefaultResource(
-                    definitionPath);
             Object definition = resourceManager.getObject(resource);
-
-            // TODO: move to framework
-            if (definition instanceof NeedArrangementToSerialize) {
-                ((NeedArrangementToSerialize) definition).afterDeserialization();
-            }
-
-            if (definition instanceof ProcessDefinition) {
-                ProcessDefinition processDefinition = (ProcessDefinition) definition;
-                { // TODO: will be moved to afterDeserialize of ProcessDefinition
-                    processDefinition.setId(resource.getPath().substring(RESOURCE_ROOT.length() + 1));
-                    if (processDefinition.getName() == null) {
-                        processDefinition.setName(resource.getPath());
-                    }
-                }
-            }
 
             return definition;
 
         } catch (Exception e) {
-            throw new UEngineException("Error when to load definition: " + definitionPath, e);
+            if (e instanceof ResourceNotFoundException) {
+                throw e;
+            }
+            throw new RuntimeException("Error when to load definition: " + definitionPath, e);
         }
 
+    }
+
+    private String toDefinitionResourcePath(String definitionPath) {
+        String normalized = definitionPath == null ? "" : definitionPath.trim().replace("\\", "/");
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.startsWith(RESOURCE_ROOT + "/")) {
+            return normalized;
+        }
+        return RESOURCE_ROOT + (normalized.isEmpty() ? "" : "/" + normalized);
+    }
+
+    private String toArchiveResourcePath(String definitionPath, String version) {
+        String currentPath = toDefinitionResourcePath(definitionPath);
+        String relativePath = currentPath.startsWith(RESOURCE_ROOT + "/")
+                ? currentPath.substring((RESOURCE_ROOT + "/").length())
+                : currentPath;
+        return ARCHIVE_ROOT + "/" + relativePath + "/" + version + ".bpmn";
     }
 
     // --------------- 요소별 댓글 (DefinitionService Feign 계약 구현) ---------------
@@ -1030,5 +1159,50 @@ public class DefinitionServiceImpl implements DefinitionService, DefinitionXMLSe
     private static HttpServletRequest currentRequest() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         return attrs != null ? attrs.getRequest() : null;
+    }
+
+    // --------------- 동시 수정 방지 Lock API ---------------
+
+    /**
+     * path 쿼리 파라미터 지원: 슬래시 포함 id 시 GET
+     * /definition/lock?path=부산은행/credit_review_call (400 방지)
+     */
+    @RequestMapping(value = "/definition/lock", method = RequestMethod.GET, produces = "application/json;charset=UTF-8", params = "path")
+    public DefinitionLockDto getLockByPath(@RequestParam("path") String path) {
+        return definitionLockService.getLock(path).orElse(null);
+    }
+
+    @RequestMapping(value = "/definition/lock/{id:.+}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    public DefinitionLockDto getLock(@PathVariable("id") String id) {
+        return definitionLockService.getLock(id).orElse(null);
+    }
+
+    @RequestMapping(value = "/definition/lock", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json;charset=UTF-8")
+    public DefinitionLockDto putLock(@RequestBody DefinitionLockDto body) {
+        HttpServletRequest req = currentRequest();
+        String userId = body.getUserId();
+        if (userId == null || userId.isEmpty()) {
+            userId = DefinitionLockService.getCurrentUserId(req);
+        }
+        String resourceId = body.getId();
+        if (resourceId == null || resourceId.isEmpty()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "id is required");
+        }
+        return definitionLockService.putLock(resourceId, userId);
+    }
+
+    /**
+     * path 쿼리 파라미터 지원: 슬래시 포함 id 시 DELETE /definition/lock?path=... (라우팅/인코딩 이슈 방지)
+     */
+    @RequestMapping(value = "/definition/lock", method = RequestMethod.DELETE, params = "path")
+    public ResponseEntity<Void> deleteLockByPath(@RequestParam("path") String path) {
+        definitionLockService.deleteLock(path);
+        return ResponseEntity.noContent().build();
+    }
+
+    @RequestMapping(value = "/definition/lock/{id:.+}", method = RequestMethod.DELETE)
+    public ResponseEntity<Void> deleteLock(@PathVariable("id") String id) {
+        definitionLockService.deleteLock(id);
+        return ResponseEntity.noContent().build();
     }
 }

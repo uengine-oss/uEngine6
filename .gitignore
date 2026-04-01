@@ -26,3 +26,10 @@ dist/
 nbdist/
 .nb-gradle/
 keycloak-15.0.2/standalone/data/*.db
+
+install/
+offline-image/
+offline-images/
+uengine-diff/
+*-test-output.txt
+.DS_Store

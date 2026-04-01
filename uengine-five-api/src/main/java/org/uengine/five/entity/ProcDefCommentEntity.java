@@ -4,12 +4,15 @@ import javax.persistence.*;
 import java.util.Date;
 import java.util.UUID;
 
+import org.uengine.five.entity.converter.OracleBooleanConverter;
+import org.uengine.five.entity.converter.OracleDateTimeStringConverter;
+
 /**
  * 프로세스 정의 요소별 댓글 (BPMN 요소 코멘트).
  * 테이블: proc_def_comments
  */
 @Entity
-@Table(name = "proc_def_comments")
+@Table(name = "TB_BPM_PDEF_CMT")
 public class ProcDefCommentEntity {
 
     @Id
@@ -40,13 +43,14 @@ public class ProcDefCommentEntity {
     @Column(name = "parent_comment_id", length = 36)
     private String parentCommentId;
 
+    @Convert(converter = OracleBooleanConverter.class)
     @Column(name = "is_resolved", nullable = false)
     private Boolean isResolved = false;
 
     @Column(name = "resolved_by", length = 255)
     private String resolvedBy;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
     @Column(name = "resolved_at")
     private Date resolvedAt;
 
@@ -56,11 +60,11 @@ public class ProcDefCommentEntity {
     @Column(name = "tenant_id", length = 255)
     private String tenantId;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
     @Column(name = "created_at", nullable = false)
     private Date createdAt;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt;
 

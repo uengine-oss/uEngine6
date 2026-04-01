@@ -4,3 +4,8 @@ server:
     key-store-password: mypassword
     keyStoreType: PKCS12
     keyAlias: uengine
+
+# 시나리오 테스트 등에서 definitions 로딩 (project root = process-service 부모)
+uengine:
+  definition:
+    basePath: ${UENGINE_BASEPATH:..}

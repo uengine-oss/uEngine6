@@ -76,12 +76,13 @@ public interface ProcessInstanceRepositoryOracle extends ProcessInstanceReposito
                         Pageable pageable);
 
         @Override
-        @Query(value = "SELECT * FROM BPM_PROCINST pi " +
-                        "WHERE REGEXP_LIKE(pi.groups, :pattern) " +
+        @Query(value = "SELECT pi FROM ProcessInstanceEntity pi " +
+                        "WHERE function('REGEXP_LIKE_YN', pi.groups, :pattern) = 1 " +
                         "AND (:status IS NULL OR pi.status = :status) " +
-                        "ORDER BY pi.started_date DESC", countQuery = "SELECT COUNT(*) FROM BPM_PROCINST pi " +
-                                        "WHERE REGEXP_LIKE(pi.groups, :pattern) " +
-                                        "AND (:status IS NULL OR pi.status = :status)", nativeQuery = true)
+                        "ORDER BY pi.startedDate DESC",
+                        countQuery = "SELECT COUNT(pi) FROM ProcessInstanceEntity pi " +
+                                        "WHERE function('REGEXP_LIKE_YN', pi.groups, :pattern) = 1 " +
+                                        "AND (:status IS NULL OR pi.status = :status)")
         Page<ProcessInstanceEntity> findAllByGroupsRegex(@Param("pattern") String pattern,
                         @Param("status") String status, Pageable pageable);
 

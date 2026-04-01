@@ -1,0 +1,21 @@
+# 프론트만: docker compose -f docker-compose.frontend.yml up -d
+# down: docker compose -f docker-compose.frontend.yml down
+# 키클락·gateway는 호스트에서 띄워두고 localhost로 접속한다고 가정
+
+services:
+  frontend:
+    image: process-gpt-vue3:1.4.0
+    container_name: release-frontend
+    # 이미지가 컨테이너 내 8080 리스닝 시 5173:8080
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:${FRONTEND_CONTAINER_PORT:-8080}"
+    environment:
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
+      VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-uengine}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-uengine}
+    networks:
+      - frontend-network
+
+networks:
+  frontend-network:
+    driver: bridge

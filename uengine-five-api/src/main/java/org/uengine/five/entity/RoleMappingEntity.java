@@ -6,11 +6,13 @@ import javax.persistence.*;
  * Created by uengine on 2017. 8. 1..
  */
 @Entity
-@Table(name = "BPM_ROLEMAPPING")
+@Table(name = "TB_BPM_ROLEMAP")
 public class RoleMappingEntity {//implements RoleMappingDAO {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hibernateSequence")
+    @SequenceGenerator(name = "hibernateSequence", sequenceName = "HIBERNATE_SEQUENCE", allocationSize = 1)
+    @Column(name = "role_mapping_id")
     Long roleMappingId;
 
 //    @ManyToOne(targetEntity = ProcessInstanceEntity.class)
@@ -20,7 +22,7 @@ public class RoleMappingEntity {//implements RoleMappingDAO {
 //    Long rootInstId;
 
     @ManyToOne
-    @JoinColumn(name="instId")
+    @JoinColumn(name="inst_id")
     ProcessInstanceEntity processInstance;
     public ProcessInstanceEntity getProcessInstance() {
         return processInstance;

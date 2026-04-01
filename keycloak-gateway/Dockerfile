@@ -1,5 +1,6 @@
-FROM openjdk:11-jdk-slim
-COPY target/*SNAPSHOT.jar app.jar
+FROM eclipse-temurin:11-jre
+# SNAPSHOT 및 릴리즈 버전 공통 (gateway-*.jar)
+COPY target/gateway-*.jar app.jar
 EXPOSE 8080
 ENV TZ=Asia/Seoul
 # ENV KEYCLOAK_CLIENT_SERVER_URL=http://keycloak:9090

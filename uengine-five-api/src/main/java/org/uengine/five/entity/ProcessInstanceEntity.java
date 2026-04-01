@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,12 +13,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.uengine.five.entity.converter.OracleBooleanConverter;
+import org.uengine.five.entity.converter.OracleDateTimeStringConverter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,7 +40,7 @@ class DummyRoleMapping extends RoleMappingEntity {
  * Created by uengine on 2017. 6. 19..
  */
 @Entity
-@Table(name = "BPM_PROCINST")
+@Table(name = "TB_BPM_PROCINST")
 @RepositoryEventHandler(ProcessInstanceEntity.class)
 @Component
 public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
@@ -72,8 +74,17 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
         this.dummyRoleMappings = dummyRoleMappings;
     }
 
+    @PrePersist
+    public void ensureStartedDate() {
+        if (startedDate == null) {
+            startedDate = new Date();
+        }
+    }
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hibernateSequence")
+    @SequenceGenerator(name = "hibernateSequence", sequenceName = "HIBERNATE_SEQUENCE", allocationSize = 1)
+    @Column(name = "inst_id")
     @JsonProperty("instId")
     Long instId;
 
@@ -85,16 +96,24 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     String defName;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "started_date", nullable = false)
     Date startedDate;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "finished_date")
     Date finishedDate;
 
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "due_date")
     Date dueDate;
 
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "def_mod_date")
     Date defModDate;
 
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "mod_date")
     Date modDate;
 
     String status;
@@ -109,20 +128,27 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
     @Convert(converter = OracleBooleanConverter.class)
     boolean adhoc;
 
+    @Column(name = "sub_process")
     @Convert(converter = OracleBooleanConverter.class)
     boolean subProcess;
 
+    @Column(name = "event_handler")
     @Convert(converter = OracleBooleanConverter.class)
     boolean eventHandler;
 
+    @Column(name = "root_inst_id")
     Long rootInstId;
 
+    @Column(name = "main_inst_id")
     Long mainInstId;
 
+    @Column(name = "main_act_trc_tag")
     String mainActTrcTag;
 
+    @Column(name = "main_exec_scope")
     String mainExecScope;
 
+    @Column(name = "main_def_ver_id")
     Long mainDefVerId;
 
     @Convert(converter = OracleBooleanConverter.class)
@@ -130,6 +156,7 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     String absTrcPath;
 
+    @Column(name = "dont_return")
     @Convert(converter = OracleBooleanConverter.class)
     boolean dontReturn;
 
@@ -143,14 +170,18 @@ public class ProcessInstanceEntity {// implements ProcessInstanceDAO {
 
     String ext5;
 
+    @Column(name = "init_com_cd")
     String initComCd;
 
+    @Column(name = "corr_key")
     String corrKey;
 
     /** 현재 유효한 인스턴스 변수 파일 경로 (instances/...). null이면 startedDate 기준 계산 경로 사용. */
+    @Column(name = "variables_path")
     String variablesPath;
 
     @Lob
+    @Column(name = "var_lob")
     @JsonIgnore
     byte[] varLob;
 

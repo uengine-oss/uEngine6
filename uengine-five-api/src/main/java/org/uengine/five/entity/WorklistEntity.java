@@ -5,18 +5,38 @@ package org.uengine.five.entity;
 import javax.persistence.*;
 
 import java.util.Date;
+import java.util.Calendar;
+
+import org.uengine.five.entity.converter.OracleBooleanConverter;
+import org.uengine.five.entity.converter.OracleDateStringConverter;
 
 /**
  * Created by uengine on 2017. 8. 1..
  */
 @Entity
-@Table(name = "BPM_WORKLIST")
+@Table(name = "TB_BPM_WORKLIST")
 public class WorklistEntity {// implements WorkListDAO {
 
+    @PrePersist
+    public void ensureRequiredColumns() {
+        if (saveDate == null) {
+            saveDate = Calendar.getInstance().getTime();
+        }
+        if (delegated == null) {
+            delegated = Boolean.FALSE;
+        }
+        if (urget == null) {
+            urget = Boolean.FALSE;
+        }
+    }
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hibernateSequence")
+    @SequenceGenerator(name = "hibernateSequence", sequenceName = "HIBERNATE_SEQUENCE", allocationSize = 1)
+    @Column(name = "task_id")
     Long taskId;
 
+    @Column(name = "inst_id")
     Long instId;
 
     @PrimaryKeyJoinColumn
@@ -29,7 +49,7 @@ public class WorklistEntity {// implements WorkListDAO {
     }
 
     @ManyToOne
-    @PrimaryKeyJoinColumn(name = "instId")
+    @JoinColumn(name = "inst_id", insertable = false, updatable = false)
     ProcessInstanceEntity processInstance;
 
     public ProcessInstanceEntity getProcessInstance() {
@@ -62,16 +82,20 @@ public class WorklistEntity {// implements WorkListDAO {
     String parameter;
     Number priority;
 
-    @Temporal(TemporalType.DATE)
+    @Convert(converter = OracleDateStringConverter.class)
+    @Column(name = "start_date")
     Date startDate;
 
-    @Temporal(TemporalType.DATE)
+    @Convert(converter = OracleDateStringConverter.class)
+    @Column(name = "end_date")
     Date endDate;
 
-    @Temporal(TemporalType.DATE)
+    @Convert(converter = OracleDateStringConverter.class)
+    @Column(name = "save_date", nullable = false)
     Date saveDate;
 
-    @Temporal(TemporalType.DATE)
+    @Convert(converter = OracleDateStringConverter.class)
+    @Column(name = "due_date")
     Date dueDate;
 
     String status;
@@ -89,14 +113,20 @@ public class WorklistEntity {// implements WorkListDAO {
     int dispatchOption;
     String dispatchParam1;
     String prevUserName;
+    @Column(name = "root_inst_id")
     Number rootInstId;
 
-    @Temporal(TemporalType.DATE)
+    @Convert(converter = OracleDateStringConverter.class)
+    @Column(name = "read_date")
     Date readDate;
 
     String actType;
     String absTrcTag;
+    @Convert(converter = OracleBooleanConverter.class)
+    @Column(name = "delegated", nullable = false)
     Boolean delegated;
+    @Convert(converter = OracleBooleanConverter.class)
+    @Column(name = "urget", nullable = false)
     Boolean urget;
     String execScope;
     String ext1;

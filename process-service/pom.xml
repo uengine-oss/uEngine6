@@ -34,6 +34,11 @@
 		</dependency>
 		<dependency>
 			<groupId>org.uengine</groupId>
+			<artifactId>uengine-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.uengine</groupId>
 			<artifactId>uengine-resource-manager</artifactId>
 			<version>${project.version}</version>
 		</dependency>

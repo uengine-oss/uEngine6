@@ -3,6 +3,8 @@ package org.uengine.five.entity;
 import javax.persistence.*;
 import java.util.Date;
 
+import org.uengine.five.entity.converter.OracleDateTimeStringConverter;
+
 /**
  * Created by uengine on 2017. 12. 21..
  */
@@ -30,22 +32,25 @@ import java.util.Date;
 
  
 @Entity
-@Table(name="bpm_audit")
+@Table(name="TB_BPM_AUDIT")
 public class AuditEntity {
 
     @ManyToOne
-    @JoinColumn(name="rootInstId")
+    @JoinColumn(name="root_inst_id")
     ProcessInstanceEntity rootProcessInstance;
 
     @Id
+    @Column(name = "audit_id")
     Long auditId;
 
     String fullTracingTag;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "started_date")
     Date startedDate;
 
-    @Temporal(TemporalType.TIMESTAMP)
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "finished_date")
     Date finishedDate;
 
     String activityName;
@@ -53,7 +58,7 @@ public class AuditEntity {
 
 
     @ManyToOne
-    @JoinColumn(name="instId")
+    @JoinColumn(name="inst_id")
     private ProcessInstanceEntity processInstance;
 
 

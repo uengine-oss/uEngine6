@@ -15,7 +15,13 @@
       "realm": [
         {
           "name": "user",
-          "description": "일반 사용자 역할"
+          "description": "일반 사용자 역할",
+          "composite": true,
+          "composites": {
+            "client": {
+              "realm-management": ["view-users"]
+            }
+          }
         },
         {
           "name": "admin",
@@ -61,10 +67,27 @@
             "temporary": false
           }
         ],
-        "realmRoles": ["user"],
+        "realmRoles": ["admin", "user"],
         "attributes": {
           "department": ["영업부서"]
         }
+      },
+      {
+        "username": "test",
+        "email": "test@uengine.org",
+        "enabled": true,
+        "emailVerified": true,
+        "firstName": "테스트",
+        "lastName": "사용자",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "test",
+            "temporary": false
+          }
+        ],
+        "realmRoles": ["admin", "user"],
+        "attributes": {}
       },
       {
         "username": "유",
@@ -100,6 +123,7 @@
         "clientAuthenticatorType": "client-secret",
         "secret": "66LpF19OpkpgKKpWHdgiCEKisx5AXqLA",
         "redirectUris": [
+          "http://localhost:8088/*",
           "http://localhost:8088/*"
         ],
         "webOrigins": ["+"],

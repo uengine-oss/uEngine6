@@ -21,7 +21,7 @@ public class ProcDefDataService {
     @Autowired
     private ProcDefCommentRepository repository;
 
-    private static String getCurrentUserId(HttpServletRequest request) {
+    public static String getCurrentUserId(HttpServletRequest request) {
         String userId = null;
         try {
             userId = UserContext.getThreadLocalInstance().getUserId();

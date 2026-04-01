@@ -75,7 +75,8 @@ public class ScenarioLoader {
         try {
             Object raw = definitionService.getRawDefinition(path);
             String json = toJsonString(raw);
-            List<Scenario> list = objectMapper.readValue(json, new TypeReference<List<Scenario>>() {});
+            List<Scenario> list = objectMapper.readValue(json, new TypeReference<List<Scenario>>() {
+            });
             return list != null ? list : new ArrayList<>();
         } catch (ResponseStatusException rse) {
             if (rse.getStatus() == HttpStatus.NOT_FOUND) {

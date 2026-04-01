@@ -3,6 +3,8 @@ package org.uengine.five.entity;
 import javax.persistence.*;
 import java.util.Date;
 
+import org.uengine.five.entity.converter.OracleDateTimeStringConverter;
+
 /**
  * 확장 가능한 감사 로그 엔티티.
  * 이벤트 유형별 상세는 payload(JSON)에 저장하여 스키마 변경 없이 확장 가능.
@@ -13,37 +15,39 @@ import java.util.Date;
  * 오래된 데이터 정리는 별도 아카이브/배치 정책으로만 처리하는 것을 권장한다.
  */
 @Entity
-@Table(name = "bpm_audit_log", indexes = {
-    @Index(name = "idx_audit_log_root_inst", columnList = "rootInstId"),
-    @Index(name = "idx_audit_log_inst_occurred", columnList = "instId, occurredAt")
+@Table(name = "TB_BPM_AUDIT_LOG", indexes = {
+    @Index(name = "I1TB_BPM_AUDIT_LOG", columnList = "root_inst_id, occurred_at"),
+    @Index(name = "I2TB_BPM_AUDIT_LOG", columnList = "inst_id, occurred_at")
     // 필요 시 '누가' 조회용: @Index(name = "idx_audit_log_actor", columnList = "actor")
 })
 public class AuditLogEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hibernateSequence")
+    @SequenceGenerator(name = "hibernateSequence", sequenceName = "HIBERNATE_SEQUENCE", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false, length = 64)
     private String eventType;
 
-    @Column(nullable = false)
+    @Column(name = "root_inst_id", nullable = false)
     private Long rootInstId;
 
+    @Column(name = "inst_id")
     private Long instId;
 
     @Column(length = 512)
     private String tracingTag;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
+    @Convert(converter = OracleDateTimeStringConverter.class)
+    @Column(name = "occurred_at", nullable = false)
     private Date occurredAt;
 
     @Column(length = 255)
     private String actor;
 
     @Lob
-    @Column(length = 65535)
+    @Column(name = "payload", columnDefinition = "CLOB", length = 65535)
     private String payload;
 
     public Long getId() { return id; }

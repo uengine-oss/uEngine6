@@ -1,4 +1,4 @@
-version: '3.8'
+# version 필드는 Compose V2에서 무시되므로 제거 (경고 방지)
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -30,6 +30,9 @@ services:
 
   process-service:
     image: process-service:v0.0.1
+    build:
+      context: ..
+      dockerfile: process-service/Dockerfile
     depends_on:
       - kafka
     volumes:
@@ -43,6 +46,9 @@ services:
 
   definition-service:
     image: definition-service:v0.0.1
+    build:
+      context: ..
+      dockerfile: definition-service/Dockerfile
     depends_on:
       - kafka
     volumes:
@@ -53,10 +59,13 @@ services:
       - ../test:/app/test
     networks:
     - app-network
+  # 기본 up 시에는 제외 (이미지가 Docker Hub에 없음). 사용 시: docker-compose --profile frontend up
   frontend:
     image: frontend:0.0.7
+    profiles:
+      - frontend
     environment:
-      - VITE_KEYCLOAK_URL=http://keycloak:8080
+      - VITE_KEYCLOAK_URL=http://localhost:8080
       - VITE_KEYCLOAK_REALM=uengine
       - VITE_KEYCLOAK_CLIENT_ID=uengine
     networks:
@@ -84,12 +93,14 @@ services:
   
   gateway:
     image: keycloak-gateway:0.0.5
+    build:
+      context: ../keycloak-gateway
+      dockerfile: Dockerfile
     ports:
       - 8088:8080
     depends_on:
       - process-service
       - definition-service
-      - frontend
       - keycloak
     environment:
       - KEYCLOAK_URI=http://keycloak:8080

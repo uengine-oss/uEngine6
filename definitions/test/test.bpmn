@@ -12,7 +12,7 @@
   <bpmn:process id="Process_1oscmbn" isExecutable="true">
     <bpmn:extensionElements>
       <uengine:properties>
-        <uengine:json>{"definitionName":"test/test","version":"1.0","shortDescription":{"text":null}}</uengine:json>
+        <uengine:json>{"definitionName":"test/test","version":"4.0","shortDescription":{"text":null}}</uengine:json>
         <uengine:variable name="임시저장변수" type="Text">
           <uengine:json>{"defaultValue":"","name":"임시저장변수","type":"Text"}</uengine:json>
         </uengine:variable>
@@ -74,7 +74,7 @@
     <bpmn:callActivity id="Activity_1qpz5ts" name="고장접수">
       <bpmn:extensionElements>
         <uengine:properties>
-          <uengine:json>{"variableBindings":[{"direction":"IN-OUT","variable":{"name":"임시저장변수"},"argument":{"text":"고장"},"split":false}],"roleBindings":[],"definitionId":"test/testCall.bpmn","forEachVariable":{"defaultValue":"","name":"임시저장변수","type":"java.lang.String"},"version":"1.0"}</uengine:json>
+          <uengine:json>{"variableBindings":[{"direction":"IN-OUT","variable":{"name":"임시저장변수"},"argument":{"text":"고장"},"split":false}],"roleBindings":[],"definitionId":"test/testCall.bpmn","forEachVariable":{"name":"임시저장변수","description":"임시저장변수 description","type":"java.lang.String","defaultValue":""},"version":"2.0"}</uengine:json>
         </uengine:properties>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0f5cvw2</bpmn:incoming>

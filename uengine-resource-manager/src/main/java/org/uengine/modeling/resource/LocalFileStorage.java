@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
  * Created by jangjinyoung on 15. 7. 12..
  */
 @Component
-public class LocalFileStorage extends AbstractStorage {
+public class LocalFileStorage extends JPAStorage {
 
     @Override
     public void delete(IResource fileResource) throws IOException {

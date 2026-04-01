@@ -49,17 +49,18 @@ public class InstanceResource extends RepresentationModel {
         public void setCorrKey(String corrKey) {
                 this.corrKey = corrKey;
         }
+
         public InstanceResource() {
         }
 
         public String defVer;
 
         public String getDefVer() {
-            return defVer;
+                return defVer;
         }
 
         public void setDefVer(String defVer) {
-            this.defVer = defVer;
+                this.defVer = defVer;
         }
 
         public InstanceResource(ProcessInstance processInstance) throws Exception {

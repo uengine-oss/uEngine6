@@ -1,13 +1,22 @@
 
 server:
-  port: 8088
+  port: ${GATEWAY_SERVER_PORT:8088}
+
+# OAuth2/인증 디버깅 시 로그 상세 출력 (필요 시 DEBUG → TRACE)
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.web: DEBUG
+    reactor.netty.http.client: INFO
 
 ---
 
 
 keycloak-client:
-  server-url: http://localhost:8080
-  realm: uengine
+  server-url: ${KEYCLOAK_CLIENT_SERVER_URL:http://localhost:8080}
+  realm: ${KEYCLOAK_CLIENT_REALM:uengine}
 
 spring:
   profiles: default
@@ -15,17 +24,17 @@ spring:
     gateway:
       routes:
         - id: execution
-          uri: http://localhost:8000
+          uri: ${EXECUTION_SERVICE_URL:http://localhost:8000}
           predicates:
             - Path=/complete/**, /vision-complete/**, /execution/**
           filters:
             - RewritePath=/execution/?(?<segment>.*), /$\{segment}
         - id: definition-servicce
-          uri: http://localhost:9093
+          uri: ${DEFINITION_SERVICE_URL:http://localhost:9093}
           predicates:
             - Path=/definition/**, /version/**, /versions/**
         - id: instance-servicce
-          uri: http://localhost:9094
+          uri: ${PROCESS_SERVICE_URL:http://localhost:9094}
           predicates:
             - Path=/worklist/**, /test/**, /instance/**, /work-item/** , /instances/**, /dry-run/**, /validate/**, /start-and-complete
         # - id: inventory-service
@@ -33,7 +42,7 @@ spring:
         #   predicates: 
         #     - Path=/inventories/**, /url-test/**
         - id: frontend
-          uri: http://localhost:5173
+          uri: ${FRONTEND_URL:http://localhost:5173}
           predicates:
             - Path=/**
       globalcors:
@@ -55,13 +64,28 @@ spring:
     gateway:
       routes:
         - id: execution
-          uri: http://localhost:8000
+          uri: ${EXECUTION_SERVICE_URL:http://localhost:8000}
           predicates:
-            - Path=/complete/**, /vision-complete/**,  
+            - Path=/complete/**, /vision-complete/**, /execution/**
+          filters:
+            - RewritePath=/execution/?(?<segment>.*), /$\{segment}
+        # definition-service 컨테이너는 Dockerfile에서 8080 리스닝
+        - id: definition-service
+          uri: ${DEFINITION_SERVICE_URL:http://definition-service:8080}
+          predicates:
+            - Path=/definition/**, /version/**, /versions/**
+        - id: instance-service
+          uri: ${PROCESS_SERVICE_URL:http://process-service:8080}
+          predicates:
+            - Path=/worklist/**, /test/**, /instance/**, /work-item/**, /instances/**, /dry-run/**, /validate/**, /start-and-complete
+        - id: frontend
+          uri: ${FRONTEND_URL:http://frontend:8080}
+          predicates:
+            - Path=/**
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
+            allowedOriginPatterns:
               - "*"
             allowedMethods:
               - "*"
@@ -73,18 +97,22 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}
+            # 브라우저 리다이렉트용. 나머지는 서버→Keycloak용 keycloak:8080
+            authorization-uri: ${KEYCLOAK_BROWSER_AUTH_URL:http://localhost:8080}/realms/${KEYCLOAK_CLIENT_REALM:uengine}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_CLIENT_SERVER_URL:http://keycloak:8080}/realms/${KEYCLOAK_CLIENT_REALM:uengine}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_CLIENT_SERVER_URL:http://keycloak:8080}/realms/${KEYCLOAK_CLIENT_REALM:uengine}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_CLIENT_SERVER_URL:http://keycloak:8080}/realms/${KEYCLOAK_CLIENT_REALM:uengine}/protocol/openid-connect/certs
             user-name-attribute: preferred_username
         registration:
           keycloak:
-            client-id: supabase
-            client-secret: oZ2Hj8a48f2jsfgMibXqg17YwqYGHPEc
-            redirect-uri: http://127.0.0.1:8088/login/oauth2/code/supabase
+            client-id: ${KEYCLOAK_CLIENT_ID:uengine}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:66LpF19OpkpgKKpWHdgiCEKisx5AXqLA}
+            redirect-uri: ${KEYCLOAK_REDIRECT_URI:http://localhost:8088/login/oauth2/code/keycloak}
             authorization-grant-type: authorization_code
-            scope: openid, execution
+            scope: openid, profile
       resourceserver:
         jwt:
-          jwk-set-uri: ${keycloak-client.server-url}/realms/${keycloak-client.realm}/protocol/openid-connect/certs
+          jwk-set-uri: ${KEYCLOAK_CLIENT_SERVER_URL:http://keycloak:8080}/realms/${KEYCLOAK_CLIENT_REALM:uengine}/protocol/openid-connect/certs
 
 server:
-  port: 8080
+  port: ${GATEWAY_SERVER_PORT:8080}

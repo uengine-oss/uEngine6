@@ -3,6 +3,7 @@ package org.uengine.five;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +16,6 @@ import org.uengine.five.overriding.EmailServiceLocalImpl;
 import org.uengine.five.overriding.BusinessRuleTaskAutoEvaluatorFilter;
 import org.uengine.five.overriding.InstanceDataAppendingActivityFilter;
 import org.uengine.five.overriding.InstanceServiceLocalImpl;
-import org.uengine.five.overriding.JPAProcessInstance;
 import org.uengine.five.overriding.JPAWorkList;
 import org.uengine.five.spring.TenantSecurityEvaluationContextExtension;
 import org.uengine.kernel.ActivityFilter;
@@ -169,8 +169,15 @@ public class ProcessServiceWebConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "uengine.definition.service.mode", havingValue = "local", matchIfMissing = true)
     public DefinitionServiceLocal definitionServiceLocal() {
         return new org.uengine.five.overriding.DefinitionServiceLocalImpl();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "uengine.definition.service.mode", havingValue = "remote")
+    public DefinitionServiceLocal remoteDefinitionServiceLocal() {
+        return new org.uengine.five.overriding.RemoteDefinitionServiceLocalImpl();
     }
 
     @Bean

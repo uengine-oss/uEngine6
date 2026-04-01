@@ -2,10 +2,19 @@ package org.uengine.five.entity;
 
 import javax.persistence.*;
 
+import org.uengine.five.entity.converter.OracleBooleanConverter;
+
 @Entity
-@Table(name = "BPM_EVENT_MAPPING")
+@Table(name = "TB_BPM_EVTMAP")
 public class EventMappingEntity {
-    
+
+    @PrePersist
+    public void ensureRequiredColumns() {
+        if (isStartEvent == null) {
+            isStartEvent = Boolean.FALSE;
+        }
+    }
+
     @Id
     @Column(name = "event_type")
     private String eventType;
@@ -19,7 +28,8 @@ public class EventMappingEntity {
     @Column(name = "tracing_tag")
     private String tracingTag;
     
-    @Column(name = "is_start_event")
+    @Convert(converter = OracleBooleanConverter.class)
+    @Column(name = "is_start_event", nullable = false)
     private Boolean isStartEvent;
 
    

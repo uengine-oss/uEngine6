@@ -20,6 +20,7 @@ import org.uengine.five.overriding.ServiceRegisterDeployFilter;
 import org.uengine.five.overriding.SpringComponentFactory;
 import org.uengine.five.service.DefinitionServiceUtil;
 import org.uengine.five.service.LocalFileDefinitionServiceUtil;
+import org.uengine.five.service.RemoteDefinitionServiceUtil;
 import org.uengine.kernel.DeployFilter;
 import org.uengine.kernel.GlobalContext;
 
@@ -115,9 +116,16 @@ public class ProcessServiceApplication {
 
     @Bean
     @Primary
+    @ConditionalOnProperty(name = "uengine.definition.service.mode", havingValue = "local", matchIfMissing = true)
     public DefinitionServiceUtil definitionServiceUtil() {
-        // return new SupabaseDefinitionServiceUtil();
         return new LocalFileDefinitionServiceUtil();
+    }
+
+    @Bean
+    @Primary
+    @ConditionalOnProperty(name = "uengine.definition.service.mode", havingValue = "remote")
+    public DefinitionServiceUtil remoteDefinitionServiceUtil() {
+        return new RemoteDefinitionServiceUtil();
     }
 
     public static ObjectMapper createTypedJsonObjectMapper() {

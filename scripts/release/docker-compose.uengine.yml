@@ -1,0 +1,119 @@
+# uEngine(백엔드)만: zookeeper + kafka + definition-service + keycloak-gateway (Oracle 쪽과 동일 구성)
+# 키클락과 같은 네트워크(release-shared) → keycloak:8080 으로 접속
+# 사용: 1) 키클락 먼저 up  2) docker compose -f docker-compose.uengine.yml up -d
+# down: docker compose -f docker-compose.uengine.yml down
+
+services:
+  zookeeper:
+    image: uengine-zookeeper:1.1.0
+    container_name: release-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT:-2181}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME:-2000}
+    networks:
+      - release-shared
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo 'ruok' | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: uengine-kafka:1.1.0
+    container_name: release-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID:-1}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT:-zookeeper:2181}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS:-PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS:-PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:-PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME:-PLAINTEXT_INTERNAL}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:-1}
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "${KAFKA_AUTO_CREATE_TOPICS_ENABLE:-true}"
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS:--Xmx512m -Xms256m}
+    networks:
+      - release-shared
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  definition-service:
+    image: definition-service:1.1.0
+    container_name: release-definition-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+    # oracle 프로필 없으면 H2 사용 → TB_BPM_* 테이블 없음. Oracle 쓰려면 oracle,docker 둘 다.
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-oracle,docker}
+      ORACLE_HOST: ${ORACLE_HOST:-host.docker.internal}
+      ORACLE_PORT: ${ORACLE_PORT:-1521}
+      ORACLE_SERVICE: ${ORACLE_SERVICE:-XE}
+      ORACLE_USER: ${ORACLE_USER:-system}
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-oracle}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      DEFINITION_SERVER_PORT: ${DEFINITION_SERVER_PORT:-8080}
+    networks:
+      - release-shared
+
+  process-service:
+    image: process-service:1.1.0
+    container_name: release-process-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      definition-service:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-oracle,docker}
+      ORACLE_HOST: ${ORACLE_HOST:-host.docker.internal}
+      ORACLE_PORT: ${ORACLE_PORT:-1521}
+      ORACLE_SERVICE: ${ORACLE_SERVICE:-XE}
+      ORACLE_USER: ${ORACLE_USER:-system}
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-oracle}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      PROCESS_SERVER_PORT: ${PROCESS_SERVER_PORT:-8080}
+      KEYCLOAK_URL: ${PROCESS_KEYCLOAK_URL:-http://localhost:8080}
+      KEYCLOAK_REALM: ${PROCESS_KEYCLOAK_REALM:-uengine}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${PROCESS_KEYCLOAK_ADMIN_CLIENT_ID:-admin-cli}
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-smtp.gmail.com}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_SSL_TRUST: ${MAIL_SMTP_SSL_TRUST:-smtp.gmail.com}
+      MAIL_USERNAME: ${MAIL_USERNAME:-lee}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-123}
+    networks:
+      - release-shared
+
+  keycloak-gateway:
+    image: keycloak-gateway:1.1.0
+    container_name: release-gateway
+    ports:
+      - "${GATEWAY_HOST_PORT:-8088}:${GATEWAY_SERVER_PORT:-8080}"
+    depends_on:
+      - definition-service
+      - process-service
+    environment:
+      KEYCLOAK_CLIENT_SERVER_URL: ${KEYCLOAK_CLIENT_SERVER_URL:-http://keycloak:8080}
+      KEYCLOAK_BROWSER_AUTH_URL: ${KEYCLOAK_BROWSER_AUTH_URL:-http://localhost:8080}
+      KEYCLOAK_CLIENT_REALM: ${KEYCLOAK_CLIENT_REALM:-uengine}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-uengine}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-66LpF19OpkpgKKpWHdgiCEKisx5AXqLA}
+      KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-http://localhost:8088/login/oauth2/code/keycloak}
+      GATEWAY_URI: ${GATEWAY_URI:-http://localhost:8088}
+      GATEWAY_SERVER_PORT: ${GATEWAY_SERVER_PORT:-8080}
+      EXECUTION_SERVICE_URL: ${EXECUTION_SERVICE_URL:-http://localhost:8000}
+      DEFINITION_SERVICE_URL: ${DEFINITION_SERVICE_URL:-http://definition-service:8080}
+      PROCESS_SERVICE_URL: ${PROCESS_SERVICE_URL:-http://process-service:8080}
+      SPRING_PROFILES_ACTIVE: ${GATEWAY_SPRING_PROFILES_ACTIVE:-docker}
+    networks:
+      - release-shared
+
+networks:
+  release-shared:
+    name: release-shared
+    external: true

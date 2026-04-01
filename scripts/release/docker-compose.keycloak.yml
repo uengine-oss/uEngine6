@@ -1,0 +1,36 @@
+# 키클락만: docker compose -f docker-compose.keycloak.yml up -d
+# down: docker compose -f docker-compose.keycloak.yml down
+# 공유 네트워크(release-shared). uengine 쪽은 keycloak:8080 으로 접속 (같은 네트워크)
+# realm: release 폴더의 keycloak/realm-export.json 마운트 → --import-realm 로 로드
+
+services:
+  keycloak:
+    image: keycloak:1.1.0
+    container_name: release-keycloak
+    ports:
+      - "${KEYCLOAK_HOST_PORT:-8080}:${KEYCLOAK_CONTAINER_PORT:-8080}"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_ENABLED: "${KC_HTTP_ENABLED:-true}"
+      KC_PROXY: ${KC_PROXY:-edge}
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: "${KC_HOSTNAME_PORT:-8080}"
+      KC_LOG_LEVEL: ${KC_LOG_LEVEL:-DEBUG}
+      KC_LOG_LEVEL_ORG_KEYCLOAK_SERVICES: ${KC_LOG_LEVEL_ORG_KEYCLOAK_SERVICES:-DEBUG}
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    command: ["start-dev", "--import-realm"]
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
+      start_period: 90s
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - release-shared
+
+networks:
+  release-shared:
+    name: release-shared
+    driver: bridge
