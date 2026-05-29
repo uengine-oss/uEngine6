@@ -60,11 +60,12 @@ services:
     networks:
     - app-network
   frontend:
-    image: uengine/process-gpt-vue3:1.4.0
+    image: uengine/process-gpt-vue3:uengine-latest
     environment:
       - VITE_KEYCLOAK_URL=http://localhost:8080
       - VITE_KEYCLOAK_REALM=uengine
       - VITE_KEYCLOAK_CLIENT_ID=uengine
+      - VITE_MODE=uEngine
     networks:
       - app-network
 
