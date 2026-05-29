@@ -2098,7 +2098,7 @@ public class InstanceServiceImpl implements InstanceService {
 
     //
 
-    @ProcessTransactional(readOnly = true)
+    @ProcessTransactional
     @RequestMapping(value = "/dry-run", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public Object dryRun(@RequestBody ProcessExecutionCommand command) throws Exception {
         ProcessExecutionCommand processCommand = new ProcessExecutionCommand();
@@ -2174,6 +2174,8 @@ public class InstanceServiceImpl implements InstanceService {
                     workItem.setActivity(activity);
                 }
 
+                org.springframework.transaction.interceptor.TransactionAspectSupport
+                        .currentTransactionStatus().setRollbackOnly();
                 return workItem;
             } catch (Exception e) {
                 e.printStackTrace();
