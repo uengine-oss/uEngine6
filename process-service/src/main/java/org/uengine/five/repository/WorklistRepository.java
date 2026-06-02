@@ -22,17 +22,17 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     // 'NEW' or wl.status = 'DRAFT')")
 
     /**
-     * ToDo 정의
-     * - 기본: endpoint 가 나(principal.userId) 이거나, endpoint 가 내 scope(roles) 중 하나인 workitem
-     * - 추가: dispatchOption = 1(경합/RACING) 인 경우 roleName 이 내 scope(roles)와 일치해도 노출
-     * - 상태: COMPLETED / CANCELLED 는 제외
+     * ToDo ?뺤쓽
+     * - 湲곕낯: endpoint 媛 ??principal.userId) ?닿굅?? endpoint 媛 ??scope(roles) 以??섎굹??workitem
+     * - 異붽?: dispatchOption = 1(寃쏀빀/RACING) ??寃쎌슦 roleName ????scope(roles)? ?쇱튂?대룄 ?몄텧
+     * - ?곹깭: COMPLETED / CANCELLED ???쒖쇅
      */
 //     @Query("select wl from WorklistEntity wl where (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes}) and (wl.status != 'COMPLETED') ")
     @Query("select wl from WorklistEntity wl " +
             "where (" +
             "   (wl.endpoint = ?#{principal.userId} or wl.endpoint in ?#{principal.scopes})" +
-            "   or (wl.dispatchOption = 1 and wl.endpoint is null and wl.scope in ?#{principal.groups})" +
-            "   or (wl.dispatchOption = 1 and wl.endpoint is null and wl.scope in ?#{principal.scopes})" +
+            "   or (wl.endpoint is null and wl.scope in ?#{principal.groups})" +
+            "   or (wl.endpoint is null and wl.scope in ?#{principal.scopes})" +
             ") and (wl.status != 'COMPLETED') ")
     public List<WorklistEntity> findToDo();
 
@@ -61,10 +61,10 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     public List<WorklistEntity> findCurrentWorkItemByInstId(@Param(value = "rootInstId") Number rootInstId);
 
     /**
-     * 경합(DispatchOption=1) 등으로 endpoint가 비어있는 workitem들을,
-     * 특정 사용자가 claim 했을 때 동일 role/scope/assignType 그룹으로 함께 소유자 세팅하기 위해 사용.
+     * 寃쏀빀(DispatchOption=1) ?깆쑝濡?endpoint媛 鍮꾩뼱?덈뒗 workitem?ㅼ쓣,
+     * ?뱀젙 ?ъ슜?먭? claim ?덉쓣 ???숈씪 role/scope/assignType 洹몃９?쇰줈 ?④퍡 ?뚯쑀???명똿?섍린 ?꾪빐 ?ъ슜.
      *
-     * rootInstId는 일부 레코드에서 null일 수 있어 instId로 fallback 합니다.
+     * rootInstId???쇰? ?덉퐫?쒖뿉??null?????덉뼱 instId濡?fallback ?⑸땲??
      */
     @Query("select wl from WorklistEntity wl " +
             "where ( (wl.rootInstId = :rootInstId) or (wl.rootInstId is null and wl.instId = :rootInstId) ) " +
@@ -85,3 +85,4 @@ public interface WorklistRepository extends JpaRepository<WorklistEntity, Long> 
     // public List<WorklistEntity> findAll();
 
 }
+

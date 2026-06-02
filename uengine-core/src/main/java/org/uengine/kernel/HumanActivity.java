@@ -487,8 +487,11 @@ public class HumanActivity extends ReceiveActivity {
 
 		kpv.setProperty(KeyedParameter.TITLE, title);
 		kpv.setProperty(KeyedParameter.DURATION, "" + getDuration());
+		String processDefinitionName = getProcessDefinition() != null
+				? getProcessDefinition().getName(GlobalContext.DEFAULT_LOCALE)
+				: null;
 		kpv.setProperty(KeyedParameter.PROCESSDEFINITIONNAME,
-				getProcessDefinition().getName(GlobalContext.DEFAULT_LOCALE));
+				processDefinitionName != null ? processDefinitionName : "");
 		kpv.setProperty(KeyedParameter.CO2EMISSION, "" + getCo2Emission());
 
 		if (getExtValue1() != null)

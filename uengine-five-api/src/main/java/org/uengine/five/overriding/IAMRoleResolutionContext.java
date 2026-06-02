@@ -1,7 +1,9 @@
 package org.uengine.five.overriding;
 
 import java.util.Map;
+import java.util.List;
 import org.uengine.five.service.IAMService;
+import org.uengine.contexts.UserContext;
 import org.uengine.five.service.IAMServices;
 import org.uengine.kernel.IContainsMapping;
 import org.uengine.kernel.ProcessDefinition;
@@ -11,11 +13,11 @@ import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.RoleResolutionContext;
 
 /**
- * IAM 역할(Scope) 기반 역할 해석 컨텍스트
- * IAM 공급자에서 특정 scope(역할)을 가진 사용자인지 여부를 판단합니다.
+ * IAM ????Scope) ?リ옇?↑???????怨댄맍 ???쳜????덈콦
+ * IAM ??ㅻ?????????獄???scope(???????띠럾?嶺???????逾η춯?뼿 ????????堉??紐껊퉵??
  * 
  * Created by uengine on 2018. 4. 5..
- * Updated: IAM 공급자 추상화 적용 (IAMService)
+ * Updated: IAM ??ㅻ?????怨뺣뾼疫????⑤챷??(IAMService)
  */
 public class IAMRoleResolutionContext extends RoleResolutionContext implements IContainsMapping {
     
@@ -65,6 +67,11 @@ public class IAMRoleResolutionContext extends RoleResolutionContext implements I
         }
         
         try {
+            List<String> requestScopes = UserContext.getThreadLocalInstance().getScopes();
+            if (requestScopes != null && requestScopes.contains(scope)) {
+                return true;
+            }
+
             IAMService iamService = IAMServices.getDefault();
             return iamService.hasScope(currentLoginEndpoint, scope);
         } catch (Exception e) {
@@ -72,11 +79,12 @@ public class IAMRoleResolutionContext extends RoleResolutionContext implements I
         }
     }
 }
-/* 기존 코드 (주석 처리)
+/* ?リ옇????袁⑤?獄?(?낅슣?섋땻?嶺뚳퐣瑗??
 package org.uengine.five.overriding;
 
 import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 import org.uengine.kernel.IContainsMapping;
 import org.uengine.kernel.ProcessDefinition;
@@ -90,7 +98,7 @@ public class IAMRoleResolutionContext extends RoleResolutionContext implements I
     public RoleMapping getActualMapping(ProcessDefinition pd, ProcessInstance instance, String tracingTag, Map options)
             throws Exception {
         RoleMapping roleMapping = RoleMapping.create();
-        roleMapping.setEndpoint(getScope());// 혹은 keycloak API 모든 scope을 가진 유저를 검색해서 endpoint에 집어넣느냐.
+        roleMapping.setEndpoint(getScope());// ?獄?? keycloak API 嶺뚮ㅄ維獄?scope???띠럾?嶺???????롪틵???????endpoint??嶺뚯쉶理먨젆?影?ル츇??
         return roleMapping;
     }
 
@@ -118,7 +126,7 @@ public class IAMRoleResolutionContext extends RoleResolutionContext implements I
         // KeyClock Logic
         //   call keyclock (currentLoginEndpoint)
         
-        // List<String> scopes = callKeyClock(currentLoginEndpoint); // keyclock 쪽으로 post 시 scope 정보 리턴 되도록.
+        // List<String> scopes = callKeyClock(currentLoginEndpoint); // keyclock 嶺뚯옕????뿉?post ??scope ?筌먲퐢沅??洹먮뿪????濡レ┣??
         // for( String scope : scopes) {
         //     if(scope.equals(instanceEndpoint)){
         //         return true;

@@ -1,0 +1,158 @@
+name: infra-debug
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "12281:2181"
+    networks:
+      - app-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "19092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CREATE_TOPICS: "bpm-topic:1:1,bpm.topic:1:1"
+    networks:
+      - app-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.1
+    ports:
+      - "18080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_LOGLEVEL: debug
+      KC_METRICS_ENABLED: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 18080
+      KC_PROXY: edge
+      KC_SPI_THEME_DEFAULT: keycloak
+      KC_SPI_THEME_WELCOME_THEME: keycloak
+      KEYCLOAK_EXTRA_ARGS: "--spi-theme-static-max-age=-1 --spi-theme-cache-themes=false --spi-theme-cache-templates=false"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    command: ["start-dev", "--import-realm"]
+    networks:
+      - app-network
+
+  definition-service:
+    image: definition-service:v0.0.1
+    build:
+      context: ..
+      dockerfile: definition-service/Dockerfile
+    depends_on:
+      - kafka
+    ports:
+      - "19093:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_HBM2DDL_AUTO: update
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS: kafka:29092
+    volumes:
+      - ../archive:/app/archive
+      - ../definitions:/app/definitions
+      - ../instances:/app/instances
+      - ../payloads:/app/payloads
+      - ../test:/app/test
+    networks:
+      - app-network
+
+  process-service:
+    image: process-service:v0.0.1
+    build:
+      context: ..
+      dockerfile: process-service/Dockerfile
+    depends_on:
+      - kafka
+      - keycloak
+    ports:
+      - "19094:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_HBM2DDL_AUTO: update
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS: kafka:29092
+      KEYCLOAK_URI: http://keycloak:8080
+      KEYCLOAK_REALM: uengine
+      KEYCLOAK_ADMIN_REALM: uengine
+      KEYCLOAK_ADMIN_CLIENT_ID: admin-cli
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ../archive:/app/archive
+      - ../definitions:/app/definitions
+      - ../instances:/app/instances
+      - ../payloads:/app/payloads
+      - ../test:/app/test
+    networks:
+      - app-network
+
+  frontend:
+    image: process-gpt-vue3:infra-debug
+    build:
+      context: ../../process-gpt-vue3
+      dockerfile: Dockerfile
+    ports:
+      - "15175:8080"
+    environment:
+      VITE_MODE: uEngine
+      VITE_KEYCLOAK_URL: http://localhost:18080
+      VITE_KEYCLOAK_REALM: uengine
+      VITE_KEYCLOAK_CLIENT_ID: uengine
+    networks:
+      - app-network
+  gateway:
+    image: keycloak-gateway:0.0.5
+    build:
+      context: ../keycloak-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      - process-service
+      - definition-service
+      - keycloak
+      - frontend
+    ports:
+      - "18088:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EXECUTION_SERVICE_URL: http://process-service:8080
+      DEFINITION_SERVICE_URL: http://definition-service:8080
+      PROCESS_SERVICE_URL: http://process-service:8080
+      FRONTEND_URL: http://frontend:8080
+      KEYCLOAK_URI: http://keycloak:8080
+      KEYCLOAK_REALM: uengine
+      KEYCLOAK_CLIENT_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_CLIENT_REALM: uengine
+      KEYCLOAK_BROWSER_AUTH_URL: http://localhost:18080
+      KEYCLOAK_CLIENT_ID: uengine
+      KEYCLOAK_CLIENT_SECRET: 66LpF19OpkpgKKpWHdgiCEKisx5AXqLA
+      KEYCLOAK_REDIRECT_URI: http://localhost:18088/login/oauth2/code/keycloak
+      GATEWAY_URI: http://localhost:18088
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: on-failure
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -38,6 +38,17 @@ public class BpmnXMLParser {
 
     static ObjectMapper objectMapper = createTypedJsonObjectMapper();
 
+    private static String normalizeXmlForParse(String xml) {
+        if (xml == null) {
+            return null;
+        }
+        return xml.replaceAll("\\s+\\$type\\s*=\\s*([\"'])[^\"']*\\1", "");
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     public static String convertToJavaType(String simpleTypeName) {
         switch (simpleTypeName) {
             case "Text":
@@ -1020,8 +1031,7 @@ public class BpmnXMLParser {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            // XML Tag Inner $type Cast to type
-            xml = xml.replace("$type", "type");
+            xml = normalizeXmlForParse(xml);
             Document document = builder.parse(new InputSource(new StringReader(xml)));
 
             ProcessDefinition processDefinition = new ProcessDefinition();
@@ -1045,13 +1055,26 @@ public class BpmnXMLParser {
                 throw new RuntimeException("No process tag found in the XML");
             }
 
+            String fallbackProcessName = null;
             for (int i = 0; i < processNodes.getLength(); i++) {
                 Node processNode = processNodes.item(i);
-                boolean isExecutable = Boolean
-                        .parseBoolean(processNode.getAttributes().getNamedItem("isExecutable").getTextContent());
+                Element processElement = (Element) processNode;
+                if (isBlank(fallbackProcessName)) {
+                    fallbackProcessName = processElement.getAttribute("name");
+                    if (isBlank(fallbackProcessName)) {
+                        fallbackProcessName = processElement.getAttribute("id");
+                    }
+                }
+                Node isExecutableAttr = processNode.getAttributes().getNamedItem("isExecutable");
+                boolean isExecutable = isExecutableAttr == null
+                        || Boolean.parseBoolean(isExecutableAttr.getTextContent());
                 if (isExecutable) {
                     parseActivities(processNode, processDefinition);
                 }
+            }
+
+            if (isBlank(processDefinition.getName()) && !isBlank(fallbackProcessName)) {
+                processDefinition.setName(fallbackProcessName);
             }
 
             processDefinition.afterDeserialization();

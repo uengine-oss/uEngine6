@@ -9,6 +9,7 @@ import java.util.*;
 
 import org.uengine.contexts.HtmlFormContext;
 //import com.sun.org.apache.regexp.internal.RE;
+import org.uengine.contexts.EventSynchronization;
 import org.uengine.contexts.MappingContext;
 import org.uengine.processdesigner.mapper.Transformer;
 import org.uengine.processdesigner.mapper.TransformerMapping;
@@ -197,7 +198,11 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     protected void mappingOut(ProcessInstance instance, Map payload) throws Exception {
-        ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
+        EventSynchronization eventSynchronization = getEventSynchronization();
+        if (eventSynchronization == null || eventSynchronization.getMappingContext() == null) {
+            return;
+        }
+        ParameterContext[] params = eventSynchronization.getMappingContext().getMappingElements();
         if (params != null) {
             for (int i = 0; i < params.length; i++) {
                 try {
@@ -265,15 +270,20 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     public Map<String, Object> getMappingInValues(ProcessInstance instance)
             throws Exception {
         Map<String, Object> mappingInValues = new HashMap();
-        if (getEventSynchronization().getMappingContext() == null)
+        EventSynchronization eventSynchronization = getEventSynchronization();
+        if (eventSynchronization == null || eventSynchronization.getMappingContext() == null)
             return mappingInValues;
 
-        ParameterContext[] params = getEventSynchronization().getMappingContext().getMappingElements();
+        ParameterContext[] params = eventSynchronization.getMappingContext().getMappingElements();
         Object value = null;
         if (params == null)
             return mappingInValues;
 
-        for (FieldDescriptor field : getEventSynchronization().getAttributes()) {
+        FieldDescriptor[] fields = eventSynchronization.getAttributes();
+        if (fields == null) {
+            fields = new FieldDescriptor[0];
+        }
+        for (FieldDescriptor field : fields) {
             boolean isArray = "Array".equals(field.getClassName());
             if (isArray) {
                 ArrayList<Object> mappingInValue = new ArrayList<>();
@@ -352,7 +362,10 @@ public class ReceiveActivity extends DefaultActivity implements MessageListener,
     }
 
     public void savePayload(ProcessInstance instance, Map resultPayload) throws Exception {
-        if (getEventSynchronization().getMappingContext().getMappingElements() != null) {
+        EventSynchronization eventSynchronization = getEventSynchronization();
+        if (eventSynchronization != null
+                && eventSynchronization.getMappingContext() != null
+                && eventSynchronization.getMappingContext().getMappingElements() != null) {
             mappingOut(instance, resultPayload);
         } else {
             for (Object key : resultPayload.keySet()) {

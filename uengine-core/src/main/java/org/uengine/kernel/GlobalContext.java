@@ -685,11 +685,19 @@ public class GlobalContext {
 	}
 
 	public static String getUserId() {
-		return null;
+		try {
+			return org.uengine.contexts.UserContext.getThreadLocalInstance().getUserId();
+		} catch (Throwable t) {
+			return null;
+		}
 	}
 
 	public static void setUserId(String userId) {
-
+		try {
+			org.uengine.contexts.UserContext.getThreadLocalInstance().setUserId(userId);
+		} catch (Throwable t) {
+			// no-op
+		}
 	}
 
 	public static <T> Map<String, T> getComponents(Class<T> clazz, Object[] objects) {

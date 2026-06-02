@@ -1,0 +1,83 @@
+{
+  "realm": "uengine",
+  "displayName": "UEngine BPM Debug",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "roles": {
+    "realm": [
+      { "name": "user" },
+      { "name": "admin" },
+      { "name": "manager" },
+      { "name": "engineer" },
+      { "name": "mechanic" },
+      { "name": "process-manager" }
+    ]
+  },
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@uengine.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "UEngine",
+      "credentials": [{ "type": "password", "value": "admin", "temporary": false }],
+      "realmRoles": ["admin", "user", "manager", "engineer", "mechanic"]
+    },
+    {
+      "username": "hong",
+      "email": "hong@uengine.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Hong",
+      "lastName": "User",
+      "credentials": [{ "type": "password", "value": "1234", "temporary": false }],
+      "realmRoles": ["admin", "user", "manager", "engineer", "mechanic"]
+    },
+    {
+      "username": "test",
+      "email": "test@uengine.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [{ "type": "password", "value": "test", "temporary": false }],
+      "realmRoles": ["admin", "user", "manager", "engineer", "mechanic"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "uengine",
+      "name": "UEngine BPM Debug",
+      "rootUrl": "http://localhost:18088",
+      "adminUrl": "http://localhost:18088",
+      "baseUrl": "http://localhost:18088",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "66LpF19OpkpgKKpWHdgiCEKisx5AXqLA",
+      "redirectUris": ["http://localhost:18088/*", "http://localhost:5175/*"],
+      "webOrigins": ["+", "http://localhost:18088", "http://localhost:5175"],
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["web-origins", "roles", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    }
+  ],
+  "groups": [
+    { "name": "IT", "path": "/IT", "realmRoles": ["admin"], "subGroups": [] },
+    { "name": "Sales", "path": "/Sales", "realmRoles": ["user"], "subGroups": [] }
+  ]
+}

@@ -49,15 +49,28 @@ public class SecurityAwareServletFilter implements Filter {
 
                 List<String> groups = decodedJWT.getClaim("groups").asList(String.class);
                 String userId = decodedJWT.getClaim("email").asString();
-                List<String> roles = (List<String>)decodedJWT.getClaim("realm_access").asMap().get("roles");
-                // static cache (legacy usages) + ThreadLocal(UserContext) 모두 세팅
-                SecurityAwareServletFilter.userId = userId;
-                // ProcessTransactionContext.getThreadLocalInstance().setSharedContext("loggedUserId",
-                // userId);
-                // TenantContext.getThreadLocalInstance().setUserId(userId);
+                if (userId == null || userId.isEmpty()) {
+                    userId = decodedJWT.getClaim("preferred_username").asString();
+                }
+                if (userId == null || userId.isEmpty()) {
+                    userId = decodedJWT.getClaim("sub").asString();
+                }
 
-                // UserContext.getThreadLocalInstance().setScopes(null);
-                UserContext.getThreadLocalInstance().setUserId(userId);
+                List<String> roles = null;
+                try {
+                    java.util.Map<String, Object> realmAccess = decodedJWT.getClaim("realm_access").asMap();
+                    if (realmAccess != null) {
+                        Object r = realmAccess.get("roles");
+                        if (r instanceof List) roles = (List<String>) r;
+                    }
+                } catch (Exception ignore) {}
+
+                if (userId != null && !userId.isEmpty()) {
+                    SecurityAwareServletFilter.userId = userId;
+                    UserContext.getThreadLocalInstance().setUserId(userId);
+                } else {
+                    System.err.println("[SecurityAwareServletFilter] JWT userId extraction failed. Check email/preferred_username/sub claims.");
+                }
                 UserContext.getThreadLocalInstance().setScopes(roles);
                 UserContext.getThreadLocalInstance().setGroups(groups);
             } catch (Exception e) {
