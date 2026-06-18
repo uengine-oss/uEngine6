@@ -8,12 +8,22 @@ package org.uengine.five.dto;
  */
 public class RoleMappingCommand {
 
+    private String targetType;
     private String endpoint;
     private String resourceName;
     private String scope;
+    private String assignGroup;
     private Integer assignType;
 
     public RoleMappingCommand() {
+    }
+
+    public String getTargetType() {
+        return targetType;
+    }
+
+    public void setTargetType(String targetType) {
+        this.targetType = targetType;
     }
 
     public String getEndpoint() {
@@ -38,6 +48,14 @@ public class RoleMappingCommand {
 
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    public String getAssignGroup() {
+        return assignGroup;
+    }
+
+    public void setAssignGroup(String assignGroup) {
+        this.assignGroup = assignGroup;
     }
 
     public Integer getAssignType() {

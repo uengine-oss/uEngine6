@@ -53,6 +53,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.uengine.five.ProcessServiceApplication;
+import org.uengine.five.dto.BulkDelegateWorkItemCommand;
+import org.uengine.five.dto.BulkDelegateWorkItemResult;
 import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
@@ -98,6 +100,7 @@ import org.uengine.kernel.ProcessDefinition;
 import org.uengine.kernel.ProcessInstance;
 import org.uengine.kernel.ProcessVariable;
 import org.uengine.kernel.ReceiveActivity;
+import org.uengine.kernel.Role;
 import org.uengine.kernel.RoleMapping;
 import org.uengine.kernel.TaskSkipAnalyzer;
 import org.uengine.kernel.UEngineException;
@@ -2420,6 +2423,80 @@ public class InstanceServiceImpl implements InstanceService {
      *
      * 권한 체크(기본): 현재 task의 endpoint(담당자)와 로그인 사용자ID가 일치해야 위임 가능.
      */
+    private RoleMappingCommand normalizeDelegatedRoleMapping(RoleMappingCommand delegatedRoleMapping) {
+        if (delegatedRoleMapping == null) {
+            return null;
+        }
+
+        String targetType = delegatedRoleMapping.getTargetType();
+        if (targetType == null || targetType.trim().isEmpty() || "USER".equalsIgnoreCase(targetType)) {
+            return delegatedRoleMapping;
+        }
+
+        if ("GROUP".equalsIgnoreCase(targetType)) {
+            String group = UEngineUtil.isNotEmpty(delegatedRoleMapping.getAssignGroup())
+                    ? delegatedRoleMapping.getAssignGroup()
+                    : delegatedRoleMapping.getScope();
+            delegatedRoleMapping.setScope(group);
+            delegatedRoleMapping.setAssignType(Role.ASSIGNTYPE_GROUP);
+            delegatedRoleMapping.setEndpoint(null);
+            return delegatedRoleMapping;
+        }
+
+        if ("ROLE".equalsIgnoreCase(targetType)) {
+            delegatedRoleMapping.setAssignType(Role.ASSIGNTYPE_ROLE);
+            delegatedRoleMapping.setEndpoint(null);
+            return delegatedRoleMapping;
+        }
+
+        if ("GROUP_ROLE".equalsIgnoreCase(targetType)) {
+            delegatedRoleMapping.setAssignType(Role.ASSIGNTYPE_ROLE);
+            delegatedRoleMapping.setEndpoint(null);
+        }
+
+        return delegatedRoleMapping;
+    }
+
+    private void validateDelegatedRoleMapping(RoleMappingCommand delegatedRoleMapping) {
+        if (delegatedRoleMapping == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping is required");
+        }
+
+        String targetType = delegatedRoleMapping.getTargetType();
+        if (targetType == null || targetType.trim().isEmpty() || "USER".equalsIgnoreCase(targetType)) {
+            if (!UEngineUtil.isNotEmpty(delegatedRoleMapping.getEndpoint())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping.endpoint is required");
+            }
+            return;
+        }
+
+        if ("GROUP".equalsIgnoreCase(targetType)) {
+            if (!UEngineUtil.isNotEmpty(delegatedRoleMapping.getAssignGroup())
+                    && !UEngineUtil.isNotEmpty(delegatedRoleMapping.getScope())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping.assignGroup is required");
+            }
+            return;
+        }
+
+        if ("ROLE".equalsIgnoreCase(targetType)) {
+            if (!UEngineUtil.isNotEmpty(delegatedRoleMapping.getScope())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping.scope is required");
+            }
+            return;
+        }
+
+        if ("GROUP_ROLE".equalsIgnoreCase(targetType)) {
+            if (!UEngineUtil.isNotEmpty(delegatedRoleMapping.getAssignGroup())
+                    || !UEngineUtil.isNotEmpty(delegatedRoleMapping.getScope())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "delegatedRoleMapping.assignGroup and scope are required");
+            }
+            return;
+        }
+
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported targetType: " + targetType);
+    }
+
     @RequestMapping(value = "/work-item/{taskId}/delegate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     @org.springframework.transaction.annotation.Transactional
     @ProcessTransactional // important!
@@ -2433,10 +2510,8 @@ public class InstanceServiceImpl implements InstanceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskId is required");
         }
 
-        if (delegatedRoleMapping == null || delegatedRoleMapping.getEndpoint() == null
-                || delegatedRoleMapping.getEndpoint().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "delegatedRoleMapping.endpoint is required");
-        }
+        delegatedRoleMapping = normalizeDelegatedRoleMapping(delegatedRoleMapping);
+        validateDelegatedRoleMapping(delegatedRoleMapping);
 
         // 로그인 사용자 컨텍스트(권한/로깅/RoleResolution 등) 설정
         String userId = SecurityAwareServletFilter.getUserId();
@@ -2486,7 +2561,14 @@ public class InstanceServiceImpl implements InstanceService {
         RoleMapping delegated = RoleMapping.create();
         if (delegated != null) {
             String targetEndpoint = delegatedRoleMapping.getEndpoint() != null ? delegatedRoleMapping.getEndpoint().trim() : null;
-            delegated.setEndpoint(targetEndpoint);
+            if (UEngineUtil.isNotEmpty(targetEndpoint)) {
+                delegated.setEndpoint(targetEndpoint);
+            }
+
+            if (UEngineUtil.isNotEmpty(delegatedRoleMapping.getAssignGroup())) {
+                delegated.setGroupName(delegatedRoleMapping.getAssignGroup());
+                delegated.setGroup(true);
+            }
 
             // delegate 요청에 scope/assignType이 없더라도, Lane(=roleName) 기반 태스크는 기존 worklist의 값을 유지해야 함
             // 그래야 위임 후 새로 생성되는 workitem(재실행)이 기존 Lane 정책(scope/assignType)을 그대로 가진다.
@@ -2574,6 +2656,37 @@ public class InstanceServiceImpl implements InstanceService {
         }
 
         return getWorkItem(resultTaskId);
+    }
+
+    @RequestMapping(value = "/work-items/delegate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @org.springframework.transaction.annotation.Transactional
+    @ProcessTransactional
+    public BulkDelegateWorkItemResult delegateWorkItems(@RequestBody BulkDelegateWorkItemCommand command)
+            throws Exception {
+        if (command == null || command.getTaskIds() == null || command.getTaskIds().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "taskIds is required");
+        }
+
+        RoleMappingCommand delegatedRoleMapping = normalizeDelegatedRoleMapping(command.getDelegatedRoleMapping());
+        validateDelegatedRoleMapping(delegatedRoleMapping);
+
+        BulkDelegateWorkItemResult result = new BulkDelegateWorkItemResult();
+        Set<String> taskIds = new LinkedHashSet<>(command.getTaskIds());
+        for (String taskId : taskIds) {
+            if (!UEngineUtil.isNotEmpty(taskId)) {
+                result.addFailure(taskId, "taskId is required");
+                continue;
+            }
+
+            try {
+                delegateWorkItem(taskId, delegatedRoleMapping, command.isDelegateOnlyForWorkitem());
+                result.addSuccess(taskId);
+            } catch (Exception e) {
+                result.addFailure(taskId, e.getMessage());
+            }
+        }
+
+        return result;
     }
 
     /**

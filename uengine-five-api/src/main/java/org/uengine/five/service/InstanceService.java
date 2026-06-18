@@ -17,6 +17,8 @@ import org.uengine.five.dto.InstanceResource;
 import org.uengine.five.dto.Message;
 import org.uengine.five.dto.ProcessExecutionCommand;
 import org.uengine.five.dto.RoleMappingCommand;
+import org.uengine.five.dto.BulkDelegateWorkItemCommand;
+import org.uengine.five.dto.BulkDelegateWorkItemResult;
 import org.uengine.five.dto.StartAndCompleteCommand;
 import org.uengine.five.dto.TaskReturnAvailability;
 import org.uengine.five.dto.TaskReturnCommand;
@@ -134,6 +136,10 @@ public interface InstanceService {
                         @PathVariable("taskId") String taskId,
                         @RequestBody RoleMappingCommand delegatedRoleMapping,
                         @org.springframework.web.bind.annotation.RequestParam(value = "delegateOnlyForWorkitem", required = false, defaultValue = "false") boolean delegateOnlyForWorkitem)
+                        throws Exception;
+
+        @RequestMapping(value = "/work-items/delegate", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+        public BulkDelegateWorkItemResult delegateWorkItems(@RequestBody BulkDelegateWorkItemCommand command)
                         throws Exception;
 
         /**
